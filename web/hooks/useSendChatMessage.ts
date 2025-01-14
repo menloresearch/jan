@@ -12,6 +12,8 @@ import {
   ToolManager,
   ThreadAssistantInfo,
   InferenceEngine,
+  MessageStatus,
+  ContentType,
 } from '@janhq/core'
 import { extractInferenceParams, extractModelLoadParams } from '@janhq/core'
 import { atom, useAtom, useAtomValue, useSetAtom } from 'jotai'
@@ -47,6 +49,7 @@ import {
   updateThreadAtom,
   updateThreadWaitingForResponseAtom,
 } from '@/helpers/atoms/Thread.atom'
+import { ulid } from 'ulidx'
 
 export const reloadModelAtom = atom(false)
 
@@ -226,13 +229,13 @@ export default function useSendChatMessage() {
     }
     setIsGeneratingResponse(true)
 
+    const messageRequestBuildResult = requestBuilder.build()
     // Process message request with Assistants tools
     const request = await ToolManager.instance().process(
-      requestBuilder.build(),
+      messageRequestBuildResult,
       activeAssistantRef?.current.tools ?? []
     )
 
-    // Request for inference
     EngineManager.instance().get(InferenceEngine.cortex)?.inference(request)
 
     // Reset states

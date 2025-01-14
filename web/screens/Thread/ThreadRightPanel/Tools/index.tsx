@@ -27,7 +27,9 @@ const Tools = () => {
   const { recommendedModel, downloadedModels } = useRecommendedModel()
 
   const componentDataAssistantSetting = getConfigurationsData(
-    (activeAssistant?.tools && activeAssistant?.tools[0]?.settings) ?? {}
+    (activeAssistant?.tools &&
+      activeAssistant?.tools.find((e) => e.type === 'retrieval')?.settings) ??
+      {}
   )
 
   useEffect(() => {
@@ -53,15 +55,43 @@ const Tools = () => {
           {
             ...activeAssistant,
             tools: [
+              ...(activeAssistant.tools?.filter(
+                (e) => e.type !== 'retrieval'
+              ) ?? []),
               {
                 type: 'retrieval',
                 enabled: enabled,
                 settings:
                   (activeAssistant.tools &&
-                    activeAssistant.tools[0]?.settings) ??
+                    activeAssistant.tools?.find((e) => e.type === 'retrieval')
+                      ?.settings) ??
                   {},
               },
-            ],
+            ].filter((e) => !!e),
+          },
+        ],
+      })
+    },
+    [activeAssistant, activeThread, updateThreadMetadata]
+  )
+
+  const onFunctionSwitchUpdate = useCallback(
+    (enabled: boolean) => {
+      if (!activeThread || !activeAssistant) return
+      updateThreadMetadata({
+        ...activeThread,
+        assistants: [
+          {
+            ...activeAssistant,
+            tools: [
+              {
+                type: 'function',
+                enabled: enabled,
+                settings: {},
+              },
+              ...(activeAssistant.tools?.filter((e) => e.type !== 'function') ??
+                []),
+            ].filter((e) => !!e),
           },
         ],
       })
@@ -84,7 +114,8 @@ const Tools = () => {
                 useTimeWeightedRetriever: enabled,
                 settings:
                   (activeAssistant.tools &&
-                    activeAssistant.tools[0]?.settings) ??
+                    activeAssistant?.tools?.find((e) => e.type === 'retrieval')
+                      ?.settings) ??
                   {},
               },
             ],
@@ -101,6 +132,38 @@ const Tools = () => {
     <Fragment>
       {activeAssistant?.tools && componentDataAssistantSetting.length > 0 && (
         <div className="p-4">
+          <div className="mb-4">
+            <div className="flex items-center justify-between">
+              <label
+                id="retrieval"
+                className="inline-flex items-center font-medium"
+              >
+                Function
+                <Tooltip
+                  trigger={
+                    <InfoIcon
+                      size={16}
+                      className="ml-2 flex-shrink-0 text-[hsl(var(--text-secondary))]"
+                    />
+                  }
+                  content="Retrieval helps the assistant use information from
+                      files you send to it. Once you share a file, the
+                      assistant automatically fetches the relevant content
+                      based on your request."
+                />
+              </label>
+              <div className="flex items-center justify-between">
+                <Switch
+                  name="retrieval"
+                  checked={
+                    activeAssistant?.tools.find((e) => e.type === 'tool')
+                      ?.enabled
+                  }
+                  onChange={(e) => onFunctionSwitchUpdate(e.target.checked)}
+                />
+              </div>
+            </div>
+          </div>
           <div className="mb-2">
             <div className="flex items-center justify-between">
               <label
@@ -124,13 +187,17 @@ const Tools = () => {
               <div className="flex items-center justify-between">
                 <Switch
                   name="retrieval"
-                  checked={activeAssistant?.tools[0].enabled}
+                  checked={
+                    activeAssistant?.tools.find((e) => e.type === 'retrieval')
+                      ?.enabled
+                  }
                   onChange={(e) => onRetrievalSwitchUpdate(e.target.checked)}
                 />
               </div>
             </div>
           </div>
-          {activeAssistant?.tools[0].enabled && (
+          {activeAssistant?.tools.find((e) => e.type === 'retrieval')
+            ?.enabled && (
             <div className="pb-4 pt-2">
               <div className="mb-4">
                 <div className="item-center mb-2 flex">
@@ -212,8 +279,9 @@ const Tools = () => {
                     <Switch
                       name="use-time-weighted-retriever"
                       checked={
-                        activeAssistant?.tools[0].useTimeWeightedRetriever ||
-                        false
+                        activeAssistant?.tools.find(
+                          (e) => e.type === 'retrieval'
+                        )?.useTimeWeightedRetriever || false
                       }
                       onChange={(e) =>
                         onTimeWeightedRetrieverSwitchUpdate(e.target.checked)

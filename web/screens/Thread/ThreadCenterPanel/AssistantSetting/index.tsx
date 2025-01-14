@@ -38,27 +38,22 @@ const AssistantSetting: React.FC<Props> = ({ componentData }) => {
         stopModel()
       }
 
-      if (
-        activeAssistant?.tools &&
-        (key === 'chunk_overlap' || key === 'chunk_size')
-      ) {
+      const retrieval = activeAssistant?.tools?.find(
+        (e) => e.type === 'retrieval'
+      )
+      if (retrieval && (key === 'chunk_overlap' || key === 'chunk_size')) {
         if (
-          activeAssistant.tools[0]?.settings?.chunk_size <
-          activeAssistant.tools[0]?.settings?.chunk_overlap
+          retrieval.settings?.chunk_size < retrieval.settings?.chunk_overlap
         ) {
-          activeAssistant.tools[0].settings.chunk_overlap =
-            activeAssistant.tools[0].settings.chunk_size
+          retrieval.settings.chunk_overlap = retrieval.settings.chunk_size
         }
-        if (
-          key === 'chunk_size' &&
-          value < activeAssistant.tools[0].settings?.chunk_overlap
-        ) {
-          activeAssistant.tools[0].settings.chunk_overlap = value
+        if (key === 'chunk_size' && value < retrieval.settings?.chunk_overlap) {
+          retrieval.settings.chunk_overlap = value
         } else if (
           key === 'chunk_overlap' &&
-          value > activeAssistant.tools[0].settings?.chunk_size
+          value > retrieval.settings?.chunk_size
         ) {
-          activeAssistant.tools[0].settings.chunk_size = value
+          retrieval.settings.chunk_size = value
         }
       }
       updateThreadMetadata({
@@ -67,12 +62,14 @@ const AssistantSetting: React.FC<Props> = ({ componentData }) => {
           {
             ...activeAssistant,
             tools: [
+              ...(activeAssistant.tools?.filter(
+                (e) => e.type !== retrieval?.type
+              ) ?? []),
               {
                 type: 'retrieval',
                 enabled: true,
                 settings: {
-                  ...(activeAssistant.tools &&
-                    activeAssistant.tools[0]?.settings),
+                  ...retrieval?.settings,
                   [key]: value,
                 },
               },
@@ -88,6 +85,7 @@ const AssistantSetting: React.FC<Props> = ({ componentData }) => {
       setEngineParamsUpdate,
       stopModel,
       updateThreadMetadata,
+      resetGenerating,
     ]
   )
 

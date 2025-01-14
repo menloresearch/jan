@@ -5,7 +5,6 @@ import {
   ExtensionTypeEnum,
   Thread,
   ThreadAssistantInfo,
-  AssistantTool,
   Model,
   Assistant,
 } from '@janhq/core'
@@ -23,7 +22,6 @@ import useSetActiveThread from './useSetActiveThread'
 import { extensionManager } from '@/extension'
 import { copyOverInstructionEnabledAtom } from '@/helpers/atoms/App.atom'
 
-import { experimentalFeatureEnabledAtom } from '@/helpers/atoms/AppConfig.atom'
 import { activeAssistantAtom } from '@/helpers/atoms/Assistant.atom'
 import { selectedModelAtom } from '@/helpers/atoms/Model.atom'
 import {
@@ -45,8 +43,6 @@ export const useCreateNewThread = () => {
   )
   const [activeAssistant, setActiveAssistant] = useAtom(activeAssistantAtom)
 
-  const experimentalEnabled = useAtomValue(experimentalFeatureEnabledAtom)
-
   const threads = useAtomValue(threadsAtom)
 
   const { recommendedModel } = useRecommendedModel()
@@ -55,6 +51,7 @@ export const useCreateNewThread = () => {
     assistant: (ThreadAssistantInfo & { id: string; name: string }) | Assistant,
     model?: Model | undefined
   ) => {
+    console.log(assistant)
     const defaultModel = model || recommendedModel
 
     if (!model) {
@@ -70,13 +67,6 @@ export const useCreateNewThread = () => {
           type: 'warning',
         })
       }
-    }
-
-    // modify assistant tools when experimental on, retieval toggle enabled in default
-    const assistantTools: AssistantTool = {
-      type: 'retrieval',
-      enabled: true,
-      settings: assistant.tools && assistant.tools[0].settings,
     }
 
     // Default context length is 8192
@@ -109,7 +99,7 @@ export const useCreateNewThread = () => {
     const assistantInfo: ThreadAssistantInfo = {
       assistant_id: assistant.id,
       assistant_name: assistant.name,
-      tools: experimentalEnabled ? [assistantTools] : assistant.tools,
+      tools: assistant.tools,
       model: {
         id: defaultModel?.id ?? '*',
         settings: { ...defaultModel?.settings, ...overriddenSettings },

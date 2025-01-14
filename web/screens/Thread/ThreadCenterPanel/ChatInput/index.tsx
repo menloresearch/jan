@@ -70,6 +70,7 @@ const ChatInput = () => {
   const activeAssistant = useAtomValue(activeAssistantAtom)
   const { stopInference } = useActiveModel()
 
+  const retrieval = activeAssistant?.tools?.find((e) => e.type === 'retrieval')
   const upload = uploader()
   const [activeTabThreadRightPanel, setActiveTabThreadRightPanel] = useAtom(
     activeTabThreadRightPanelAtom
@@ -168,8 +169,7 @@ const ChatInput = () => {
                 onClick={(e) => {
                   if (
                     !!fileUpload ||
-                    (activeAssistant?.tools &&
-                      !activeAssistant?.tools[0]?.enabled &&
+                    (!retrieval?.enabled &&
                       !activeAssistant?.model.settings?.vision_model)
                   ) {
                     e.stopPropagation()
@@ -186,13 +186,12 @@ const ChatInput = () => {
             }
             disabled={
               !isModelSupportRagAndTools ||
-              (activeAssistant?.tools && activeAssistant?.tools[0]?.enabled)
+              (activeAssistant?.tools && retrieval?.enabled)
             }
             content={
               <>
                 {!!fileUpload ||
-                  (activeAssistant?.tools &&
-                    !activeAssistant?.tools[0]?.enabled &&
+                  (!retrieval?.enabled &&
                     !activeAssistant?.model.settings?.vision_model && (
                       <>
                         {!!fileUpload && (
@@ -201,8 +200,8 @@ const ChatInput = () => {
                             time.
                           </span>
                         )}
-                        {activeAssistant?.tools &&
-                          activeAssistant?.tools[0]?.enabled === false &&
+                        {retrieval &&
+                          retrieval?.enabled === false &&
                           isModelSupportRagAndTools && (
                             <span>
                               Turn on Retrieval in Tools settings to use this
@@ -268,8 +267,7 @@ const ChatInput = () => {
                   </li>
                 }
                 content={
-                  (!activeAssistant?.tools ||
-                    !activeAssistant?.tools[0]?.enabled) && (
+                  !retrieval?.enabled && (
                     <span>
                       Turn on Retrieval in Assistant Settings to use this
                       feature.

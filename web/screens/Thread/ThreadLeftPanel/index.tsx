@@ -79,12 +79,7 @@ const ThreadLeftPanel = () => {
         (model) => model.engine === InferenceEngine.cortex_llamacpp
       )
       const selectedModel = model[0] || recommendedModel
-      requestCreateNewThread(
-        activeAssistant
-          ? { ...assistants[0], ...activeAssistant }
-          : assistants[0],
-        selectedModel
-      )
+      requestCreateNewThread(assistants[0], selectedModel)
     } else if (threadDataReady && !activeThreadId) {
       setActiveThread(threads[0])
     }

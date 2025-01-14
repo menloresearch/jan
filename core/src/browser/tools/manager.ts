@@ -27,12 +27,15 @@ export class ToolManager {
   /*
    ** Process the message request with the tools.
    */
-  process(request: MessageRequest, tools: AssistantTool[]): Promise<MessageRequest> {
+  process(
+    request: MessageRequest,
+    tools: AssistantTool[]
+  ): Promise<MessageRequest> {
     return tools.reduce((prevPromise, currentTool) => {
       return prevPromise.then((prevResult) => {
-        return currentTool.enabled
-          ? this.get(currentTool.type)?.process(prevResult, currentTool) ??
-              Promise.resolve(prevResult)
+        return !currentTool || currentTool.enabled
+          ? (this.get(currentTool.type)?.process(prevResult, currentTool) ??
+              Promise.resolve(prevResult))
           : Promise.resolve(prevResult)
       })
     }, Promise.resolve(request))

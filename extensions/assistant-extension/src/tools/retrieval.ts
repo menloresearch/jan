@@ -98,7 +98,6 @@ export class RetrievalTool extends InferenceTool {
   }
 
   // Filter out all the messages that are not text
-  // TODO: Remove it until engines can handle multiple content types
   normalize(request: MessageRequest): MessageRequest {
     request.messages = request.messages?.map((message) => {
       if (

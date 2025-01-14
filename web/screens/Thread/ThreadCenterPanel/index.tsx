@@ -62,6 +62,9 @@ const ThreadCenterPanel = () => {
   const activeAssistant = useAtomValue(activeAssistantAtom)
   const chatWidth = useAtomValue(chatWidthAtom)
   const upload = uploader()
+  const retrievalTool = activeAssistant?.tools?.find(
+    (e) => e.type === 'retrieval'
+  )
   const acceptedFormat: Accept = activeAssistant?.model.settings?.vision_model
     ? {
         'application/pdf': ['.pdf'],
@@ -83,14 +86,11 @@ const ThreadCenterPanel = () => {
       if (!experimentalFeature) return
       if (
         e.dataTransfer.items.length === 1 &&
-        ((activeAssistant?.tools && activeAssistant?.tools[0]?.enabled) ||
+        ((retrievalTool && retrievalTool?.enabled) ||
           activeAssistant?.model.settings?.vision_model)
       ) {
         setDragOver(true)
-      } else if (
-        activeAssistant?.tools &&
-        !activeAssistant?.tools[0]?.enabled
-      ) {
+      } else if (activeAssistant?.tools && !retrievalTool?.enabled) {
         setDragRejected({ code: 'retrieval-off' })
       } else {
         setDragRejected({ code: 'multiple-upload' })
@@ -104,8 +104,8 @@ const ThreadCenterPanel = () => {
         !files ||
         files.length !== 1 ||
         rejectFiles.length !== 0 ||
-        (activeAssistant?.tools &&
-          !activeAssistant?.tools[0]?.enabled &&
+        (retrievalTool &&
+          !retrievalTool?.enabled &&
           !activeAssistant?.model.settings?.vision_model)
       )
         return
@@ -126,7 +126,7 @@ const ThreadCenterPanel = () => {
       setDragOver(false)
     },
     onDropRejected: (e) => {
-      if (activeAssistant?.tools && !activeAssistant?.tools[0]?.enabled) {
+      if (!retrievalTool?.enabled) {
         setDragRejected({ code: 'retrieval-off' })
       } else {
         setDragRejected({ code: e[0].errors[0].code })

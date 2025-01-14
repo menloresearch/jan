@@ -226,12 +226,16 @@ const ModelDropdown = ({
             {
               ...activeAssistant,
               tools: [
+                ...(activeAssistant.tools?.filter(
+                  (e) => e.type !== 'retrieval'
+                ) ?? []),
                 {
                   type: 'retrieval',
                   enabled: model?.engine === InferenceEngine.cortex,
                   settings: {
                     ...(activeAssistant.tools &&
-                      activeAssistant.tools[0]?.settings),
+                      activeAssistant.tools.find((e) => e.type === 'retrieval')
+                        ?.settings),
                   },
                 },
               ],
