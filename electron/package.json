@@ -55,6 +55,7 @@
     },
     "win": {
       "icon": "icons/icon.png",
+      "verifyUpdateCodeSignature": false,
       "target": [
         "nsis"
       ]
