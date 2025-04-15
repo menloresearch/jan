@@ -260,5 +260,4 @@ jobs:
         with:
           name: jan-mac-universal-${{ inputs.new_version }}
           path: |
-            ./electron/dist/*.dmg
             ./src-tauri/target/release/bundle/dmg/*.dmg
