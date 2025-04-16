@@ -32,10 +32,11 @@ fi
 if [ "$OS_TYPE" == "Linux" ]; then
     # Linux downloads
     download "${CORTEX_RELEASE_URL}/v${CORTEX_VERSION}/cortex-${CORTEX_VERSION}-linux-amd64.tar.gz" "${BIN_PATH}"
-    mv .cortex-server-beta ./cortex-server
+    mv ./cortex-server-beta ./cortex-server
     rm -rf ./cortex
     rm -rf ./cortex-beta
     chmod +x "./cortex-server"
+    cp ./cortex-server ./cortex-server-x86_64-unknown-linux-gnu
 
     # Download engines for Linux
     download "${ENGINE_DOWNLOAD_URL}-linux-amd64-noavx.tar.gz" "${SHARED_PATH}/engines/cortex.llamacpp/linux-amd64-noavx/v${ENGINE_VERSION}"
