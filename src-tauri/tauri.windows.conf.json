@@ -6,8 +6,8 @@
   "build": {
     "frontendDist": "../web/out",
     "devUrl": "http://localhost:3000",
-    "beforeDevCommand": "IS_TAURI=true yarn dev:web",
-    "beforeBuildCommand": "IS_TAURI=true yarn build:web"
+    "beforeDevCommand": "set \"IS_TAURI=true\"; yarn dev:web",
+    "beforeBuildCommand": "set \"IS_TAURI=true\"; yarn build:web"
   },
   "app": {
     "macOSPrivateApi": true,
@@ -55,7 +55,7 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["deb", "dmg"],
+    "targets": ["nsis"],
     "createUpdaterArtifacts": true,
     "icon": [
       "icons/32x32.png",

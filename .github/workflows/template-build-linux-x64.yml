@@ -130,6 +130,11 @@ jobs:
         env:
           VERSION_TAG: ${{ inputs.new_version }}
 
+      - name: Install libraries
+        run: |
+          sudo apt update
+          sudo apt install -y libglib2.0-dev libatk1.0-dev libpango1.0-dev libgtk-3-dev libsoup-3.0-dev libwebkit2gtk-4.1-dev --fix-missing
+
       - name: Build and publish app to aws s3 r2 or github artifactory
         if: inputs.public_provider != 'github'
         run: |
