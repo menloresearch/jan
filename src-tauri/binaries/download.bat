@@ -11,10 +11,10 @@ set DOWNLOAD_TOOL=..\..\extensions\inference-cortex-extension\node_modules\.bin\
 @REM Download cortex.llamacpp binaries
 
 call %DOWNLOAD_TOOL% -e --strip 1 -o %BIN_PATH% https://github.com/menloresearch/cortex.cpp/releases/download/v%CORTEX_VERSION%/cortex-%CORTEX_VERSION%-windows-amd64.tar.gz
-call %DOWNLOAD_TOOL% %ENGINE_DOWNLOAD_URL%-avx2-cuda-12-0.tar.gz -e --strip 1 -o ./engines/cortex.llamacpp/windows-amd64-avx2-cuda-12-0/v%ENGINE_VERSION%
-call %DOWNLOAD_TOOL% %ENGINE_DOWNLOAD_URL%-avx2-cuda-11-7.tar.gz -e --strip 1 -o ./engines/cortex.llamacpp/windows-amd64-avx2-cuda-11-7/v%ENGINE_VERSION%
-call %DOWNLOAD_TOOL% %ENGINE_DOWNLOAD_URL%-noavx-cuda-12-0.tar.gz -e --strip 1 -o ./engines/cortex.llamacpp/windows-amd64-noavx-cuda-12-0/v%ENGINE_VERSION%
-call %DOWNLOAD_TOOL% %ENGINE_DOWNLOAD_URL%-noavx-cuda-11-7.tar.gz -e --strip 1 -o ./engines/cortex.llamacpp/windows-amd64-noavx-cuda-11-7/v%ENGINE_VERSION%
+@REM call %DOWNLOAD_TOOL% %ENGINE_DOWNLOAD_URL%-avx2-cuda-12-0.tar.gz -e --strip 1 -o ./engines/cortex.llamacpp/windows-amd64-avx2-cuda-12-0/v%ENGINE_VERSION%
+@REM call %DOWNLOAD_TOOL% %ENGINE_DOWNLOAD_URL%-avx2-cuda-11-7.tar.gz -e --strip 1 -o ./engines/cortex.llamacpp/windows-amd64-avx2-cuda-11-7/v%ENGINE_VERSION%
+@REM call %DOWNLOAD_TOOL% %ENGINE_DOWNLOAD_URL%-noavx-cuda-12-0.tar.gz -e --strip 1 -o ./engines/cortex.llamacpp/windows-amd64-noavx-cuda-12-0/v%ENGINE_VERSION%
+@REM call %DOWNLOAD_TOOL% %ENGINE_DOWNLOAD_URL%-noavx-cuda-11-7.tar.gz -e --strip 1 -o ./engines/cortex.llamacpp/windows-amd64-noavx-cuda-11-7/v%ENGINE_VERSION%
 call %DOWNLOAD_TOOL% %ENGINE_DOWNLOAD_URL%-noavx.tar.gz -e --strip 1 -o ./engines/cortex.llamacpp/windows-amd64-noavx/v%ENGINE_VERSION%
 call %DOWNLOAD_TOOL% %ENGINE_DOWNLOAD_URL%-avx.tar.gz -e --strip 1 -o ./engines/cortex.llamacpp/windows-amd64-avx/v%ENGINE_VERSION%
 call %DOWNLOAD_TOOL% %ENGINE_DOWNLOAD_URL%-avx2.tar.gz -e --strip 1 -o ./engines/cortex.llamacpp/windows-amd64-avx2/v%ENGINE_VERSION%
