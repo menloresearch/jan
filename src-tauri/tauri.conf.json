@@ -71,7 +71,8 @@
     ],
     "externalBin": ["binaries/cortex-server"],
     "macOS": {
-      "entitlements": "entitlements.plist"
+      "entitlements": "entitlements.plist",
+      "hardenedRuntime": true
     }
   }
 }
