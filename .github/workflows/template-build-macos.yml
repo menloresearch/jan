@@ -261,3 +261,33 @@ jobs:
           name: jan-mac-universal-${{ inputs.new_version }}
           path: |
             ./src-tauri/target/release/bundle/dmg/*.dmg
+            
+      # Additional steps for Tauri builds
+      - name: Install Rust stable for Tauri
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Build Tauri app with code signing
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ENABLE_CODE_SIGNING: ${{ secrets.CODE_SIGN_P12_BASE64 != '' }}
+          APPLE_CERTIFICATE: ${{ secrets.CODE_SIGN_P12_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.CODE_SIGN_P12_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.DEVELOPER_ID }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          args: ${{ inputs.public_provider == 'none' && '--debug' || '' }}
+
+      - name: Upload Tauri Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: jan-tauri-mac-${{ inputs.new_version }}
+          path: |
+            ./src-tauri/target/release/bundle/dmg/*.dmg
+            ./src-tauri/target/release/bundle/macos/*.app
