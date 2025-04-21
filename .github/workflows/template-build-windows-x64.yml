@@ -157,16 +157,10 @@ jobs:
         env:
           VERSION_TAG: ${{ inputs.new_version }}
 
-      - name: Install AzureSignTool
+      - name: Download AzureSignTool
         shell: powershell
         run: |
-          Invoke-WebRequest https://github.com/vcsjones/AzureSignTool/releases/download/v6.0.0/AzureSignTool-x64.exe -OutFile AzureSignTool.exe
-          $env:Path += ";$PWD"
-      - name: Move AzureSignTool to src-tauri
-        shell: bash
-        run: |
-          mkdir -p src-tauri
-          mv AzureSignTool.exe src-tauri/
+          Invoke-WebRequest https://github.com/vcsjones/AzureSignTool/releases/download/v6.0.0/AzureSignTool-x64.exe -OutFile ./src-tauri/AzureSignTool.exe
       
       - name: Verify AzureSignTool exists
         shell: bash
