@@ -158,8 +158,10 @@ jobs:
           VERSION_TAG: ${{ inputs.new_version }}
 
       - name: Install AzureSignTool
+        shell: powershell
         run: |
-          dotnet tool install --global AzureSignTool
+          Invoke-WebRequest https://github.com/vcsjones/AzureSignTool/releases/download/v6.0.0/AzureSignTool-x64.exe -OutFile AzureSignTool.exe
+          $env:Path += ";$PWD"
 
       - name: Build and publish app to aws s3 r2 or github artifactory
         shell: bash
@@ -216,8 +218,7 @@ jobs:
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-          # AZURE_CERT_NAME: ${{ secrets.AZURE_CERT_NAME }}
-          AZURE_CERT_NAME: homebrewltd
+          AZURE_CERT_NAME: ${{ secrets.AZURE_CERT_NAME }}
           POSTHOG_KEY: ${{ secrets.POSTHOG_KEY }}
           POSTHOG_HOST: ${{ secrets.POSTHOG_HOST }}
 

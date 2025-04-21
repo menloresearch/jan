@@ -69,6 +69,9 @@
       "resources/themes/**/*",
       "resources/pre-install/**/*"
     ],
-    "externalBin": ["binaries/cortex-server"]
+    "externalBin": ["binaries/cortex-server"],
+    "windows": {
+      "signCommand": ".\\AzureSignTool.exe sign -du \"https://jan.ai\" -kvu https://jankeyvaults.vault.azure.net/ -kvi $AZURE_CLIENT_ID -kvt $AZURE_TENANT_ID -kvs $AZURE_CLIENT_SECRET -kvc $AZURE_CERT_NAME -tr http://timestamp.globalsign.com/tsa/r6advanced1 -v %1"
+    }
   }
 }
