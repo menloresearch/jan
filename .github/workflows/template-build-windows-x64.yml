@@ -162,15 +162,17 @@ jobs:
         run: |
           Invoke-WebRequest https://github.com/vcsjones/AzureSignTool/releases/download/v6.0.0/AzureSignTool-x64.exe -OutFile AzureSignTool.exe
 
-      - name: Add AzureSignTool to PATH
-        shell: bash
+      - name: Add AzureSignTool to system PATH for Tauri
+        shell: powershell
         run: |
-          echo "$GITHUB_WORKSPACE" >> $GITHUB_PATH
+          $env:Path += ";$PWD"
+          [System.Environment]::SetEnvironmentVariable("Path", $env:Path, "Process")
 
-      - name: Verify AzureSignTool exists
-        shell: bash
+      - name: Check if AzureSignTool in PATH from powershell
+        shell: powershell
         run: |
-          test -f AzureSignTool.exe && echo "AzureSignTool found!" || (echo "AzureSignTool NOT FOUND!" && exit 1)
+          Get-Command AzureSignTool.exe
+
 
       - name: Build and publish app to aws s3 r2 or github artifactory
         shell: bash
