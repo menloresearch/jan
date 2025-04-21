@@ -157,10 +157,10 @@ jobs:
         env:
           VERSION_TAG: ${{ inputs.new_version }}
 
-      - name: Download AzureSignTool binary
-        run: |
-          Invoke-WebRequest https://github.com/vcsjones/AzureSignTool/releases/download/v6.0.1/AzureSignTool.exe -OutFile ./src-tauri/AzureSignTool.exe
+      - name: Install AzureSignTool
         shell: pwsh
+        run: |
+          Invoke-WebRequest https://github.com/vcsjones/AzureSignTool/releases/download/v6.0.0/AzureSignTool.exe -OutFile src-tauri/AzureSignTool.exe
 
       - name: Build and publish app to aws s3 r2 or github artifactory
         shell: bash
