@@ -168,12 +168,6 @@ jobs:
           $env:Path += ";$PWD"
           [System.Environment]::SetEnvironmentVariable("Path", $env:Path, "Process")
 
-      - name: Check if AzureSignTool in PATH from powershell
-        shell: powershell
-        run: |
-          Get-Command AzureSignTool.exe
-
-
       - name: Build and publish app to aws s3 r2 or github artifactory
         shell: bash
         if: inputs.public_provider != 'github'
