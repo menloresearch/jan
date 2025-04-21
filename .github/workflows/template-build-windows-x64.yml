@@ -166,12 +166,6 @@ jobs:
         shell: bash
         run: |
           echo "$PWD/src-tauri" >> $GITHUB_PATH
-      - name: Debug: Check AzureSignTool is available
-        shell: bash
-        run: |
-          echo "Current PATH: $PATH"
-          which AzureSignTool.exe || echo "AzureSignTool.exe NOT FOUND in PATH"
-          AzureSignTool.exe --help || echo "Failed to run AzureSignTool.exe"
 
       - name: Verify AzureSignTool exists
         shell: bash
