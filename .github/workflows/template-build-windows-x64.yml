@@ -162,7 +162,12 @@ jobs:
         run: |
           Invoke-WebRequest https://github.com/vcsjones/AzureSignTool/releases/download/v6.0.0/AzureSignTool-x64.exe -OutFile src-tauri/AzureSignTool.exe
           $env:Path += ";$PWD\\src-tauri"
-      
+      - name: Debug AzureSignTool path
+        shell: bash
+        run: |
+          ls -l ./src-tauri/AzureSignTool.exe || echo "AzureSignTool NOT FOUND in working directory"
+          which AzureSignTool.exe || echo "AzureSignTool.exe not found in PATH"
+
       - name: Verify AzureSignTool exists
         shell: bash
         run: |
