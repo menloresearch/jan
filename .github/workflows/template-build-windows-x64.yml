@@ -158,9 +158,19 @@ jobs:
           VERSION_TAG: ${{ inputs.new_version }}
 
       - name: Install AzureSignTool
-        shell: pwsh
+        shell: powershell
         run: |
-          Invoke-WebRequest https://github.com/vcsjones/AzureSignTool/releases/download/v6.0.0/AzureSignTool.exe -OutFile src-tauri/AzureSignTool.exe
+          Invoke-WebRequest https://github.com/vcsjones/AzureSignTool/releases/download/v6.0.0/AzureSignTool-x64.exe -OutFile AzureSignTool.exe
+
+      - name: Add AzureSignTool to PATH
+        shell: bash
+        run: |
+          echo "$GITHUB_WORKSPACE" >> $GITHUB_PATH
+
+      - name: Verify AzureSignTool exists
+        shell: bash
+        run: |
+          test -f AzureSignTool.exe && echo "AzureSignTool found!" || (echo "AzureSignTool NOT FOUND!" && exit 1)
 
       - name: Build and publish app to aws s3 r2 or github artifactory
         shell: bash
