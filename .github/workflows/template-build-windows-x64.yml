@@ -160,13 +160,14 @@ jobs:
       - name: Install AzureSignTool
         shell: powershell
         run: |
-          Invoke-WebRequest https://github.com/vcsjones/AzureSignTool/releases/download/v6.0.0/AzureSignTool-x64.exe
+          Invoke-WebRequest https://github.com/vcsjones/AzureSignTool/releases/download/v6.0.0/AzureSignTool-x64.exe -OutFile D:\a\jan\jan\src-tauri\AzureSignTool.exe
 
-      - name: Add AzureSignTool to system PATH for Tauri
-        shell: powershell
-        run: |
-          $env:Path += ";$PWD"
-          [System.Environment]::SetEnvironmentVariable("Path", $env:Path, "Process")
+
+      # - name: Add AzureSignTool to system PATH for Tauri
+      #   shell: powershell
+      #   run: |
+      #     $env:Path += ";$PWD"
+      #     [System.Environment]::SetEnvironmentVariable("Path", $env:Path, "Process")
 
       - name: Build and publish app to aws s3 r2 or github artifactory
         shell: bash
