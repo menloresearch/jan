@@ -160,7 +160,7 @@ jobs:
       - name: Install AzureSignTool
         shell: powershell
         run: |
-          Invoke-WebRequest https://github.com/vcsjones/AzureSignTool/releases/download/v6.0.0/AzureSignTool-x64.exe -OutFile AzureSignTool.exe
+          Invoke-WebRequest https://github.com/vcsjones/AzureSignTool/releases/download/v6.0.0/AzureSignTool-x64.exe
 
       - name: Add AzureSignTool to system PATH for Tauri
         shell: powershell
