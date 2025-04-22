@@ -34,7 +34,7 @@
         "font-src": ["https://fonts.gstatic.com blob: data:"],
         "img-src": "'self' asset: http://asset.localhost blob: data:",
         "style-src": "'unsafe-inline' 'self' https://fonts.googleapis.com",
-        "script-src": "'self' asset: $APPDATA/**.*"
+        "script-src": "'self' asset: $APPDATA/**.* http://asset.localhost"
       },
       "assetProtocol": {
         "enable": true,
