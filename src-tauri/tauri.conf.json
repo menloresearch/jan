@@ -50,13 +50,16 @@
       "pubkey": "",
       "endpoints": [
         "https://github.com/menloresearch/jan/releases/latest/download/latest.json"
-      ]
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
     }
   },
   "bundle": {
     "active": true,
     "targets": ["nsis", "app", "dmg"],
-    "createUpdaterArtifacts": false,
+    "createUpdaterArtifacts": true,
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -71,7 +74,10 @@
     ],
     "externalBin": ["binaries/cortex-server"],
     "windows": {
-      "signCommand": "powershell -ExecutionPolicy Bypass -File ./sign.ps1 %1"
+      "signCommand": "powershell -ExecutionPolicy Bypass -File ./sign.ps1 %1",
+      "nsis": {
+        "template": "tauri.bundle.windows.nsis.template"
+      }
     }
   }
 }
