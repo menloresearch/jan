@@ -233,4 +233,3 @@ jobs:
           name: jan-tauri-windows-${{ inputs.new_version }}
           path: |
             ./src-tauri/target/release/bundle/nsis/*.exe
-            ./src-tauri/target/release/bundle/msi/*.msi
