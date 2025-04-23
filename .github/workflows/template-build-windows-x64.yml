@@ -156,17 +156,10 @@ jobs:
           mv /tmp/package.json electron/package.json
         env:
           VERSION_TAG: ${{ inputs.new_version }}
-
+      
       - name: Install AzureSignTool
-        shell: powershell
         run: |
-          Invoke-WebRequest https://github.com/vcsjones/AzureSignTool/releases/download/v6.0.0/AzureSignTool-x64.exe
-
-      - name: Add AzureSignTool to system PATH for Tauri
-        shell: powershell
-        run: |
-          $env:Path += ";$PWD"
-          [System.Environment]::SetEnvironmentVariable("Path", $env:Path, "Process")
+          dotnet tool install --global --version 6.0.0 AzureSignTool
 
       - name: Build and publish app to aws s3 r2 or github artifactory
         shell: bash

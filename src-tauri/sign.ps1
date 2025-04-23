@@ -2,7 +2,7 @@ param (
   [string]$Target
 )
 
-AzureSignTool-x64.exe sign `
+AzureSignTool.exe sign `
   -tr http://timestamp.digicert.com `
   -kvu $env:AZURE_KEY_VAULT_URI `
   -kvi $env:AZURE_CLIENT_ID `
