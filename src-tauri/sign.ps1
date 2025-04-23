@@ -2,11 +2,6 @@ param (
   [string]$Target
 )
 
-Write-Host "=== DEBUG: Environment Variables ==="
-Write-Host "AZURE_CERT_NAME     = $env:AZURE_CERT_NAME"
-Write-Host "Target File         = $Target"
-Write-Host "====================================="
-
 AzureSignTool-x64.exe sign `
   -tr http://timestamp.digicert.com `
   -kvu $env:AZURE_KEY_VAULT_URI `

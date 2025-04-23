@@ -226,13 +226,6 @@ jobs:
           AZURE_CERT_NAME: ${{ secrets.AZURE_CERT_NAME }}
           POSTHOG_KEY: ${{ secrets.POSTHOG_KEY }}
           POSTHOG_HOST: ${{ secrets.POSTHOG_HOST }}
-
-      - name: Upload Artifact
-        if: inputs.public_provider != 'github'
-        uses: actions/upload-artifact@v4
-        with:
-          name: jan-win-x64-${{ inputs.new_version }}
-          path: ./electron/dist/*.exe
   
       - name: Upload Signed Artifact
         uses: actions/upload-artifact@v4
@@ -240,3 +233,4 @@ jobs:
           name: jan-tauri-windows-${{ inputs.new_version }}
           path: |
             ./src-tauri/target/release/bundle/nsis/*.exe
+            ./src-tauri/target/release/bundle/msi/*.msi
