@@ -201,29 +201,25 @@ pub fn setup_sidecar(app: &App) -> Result<(), String> {
     // Setup sidecar
 
     let app_state = app.state::<AppState>();
+    let app_data_dir = get_jan_data_folder_path(app.handle().clone());
     let mut sidecar_command = app.shell().sidecar("cortex-server").unwrap().args([
         "--start-server",
         "--port",
         "39291",
         "--config_file_path",
-        app.app_handle()
-            .path()
-            .app_data_dir()
-            .unwrap()
+        app_data_dir
             .join(".janrc")
             .to_str()
             .unwrap(),
         "--data_folder_path",
-        app.app_handle()
-            .path()
-            .app_data_dir()
-            .unwrap()
+        app_data_dir
             .to_str()
             .unwrap(),
         "--cors",
         "ON",
         "--allowed_origins",
-        "http://localhost:3000,tauri://localhost",
+        // TODO(sang) '*' is only for testing purpose, will remove it later
+        "http://localhost:3000,tauri://localhost,*",
         "config",
         "--api_keys",
         app_state.inner().app_token.as_deref().unwrap_or(""),
@@ -289,7 +285,7 @@ fn copy_dir_all(src: PathBuf, dst: PathBuf) -> Result<(), String> {
 
 pub fn setup_engine_binaries(app: &App) -> Result<(), String> {
     // Copy engine binaries to app_data
-    let app_data_dir = app.handle().path().app_data_dir().unwrap();
+    let app_data_dir = get_jan_data_folder_path(app.handle().clone());
     let binaries_dir = app.handle().path().resource_dir().unwrap().join("binaries");
     let themes_dir = app
         .handle()
