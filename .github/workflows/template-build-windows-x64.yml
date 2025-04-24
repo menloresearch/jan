@@ -126,10 +126,32 @@ jobs:
           cat ./src-tauri/Cargo.toml
 
           # Update template
-          sed -i 's/jan_productname/Jan-nightly/g' ./src-tauri/tauri.bundle.windows.nsis.template
-          sed -i 's/jan_version/${{ inputs.new_version }}/g' ./src-tauri/tauri.bundle.windows.nsis.template
-          # sed -i 's/jan_build/${{ inputs.new_version }}/g' ./src-tauri/tauri.bundle.windows.nsis.template
-          sed -i 's/jan_mainbinaryname/jan-nightly/g' ./src-tauri/tauri.bundle.windows.nsis.template   
+          get_latest_tag() {
+            local retries=0
+            local max_retries=3
+            local tag
+            while [ $retries -lt $max_retries ]; do
+              tag=$(curl -s https://api.github.com/repos/menloresearch/jan/releases/latest | jq -r .tag_name)
+              if [ -n "$tag" ] && [ "$tag" != "null" ]; then
+                echo $tag
+                return
+              else
+                let retries++
+                echo "Retrying... ($retries/$max_retries)"
+                sleep 2
+              fi
+            done
+            echo "Failed to fetch latest tag after $max_retries attempts."
+            exit 1
+          }
+
+          LATEST_TAG=$(get_latest_tag)
+          jan_tag="${LATEST_TAG#v}.0"
+          echo $jan_tag
+          sed -i "s/jan_productname/Jan-nightly/g" ./src-tauri/tauri.bundle.windows.nsis.template
+          sed -i "s/jan_version/${{ inputs.new_version }}/g" ./src-tauri/tauri.bundle.windows.nsis.template
+          sed -i "s/jan_build/$jan_tag/g" ./src-tauri/tauri.bundle.windows.nsis.template
+          sed -i "s/jan_mainbinaryname/jan-nightly/g" ./src-tauri/tauri.bundle.windows.nsis.template   
           echo "------------------"
           cat ./src-tauri/tauri.bundle.windows.nsis.template       
 
