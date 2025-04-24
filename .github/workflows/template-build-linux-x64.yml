@@ -57,6 +57,20 @@ jobs:
         with:
           ref: ${{ inputs.ref }}
 
+      - name: Free Disk Space Before Build
+        run: |
+          echo "Disk space before cleanup:"
+          df -h
+          sudo rm -rf /usr/local/.ghcup
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+          sudo rm -rf /usr/local/lib/android/sdk/ndk
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/share/boost
+          sudo apt-get clean
+          echo "Disk space after cleanup:"
+          df -h
+
       - name: Replace Icons for Beta Build
         if: inputs.beta == true && inputs.nightly != true
         shell: bash
@@ -99,6 +113,10 @@ jobs:
         if: inputs.public_provider != 'github'
         run: |
           echo "Version: ${{ inputs.new_version }}"
+          # Update version in tauri.conf.json
+          jq --arg version "${{ inputs.new_version }}" '.version = $version' ./src-tauri/tauri.conf.json > /tmp/tauri.conf.json
+          mv /tmp/tauri.conf.json ./src-tauri/tauri.conf.json
+
           # Update the version in electron/package.json
           jq --arg version "${{ inputs.new_version }}" '.version = $version' electron/package.json > /tmp/package.json
           mv /tmp/package.json electron/package.json

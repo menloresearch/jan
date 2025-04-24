@@ -154,6 +154,11 @@ jobs:
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && inputs.public_provider == 'github'
         shell: bash
         run: |
+          echo "Version: ${{ inputs.new_version }}"
+          # Update version in tauri.conf.json
+          jq --arg version "${{ inputs.new_version }}" '.version = $version' ./src-tauri/tauri.conf.json > /tmp/tauri.conf.json
+          mv /tmp/tauri.conf.json ./src-tauri/tauri.conf.json
+
           jq --arg version "${VERSION_TAG#v}" '.version = $version' electron/package.json > /tmp/package.json
           mv /tmp/package.json electron/package.json
           jq --arg version "${VERSION_TAG#v}" '.version = $version' web/package.json > /tmp/package.json
