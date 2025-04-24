@@ -38,6 +38,12 @@ on:
         required: false
       DELTA_AWS_SECRET_ACCESS_KEY:
         required: false
+      TAURI_SIGNING_PRIVATE_KEY:
+        required: false
+      TAURI_SIGNING_PRIVATE_KEY_PASSWORD:
+        required: false
+      TAURI_SIGNING_PUBLIC_KEY:
+        required: false
 
 jobs:
   build-linux-x64:
@@ -83,6 +89,11 @@ jobs:
 
       - name: Install jq
         uses: dcarbone/install-jq-action@v2.0.1
+
+      - name: Install Tauri dependecies
+        run: |
+          sudo apt update
+          sudo apt install -y libglib2.0-dev libatk1.0-dev libpango1.0-dev libgtk-3-dev libsoup-3.0-dev libwebkit2gtk-4.1-dev librsvg2-dev
 
       - name: Update app version base public_provider
         if: inputs.public_provider != 'github'
@@ -130,6 +141,20 @@ jobs:
         env:
           VERSION_TAG: ${{ inputs.new_version }}
 
+      - name: Inject Tauri Signing Public Key
+        run: |
+          if [ -f "src-tauri/tauri.conf.json" ]; then
+            echo "Injecting Tauri public key into configuration..."
+            # Use jq to update the pubkey field in the tauri.conf.json file
+            jq --arg pubkey "$TAURI_SIGNING_PUBLIC_KEY" '.plugins.updater.pubkey = $pubkey' src-tauri/tauri.conf.json > /tmp/tauri.conf.json
+            mv /tmp/tauri.conf.json src-tauri/tauri.conf.json
+            echo "Tauri configuration updated successfully"
+          else
+            echo "tauri.conf.json not found"
+          fi
+        env:
+          TAURI_SIGNING_PUBLIC_KEY: ${{ secrets.TAURI_SIGNING_PUBLIC_KEY }}
+
       - name: Build and publish app to aws s3 r2 or github artifactory
         if: inputs.public_provider != 'github'
         run: |
@@ -149,6 +174,9 @@ jobs:
           POSTHOG_KEY: ${{ secrets.POSTHOG_KEY }}
           POSTHOG_HOST: ${{ secrets.POSTHOG_HOST }}
           CORTEX_API_PORT: ${{ inputs.cortex_api_port }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          TAURI_SIGNING_PUBLIC_KEY: ${{ secrets.TAURI_SIGNING_PUBLIC_KEY }}
 
       - name: Build and publish app to github
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && inputs.public_provider == 'github' && inputs.beta == false
@@ -158,6 +186,9 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           POSTHOG_KEY: ${{ secrets.POSTHOG_KEY }}
           POSTHOG_HOST: ${{ secrets.POSTHOG_HOST }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          TAURI_SIGNING_PUBLIC_KEY: ${{ secrets.TAURI_SIGNING_PUBLIC_KEY }}
 
       - name: Build and publish app to github
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && inputs.public_provider == 'github' && inputs.beta == true
@@ -171,17 +202,20 @@ jobs:
           AWS_MAX_ATTEMPTS: '5'
           POSTHOG_KEY: ${{ secrets.POSTHOG_KEY }}
           POSTHOG_HOST: ${{ secrets.POSTHOG_HOST }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          TAURI_SIGNING_PUBLIC_KEY: ${{ secrets.TAURI_SIGNING_PUBLIC_KEY }}
 
       - name: Upload Artifact .deb file
         if: inputs.public_provider != 'github'
         uses: actions/upload-artifact@v4
         with:
           name: jan-linux-amd64-${{ inputs.new_version }}-deb
-          path: ./electron/dist/*.deb
+          path: ./src-tauri/target/release/bundle/deb/*.deb
 
       - name: Upload Artifact .AppImage file
         if: inputs.public_provider != 'github'
         uses: actions/upload-artifact@v4
         with:
           name: jan-linux-amd64-${{ inputs.new_version }}-AppImage
-          path: ./electron/dist/*.AppImage
+          path: ./src-tauri/target/release/bundle/appimage/*.AppImage
