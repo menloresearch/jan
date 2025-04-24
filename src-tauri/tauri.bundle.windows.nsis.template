@@ -448,6 +448,8 @@ Function .onInit
   ${IfNot} ${Errors}
     StrCpy $PassiveMode 1
   ${EndIf}
+  ; always run in passive mode
+  StrCpy $PassiveMode 1
 
   ${GetOptions} $CMDLINE "/NS" $NoShortcutMode
   ${IfNot} ${Errors}
