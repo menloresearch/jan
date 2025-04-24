@@ -47,7 +47,7 @@ on:
 
 jobs:
   build-linux-x64:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     environment: production
     permissions:
       contents: write
