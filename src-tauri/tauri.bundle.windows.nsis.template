@@ -31,7 +31,7 @@ ${StrLoc}
 !define MANUFACTURER "ai"
 !define PRODUCTNAME "jan_productname"
 !define VERSION "jan_version"
-!define VERSIONWITHBUILD "jan_build"
+!define VERSIONWITHBUILD "0.5.16.0"
 !define HOMEPAGE ""
 !define INSTALLMODE "currentUser"
 !define LICENSE ""
