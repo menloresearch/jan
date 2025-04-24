@@ -98,37 +98,88 @@ jobs:
       - name: Install jq
         uses: dcarbone/install-jq-action@v2.0.1
 
+      - name: Install ctoml
+        run: |
+          cargo install ctoml
+
       - name: Update app version base on tag
         if: inputs.public_provider != 'github'
         id: version_update
         shell: bash
         run: |
           echo "Version: ${{ inputs.new_version }}"
+          # Update version in tauri.conf.json
+          jq --arg version "${{ inputs.new_version }}" '.version = $version' ./src-tauri/tauri.conf.json > /tmp/tauri.conf.json
+          mv /tmp/tauri.conf.json ./src-tauri/tauri.conf.json
+          jq --arg template tauri.bundle.windows.nsis.template '.bundle.windows.nsis.template = $template' ./src-tauri/tauri.conf.json > /tmp/tauri.conf.json
+          mv /tmp/tauri.conf.json ./src-tauri/tauri.conf.json
+
+          chmod +x .github/scripts/rename-tauri-app.sh
+          .github/scripts/rename-tauri-app.sh ./src-tauri/tauri.conf.json nightly
+
+          echo ./src-tauri/tauri.conf.json
+
+          # Update Cargo.toml
+          ctoml ./src-tauri/Cargo.toml package.name "jan-nightly"
+          ctoml ./src-tauri/Cargo.toml package.version "${{ inputs.new_version }}"
+          echo "------------------"
+          cat ./src-tauri/Cargo.toml
+
+          # Update template
+          sed -i 's/jan_productname/Jan-nightly/g' ./src-tauri/tauri.bundle.windows.nsis.template
+          # Function to get the latest release tag
+          get_latest_tag() {
+            local retries=0
+            local max_retries=3
+            local tag
+            while [ $retries -lt $max_retries ]; do
+              tag=$(curl -s https://api.github.com/repos/menloresearch/jan/releases/latest | jq -r .tag_name)
+              if [ -n "$tag" ] && [ "$tag" != "null" ]; then
+                echo $tag
+                return
+              else
+                let retries++
+                echo "Retrying... ($retries/$max_retries)"
+                sleep 2
+              fi
+            done
+            echo "Failed to fetch latest tag after $max_retries attempts."
+            exit 1
+          }
+          LATEST_TAG=$(get_latest_tag)
+          jan_tag="${LATEST_TAG#v}"
+          echo jan_tag
+          sed -i 's/jan_version/${{ inputs.new_version }}/g' ./src-tauri/tauri.bundle.windows.nsis.template
+          # sed -i 's/jan_build/${{ jan_tag }}/g' ./src-tauri/tauri.bundle.windows.nsis.template
+          sed -i 's/jan_mainbinaryname/jan-nightly/g' ./src-tauri/tauri.bundle.windows.nsis.template   
+          echo "------------------"
+          cat ./src-tauri/tauri.bundle.windows.nsis.template       
+
           # Update the version in electron/package.json
-          jq --arg version "${{ inputs.new_version }}" '.version = $version' electron/package.json > /tmp/package.json
-          mv /tmp/package.json electron/package.json
+          # jq --arg version "${{ inputs.new_version }}" '.version = $version' electron/package.json > /tmp/package.json
+          # mv /tmp/package.json electron/package.json
 
-          jq --arg version "${{ inputs.new_version }}" '.version = $version' web/package.json > /tmp/package.json
-          mv /tmp/package.json web/package.json
+          # jq --arg version "${{ inputs.new_version }}" '.version = $version' web/package.json > /tmp/package.json
+          # mv /tmp/package.json web/package.json
 
-          jq '.build.publish = [{"provider": "generic", "url": "https://delta.jan.ai/nightly", "channel": "latest"}, {"provider": "s3", "acl": null, "bucket": "${{ secrets.DELTA_AWS_S3_BUCKET_NAME }}", "region": "${{ secrets.DELTA_AWS_REGION}}", "path": "temp-nightly", "channel": "latest"}]' electron/package.json > /tmp/package.json
-          mv /tmp/package.json electron/package.json
+          # jq '.build.publish = [{"provider": "generic", "url": "https://delta.jan.ai/nightly", "channel": "latest"}, {"provider": "s3", "acl": null, "bucket": "${{ secrets.DELTA_AWS_S3_BUCKET_NAME }}", "region": "${{ secrets.DELTA_AWS_REGION}}", "path": "temp-nightly", "channel": "latest"}]' electron/package.json > /tmp/package.json
+          # mv /tmp/package.json electron/package.json
 
-          jq '.build.win.sign = "./sign.js"' electron/package.json > /tmp/package.json
-          mv /tmp/package.json electron/package.json
-          cat electron/package.json
+          # jq '.build.win.sign = "./sign.js"' electron/package.json > /tmp/package.json
+          # mv /tmp/package.json electron/package.json
+          # cat electron/package.json
 
-          chmod +x .github/scripts/rename-app.sh
-          .github/scripts/rename-app.sh ./electron/package.json nightly
-          chmod +x .github/scripts/rename-workspace.sh
-          .github/scripts/rename-workspace.sh ./package.json nightly
-          chmod +x .github/scripts/rename-uninstaller.sh
-          .github/scripts/rename-uninstaller.sh nightly
-          echo "------------------------"
-          cat ./electron/package.json
-          echo "------------------------"
-          cat ./package.json
-          echo "------------------------"
+          # chmod +x .github/scripts/rename-app.sh
+          # .github/scripts/rename-app.sh ./electron/package.json nightly
+          # chmod +x .github/scripts/rename-workspace.sh
+          # .github/scripts/rename-workspace.sh ./package.json nightly
+          # chmod +x .github/scripts/rename-uninstaller.sh
+          # .github/scripts/rename-uninstaller.sh nightly
+          # echo "------------------------"
+          # cat ./electron/package.json
+          # echo "------------------------"
+          # cat ./package.json
+          # echo "------------------------"
 
       - name: Change App Name for beta version
         if: inputs.beta == true
@@ -157,6 +208,8 @@ jobs:
           echo "Version: ${{ inputs.new_version }}"
           # Update version in tauri.conf.json
           jq --arg version "${{ inputs.new_version }}" '.version = $version' ./src-tauri/tauri.conf.json > /tmp/tauri.conf.json
+          mv /tmp/tauri.conf.json ./src-tauri/tauri.conf.json
+          jq --arg template tauri.bundle.windows.nsis '.bundle.windows.nsis.template = $template' ./src-tauri/tauri.conf.json > /tmp/tauri.conf.json
           mv /tmp/tauri.conf.json ./src-tauri/tauri.conf.json
 
           jq --arg version "${VERSION_TAG#v}" '.version = $version' electron/package.json > /tmp/package.json
@@ -261,3 +314,10 @@ jobs:
           name: jan-tauri-windows-${{ inputs.new_version }}
           path: |
             ./src-tauri/target/release/bundle/nsis/*.exe
+
+      - name: Upload nsi file
+        uses: actions/upload-artifact@v4
+        with:
+          name: jan-tauri-nsi
+          path: |
+            ./src-tauri/tauri.bundle.windows.nsis.template

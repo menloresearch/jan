@@ -74,10 +74,7 @@
     ],
     "externalBin": ["binaries/cortex-server"],
     "windows": {
-      "signCommand": "powershell -ExecutionPolicy Bypass -File ./sign.ps1 %1",
-      "nsis": {
-        "template": "tauri.bundle.windows.nsis.template"
-      }
+      "signCommand": "powershell -ExecutionPolicy Bypass -File ./sign.ps1 %1"
     }
   }
 }
