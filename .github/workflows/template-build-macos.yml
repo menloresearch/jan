@@ -107,8 +107,8 @@ jobs:
         if: inputs.public_provider != 'github'
         run: |
           echo "Version: ${{ inputs.new_version }}"
-          # Update version in tauri.conf.json
-          jq --arg version "${{ inputs.new_version }}" '.version = $version' ./src-tauri/tauri.conf.json > /tmp/tauri.conf.json
+          # Update tauri.conf.json
+          jq --arg version "${{ inputs.new_version }}" '.version = $version | .bundle.createUpdaterArtifacts = true' ./src-tauri/tauri.conf.json > /tmp/tauri.conf.json
           mv /tmp/tauri.conf.json ./src-tauri/tauri.conf.json
 
           chmod +x .github/scripts/rename-tauri-app.sh

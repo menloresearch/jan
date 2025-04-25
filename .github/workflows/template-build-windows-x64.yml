@@ -108,10 +108,8 @@ jobs:
         shell: bash
         run: |
           echo "Version: ${{ inputs.new_version }}"
-          # Update version in tauri.conf.json
-          jq --arg version "${{ inputs.new_version }}" '.version = $version' ./src-tauri/tauri.conf.json > /tmp/tauri.conf.json
-          mv /tmp/tauri.conf.json ./src-tauri/tauri.conf.json
-          jq --arg template tauri.bundle.windows.nsis.template '.bundle.windows.nsis.template = $template' ./src-tauri/tauri.conf.json > /tmp/tauri.conf.json
+           # Update tauri.conf.json
+          jq --arg version "${{ inputs.new_version }}" --arg template tauri.bundle.windows.nsis.template '.version = $version | .bundle.createUpdaterArtifacts = true | .bundle.windows.nsis.template = $template' ./src-tauri/tauri.conf.json > /tmp/tauri.conf.json
           mv /tmp/tauri.conf.json ./src-tauri/tauri.conf.json
 
           chmod +x .github/scripts/rename-tauri-app.sh
@@ -314,4 +312,3 @@ jobs:
           name: jan-tauri-windows-${{ inputs.new_version }}
           path: |
             ./src-tauri/target/release/bundle/nsis/*.exe
-
