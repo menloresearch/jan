@@ -127,7 +127,7 @@ jobs:
           echo ./src-tauri/tauri.conf.json
           
           # Update Cargo.toml
-          ctoml ./src-tauri/Cargo.toml package.name "jan-nightly"
+          ctoml ./src-tauri/Cargo.toml package.name "Jan-nightly"
           ctoml ./src-tauri/Cargo.toml package.version "${{ inputs.new_version }}"
           echo "------------------"
           cat ./src-tauri/Cargo.toml
@@ -135,8 +135,8 @@ jobs:
           # # Update the version in electron/package.json
           # jq --arg version "${{ inputs.new_version }}" '.version = $version' electron/package.json > /tmp/package.json
           # mv /tmp/package.json electron/package.json
-          # jq --arg version "${{ inputs.new_version }}" '.version = $version' web/package.json > /tmp/package.json
-          # mv /tmp/package.json web/package.json
+          jq --arg version "${{ inputs.new_version }}" '.version = $version' web/package.json > /tmp/package.json
+          mv /tmp/package.json web/package.json
           # jq '.build.publish = [{"provider": "generic", "url": "https://delta.jan.ai/nightly", "channel": "latest"}, {"provider": "s3", "acl": null, "bucket": "${{ secrets.DELTA_AWS_S3_BUCKET_NAME }}", "region": "${{ secrets.DELTA_AWS_REGION}}", "path": "temp-nightly", "channel": "latest"}]' electron/package.json > /tmp/package.json
           # mv /tmp/package.json electron/package.json
           # cat electron/package.json
