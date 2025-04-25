@@ -161,11 +161,15 @@ pub fn get_configuration_file_path<R: Runtime>(app_handle: tauri::AppHandle<R>) 
 
     let package_name = env!("CARGO_PKG_NAME");
     log::info!("Package name: {}", package_name);
-    let old_data_dir = app_path.clone().join("../").join(package_name);
+    let old_data_dir = app_path
+        .clone()
+        .parent()
+        .unwrap_or(&app_path.join("../"))
+        .join(package_name);
     if old_data_dir.exists() {
-        return old_data_dir.join(CONFIGURATION_FILE_NAME)
+        return old_data_dir.join(CONFIGURATION_FILE_NAME);
     } else {
-        return app_path.join(CONFIGURATION_FILE_NAME)
+        return app_path.join(CONFIGURATION_FILE_NAME);
     }
 }
 

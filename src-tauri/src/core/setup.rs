@@ -19,7 +19,9 @@ use super::{
 };
 
 pub fn install_extensions(app: tauri::AppHandle, force: bool) -> Result<(), String> {
-    let store = app.store("store.json").expect("Store not initialized");
+    let mut store_path = get_jan_data_folder_path(app.clone());
+    store_path.push("store.json");
+    let store = app.store(store_path).expect("Store not initialized");
     let stored_version = store
         .get("version")
         .and_then(|v| v.as_str().map(String::from))
@@ -207,14 +209,9 @@ pub fn setup_sidecar(app: &App) -> Result<(), String> {
         "--port",
         "39291",
         "--config_file_path",
-        app_data_dir
-            .join(".janrc")
-            .to_str()
-            .unwrap(),
+        app_data_dir.join(".janrc").to_str().unwrap(),
         "--data_folder_path",
-        app_data_dir
-            .to_str()
-            .unwrap(),
+        app_data_dir.to_str().unwrap(),
         "--cors",
         "ON",
         "--allowed_origins",
