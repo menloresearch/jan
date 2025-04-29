@@ -56,7 +56,7 @@ const RemoteEngineSettings = ({
 }: {
   engine: InferenceEngine
 }) => {
-  const { engines, mutate } = useGetEngines()
+  const { engines } = useGetEngines()
   const downloadedModels = useAtomValue(downloadedModelsAtom)
   const [showApiKey, setShowApiKey] = useState(false)
   const remoteModels = downloadedModels.filter((e) => e.engine === engineName)

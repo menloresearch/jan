@@ -12,6 +12,7 @@ import {
   ModelEvent,
   ModelSource,
   ModelSibling,
+  EngineManager,
 } from '@janhq/core'
 import { useAtom, useAtomValue } from 'jotai'
 import { atomWithStorage } from 'jotai/utils'
@@ -54,28 +55,20 @@ async function fetchExtensionData<T>(
  * @returns A Promise that resolves to an object of list engines.
  */
 export function useGetEngines() {
-  const extension = useMemo(
-    () =>
-      extensionManager.get<EngineManagementExtension>(
-        ExtensionTypeEnum.Engine
-      ) ?? null,
-    []
-  )
-
-  const {
-    data: engines,
-    error,
-    mutate,
-  } = useSWR(
-    extension ? 'engines' : null,
-    () => fetchExtensionData(extension, (ext) => ext.getEngines()),
-    {
-      revalidateOnFocus: false,
-      revalidateOnReconnect: true,
-    }
-  )
-
-  return { engines, error, mutate }
+  return {
+    engines: Object.entries(EngineManager.instance().engines).map(
+      ([key, value]) => ({
+        name: value.provider,
+        type: 'remote',
+        engine: {
+          engine: value.provider,
+          version: value.version,
+          name: value.provider,
+          api_key: 'apiKey' in value ? value.apiKey : '',
+        },
+      })
+    ),
+  }
 }
 
 /**

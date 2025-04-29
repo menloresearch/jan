@@ -117,10 +117,11 @@ const MyModels = () => {
     .map(([key, _]) => key as InferenceEngine)
 
   useEffect(() => {
-    setShowEngineListModel((prev) => [
-      ...prev,
-      ...(getEngineStatusReady as InferenceEngine[]),
-    ])
+    if (!showEngineListModel.length)
+      setShowEngineListModel((prev) => [
+        ...prev,
+        ...(getEngineStatusReady as InferenceEngine[]),
+      ])
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setShowEngineListModel, engines])
 

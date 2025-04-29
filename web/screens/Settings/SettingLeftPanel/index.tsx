@@ -91,7 +91,7 @@ const SettingLeftPanel = () => {
                   .filter(
                     ([key]) =>
                       !showSettingActiveLocalEngine.includes(key) &&
-                      engines[key as InferenceEngine].length > 0
+                      !!engines.find((e) => e.engine.name === key)
                   )
                   .map(([key]) => {
                     if (!isLocalEngine(key as InferenceEngine)) return
@@ -124,7 +124,7 @@ const SettingLeftPanel = () => {
                   .filter(
                     ([key]) =>
                       !showSettingActiveRemoteEngine.includes(key) &&
-                      engines[key as InferenceEngine].length > 0
+                      !!engines.find((e) => e.engine.name === key)
                   )
                   .map(([key]) => {
                     if (isLocalEngine(key as InferenceEngine)) return

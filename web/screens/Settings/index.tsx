@@ -18,7 +18,7 @@ export const SettingScreenList = [
   'Hardware',
   'Privacy',
   'Advanced Settings',
-  'Engines',
+  // 'Engines',
   'MCP Servers',
   'Extensions',
 ] as const

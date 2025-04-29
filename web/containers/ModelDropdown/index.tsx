@@ -2,12 +2,7 @@ import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 
 import Image from 'next/image'
 
-import {
-  EngineConfig,
-  EngineManager,
-  EngineVariant,
-  InferenceEngine,
-} from '@janhq/core'
+import { EngineConfig, InferenceEngine } from '@janhq/core'
 import {
   Badge,
   Button,
@@ -48,7 +43,11 @@ import useUpdateModelParameters from '@/hooks/useUpdateModelParameters'
 
 import { formatDownloadPercentage, toGigabytes } from '@/utils/converter'
 
-import { getLogoEngine, getTitleByEngine } from '@/utils/modelEngine'
+import {
+  getLogoEngine,
+  getTitleByEngine,
+  isLocalEngine,
+} from '@/utils/modelEngine'
 
 import { extractModelName } from '@/utils/modelSource'
 
@@ -98,9 +97,6 @@ const ModelDropdown = ({
     null
   )
   const { sources: featuredModels } = useGetFeaturedSources()
-  const [engineExt, setEngineExt] = useState<
-    { name: string; type: string; engine: EngineVariant & EngineConfig }[]
-  >([])
 
   const { engines } = useGetEngines()
 
@@ -112,43 +108,6 @@ const ModelDropdown = ({
   const { stopModel } = useActiveModel()
 
   const { updateThreadMetadata } = useCreateNewThread()
-
-  const engineList = useMemo(
-    () =>
-      Object.entries(engines ?? {})
-        .flatMap((e) => ({
-          name: e[0],
-          type: e[1][0]?.type === 'remote' ? 'remote' : 'local',
-          engine: e[1][0],
-        }))
-        .concat(engineExt),
-    [engines, engineExt]
-  )
-
-  useEffect(() => {
-    EngineManager.instance().engines.forEach((e) => {
-      // @ts-ignore
-      setEngineExt((prev) => {
-        return [
-          ...prev,
-          ...(!prev.some((x) => x.name === e.provider)
-            ? [
-                {
-                  name: e.provider,
-                  type: 'remote',
-                  engine: {
-                    engine: e.provider,
-                    version: e.version,
-                    name: e.provider,
-                    api_key: 'apiKey' in e ? e.apiKey : '',
-                  },
-                },
-              ]
-            : []),
-        ]
-      })
-    })
-  }, [])
 
   useClickOutside(() => handleChangeStateOpen(false), null, [
     dropdownOptions,
@@ -181,7 +140,7 @@ const ModelDropdown = ({
         .filter((e) => {
           if (searchFilter === 'local') {
             return (
-              engineList.find((t) => t.engine?.engine === e.engine)?.type ===
+              engines.find((t) => t.engine?.engine === e.engine)?.type ===
               'local'
             )
           }
@@ -203,7 +162,7 @@ const ModelDropdown = ({
             return 0
           }
         }),
-    [configuredModels, searchText, searchFilter, downloadedModels, engineList]
+    [configuredModels, searchText, searchFilter, downloadedModels, engines]
   )
 
   useEffect(() => {
@@ -219,23 +178,26 @@ const ModelDropdown = ({
   }, [open])
 
   useEffect(() => {
-    setShowEngineListModel((prev) => [
-      ...prev,
-      ...engineList
-        .filter((x) => (x.engine?.api_key?.length ?? 0) > 0)
-        .map((e) => e.name),
-    ])
-  }, [setShowEngineListModel, engineList])
+    if (!showEngineListModel.length)
+      setShowEngineListModel((prev) => [
+        ...prev,
+        ...engines
+          .filter((x) => (x.engine?.api_key?.length ?? 0) > 0)
+          .map((e) => e.name),
+      ])
+  }, [setShowEngineListModel, engines])
 
   useEffect(() => {
     if (!activeThread) return
     const modelId = activeAssistant?.model?.id
 
     const model = downloadedModels.find((model) => model.id === modelId)
-    if (model) {
+    if (model && model.engine) {
       if (
-        engines?.[model.engine]?.[0]?.type === 'local' ||
-        (engines?.[model.engine]?.[0]?.api_key?.length ?? 0) > 0
+        engines.find((t) => t.engine?.engine === model.engine)?.type ===
+          'local' ||
+          engines.find((t) => t.engine?.engine === model.engine)?.engine
+          .api_key?.length > 0
       )
         setSelectedModel(model)
     } else {
@@ -249,14 +211,6 @@ const ModelDropdown = ({
     activeAssistant?.model?.id,
     engines,
   ])
-
-  const isLocalEngine = useCallback(
-    (engine?: string) => {
-      if (!engine) return false
-      return engineList.some((t) => t.name === engine && t.type === 'local')
-    },
-    [engineList]
-  )
 
   const onClickModelItem = useCallback(
     async (modelId: string) => {
@@ -324,14 +278,17 @@ const ModelDropdown = ({
   const isDownloadALocalModel = useMemo(
     () =>
       downloadedModels.some((x) =>
-        engineList.some((t) => t.name === x.engine && t.type === 'local')
+        engines.some((t) => t.name === x.engine && t.type === 'local')
       ),
-    [downloadedModels, engineList]
+    [downloadedModels, engines]
   )
 
   if (strictedThread && !activeThread) {
     return null
   }
+
+  console.log(filteredDownloadedModels)
+  console.log(engines)
 
   return (
     <div
@@ -417,7 +374,7 @@ const ModelDropdown = ({
             type={showScrollBar ? 'always' : 'scroll'}
             className="h-[calc(100%-90px)] w-full"
           >
-            {engineList
+            {engines
               .filter((e) => e.type === searchFilter)
               .map((engine, i) => {
                 const isConfigured =

@@ -28,7 +28,7 @@ export type UpdateModelParameter = {
   params?: ModelParams
   modelId?: string
   modelPath?: string
-  engine?: InferenceEngine
+  engine?: string | InferenceEngine
 }
 
 export default function useUpdateModelParameters() {
