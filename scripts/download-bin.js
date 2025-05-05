@@ -117,6 +117,13 @@ async function main() {
       path.join(tempBinDir, `bun-${bunPlatform}`, 'bun'),
       path.join(binDir)
     )
+    if (platform === 'darwin') {
+      copySync(path.join(binDir, 'bun'), path.join(binDir, 'bun-aarch64-apple-darwin'))
+      copySync(path.join(binDir, 'bun'), path.join(binDir, 'bun-x86_64-apple-darwin'))
+      copySync(path.join(binDir, 'bun'), path.join(binDir, 'bun-universal-apple-darwin'))
+    } else if (platform === 'linux') {
+      copySync(path.join(binDir, 'bun'), path.join(binDir, 'bun-x86_64-unknown-linux-gnu'))
+    }
   } catch (err) {
     // Expect EEXIST error
   }
@@ -125,6 +132,9 @@ async function main() {
       path.join(tempBinDir, `bun-${bunPlatform}`, 'bun.exe'),
       path.join(binDir)
     )
+    if (platform === 'win32') {
+      copySync(path.join(binDir, 'bun.exe'), path.join(binDir, 'bun-x86_64-pc-windows-msvc.exe'))
+    }
   } catch (err) {
     // Expect EEXIST error
   }
@@ -142,6 +152,13 @@ async function main() {
       path.join(tempBinDir, `uv-${uvPlatform}`, 'uv'),
       path.join(binDir)
     )
+    if (platform === 'darwin') {
+      copySync(path.join(binDir, 'uv'), path.join(binDir, 'uv-aarch64-apple-darwin'))
+      copySync(path.join(binDir, 'uv'), path.join(binDir, 'uv-x86_64-apple-darwin'))
+      copySync(path.join(binDir, 'uv'), path.join(binDir, 'uv-universal-apple-darwin'))
+    } else if (platform === 'linux') {
+      copySync(path.join(binDir, 'uv'), path.join(binDir, 'uv-x86_64-unknown-linux-gnu'))
+    }
   } catch (err) {
     // Expect EEXIST error
   }
@@ -150,6 +167,9 @@ async function main() {
       path.join(tempBinDir, `uv-${uvPlatform}`, 'uv.exe'),
       path.join(binDir)
     )
+    if (platform === 'win32') {
+      copySync(path.join(binDir, 'uv.exe'), path.join(binDir, 'uv-x86_64-pc-windows-msvc.exe'))
+    }
   } catch (err) {
     // Expect EEXIST error
   }
