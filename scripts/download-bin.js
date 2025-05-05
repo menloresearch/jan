@@ -68,10 +68,10 @@ function getPlatformArch() {
     uvPlatform =
       arch === 'arm64' ? 'aarch64-apple-darwin' : 'x86_64-apple-darwin'
   } else if (platform === 'linux') {
-    bunPlatform = arch === 'arm64' ? 'linux-aarch64' : 'linux-x86_64'
+    bunPlatform = arch === 'arm64' ? 'linux-aarch64' : 'linux-x64'
     uvPlatform = 'unknown-x86_64-linux-aarch64-gnu' // Add aarch64 support if needed
   } else if (platform === 'win32') {
-    bunPlatform = 'windows-x86_64' // Bun has limited Windows support
+    bunPlatform = 'windows-x64' // Bun has limited Windows support
     uvPlatform = 'windows'
   } else {
     throw new Error(`Unsupported platform: ${platform}`)
