@@ -70,10 +70,9 @@
     "resources": [
       "binaries/engines/**/*",
       "resources/themes/**/*",
-      "resources/pre-install/**/*",
-      "resources/bin/**/*"
+      "resources/pre-install/**/*"
     ],
-    "externalBin": ["binaries/cortex-server"],
+    "externalBin": ["binaries/cortex-server", "resources/bin/bun", "resources/bin/uv"],
     "windows": {
       "signCommand": "powershell -ExecutionPolicy Bypass -File ./sign.ps1 %1"
     }
