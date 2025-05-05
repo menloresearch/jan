@@ -69,10 +69,10 @@ function getPlatformArch() {
       arch === 'arm64' ? 'aarch64-apple-darwin' : 'x86_64-apple-darwin'
   } else if (platform === 'linux') {
     bunPlatform = arch === 'arm64' ? 'linux-aarch64' : 'linux-x64'
-    uvPlatform = 'unknown-x86_64-linux-aarch64-gnu' // Add aarch64 support if needed
+    uvPlatform = arch === 'arm64' ? 'aarch64-unknown-linux-gnu' : 'x86_64-unknown-linux-gnu'
   } else if (platform === 'win32') {
     bunPlatform = 'windows-x64' // Bun has limited Windows support
-    uvPlatform = 'windows'
+    uvPlatform = 'x86_64-pc-windows-msvc'
   } else {
     throw new Error(`Unsupported platform: ${platform}`)
   }
@@ -82,13 +82,17 @@ function getPlatformArch() {
 
 async function main() {
   console.log('Starting main function')
+  const platform = os.platform()
   const { bunPlatform, uvPlatform } = getPlatformArch()
   console.log(`bunPlatform: ${bunPlatform}, uvPlatform: ${uvPlatform}`)
 
   const binDir = 'src-tauri/resources/bin'
   const tempBinDir = 'scripts/dist'
   const bunPath = `${tempBinDir}/bun-${bunPlatform}.zip`
-  const uvPath = `${tempBinDir}/uv-${uvPlatform}.tar.gz`
+  let uvPath = `${tempBinDir}/uv-${uvPlatform}.tar.gz`
+  if (platform === 'win32') {
+    uvPath = `${tempBinDir}/uv-${uvPlatform}.zip`
+  }
   try {
     mkdirSync('scripts/dist')
   } catch (err) {
@@ -100,7 +104,10 @@ async function main() {
   const bunUrl = `https://github.com/oven-sh/bun/releases/download/bun-v${bunVersion}/bun-${bunPlatform}.zip`
 
   const uvVersion = '0.6.17' // Example UV version
-  const uvUrl = `https://github.com/astral-sh/uv/releases/download/${uvVersion}/uv-${uvPlatform}.tar.gz`
+  let uvUrl = `https://github.com/astral-sh/uv/releases/download/${uvVersion}/uv-${uvPlatform}.tar.gz`
+  if (platform === 'win32') {
+    uvUrl = `https://github.com/astral-sh/uv/releases/download/${uvVersion}/uv-${uvPlatform}.zip`
+  }
 
   console.log(`Downloading Bun for ${bunPlatform}...`)
   await download(bunUrl, path.join(tempBinDir, `bun-${bunPlatform}.zip`))
@@ -124,7 +131,11 @@ async function main() {
   console.log('Bun downloaded.')
 
   console.log(`Downloading UV for ${uvPlatform}...`)
-  await download(uvUrl, path.join(tempBinDir, `uv-${uvPlatform}.tar.gz`))
+  if (platform === 'win32') {
+    await download(uvUrl, path.join(tempBinDir, `uv-${uvPlatform}.zip`))
+  } else {
+    await download(uvUrl, path.join(tempBinDir, `uv-${uvPlatform}.tar.gz`))
+  }
   await decompress(uvPath, tempBinDir)
   try {
     copySync(
