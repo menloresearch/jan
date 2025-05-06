@@ -1,7 +1,7 @@
 console.log('Script is running')
 // scripts/download.js
 import https from 'https'
-import fs, { copyFile, mkdirSync } from 'fs'
+import fs, { chmod, copyFile, mkdirSync } from 'fs'
 import os from 'os'
 import path from 'path'
 import unzipper from 'unzipper'
@@ -113,16 +113,28 @@ async function main() {
   await download(bunUrl, path.join(tempBinDir, `bun-${bunPlatform}.zip`))
   await decompress(bunPath, tempBinDir)
   try {
+    chmod(path.join(tempBinDir, `bun-${bunPlatform}`, 'bun'), 0o755, (err) => {
+      if (err) {
+        console.error('Failed to change permissions:', err);
+      } else {
+        console.log('Permissions changed successfully!');
+      }
+    });
+    
     copySync(
       path.join(tempBinDir, `bun-${bunPlatform}`, 'bun'),
       path.join(binDir)
     )
     if (platform === 'darwin') {
-      copySync(path.join(binDir, 'bun'), path.join(binDir, 'bun-aarch64-apple-darwin'))
-      copySync(path.join(binDir, 'bun'), path.join(binDir, 'bun-x86_64-apple-darwin'))
-      copySync(path.join(binDir, 'bun'), path.join(binDir, 'bun-universal-apple-darwin'))
+      // copySync(path.join(binDir, 'bun'), path.join(binDir, 'bun-aarch64-apple-darwin'))
+      // copySync(path.join(binDir, 'bun'), path.join(binDir, 'bun-x86_64-apple-darwin'))
+      // copySync(path.join(binDir, 'bun'), path.join(binDir, 'bun-universal-apple-darwin'))
     } else if (platform === 'linux') {
-      copySync(path.join(binDir, 'bun'), path.join(binDir, 'bun-x86_64-unknown-linux-gnu'))
+      copyFile(path.join(binDir, 'bun'), path.join(binDir, 'bun-x86_64-unknown-linux-gnu'), (err) => {
+        if (err) {
+          console.log("Error Found:", err);
+        }
+      })
     }
   } catch (err) {
     // Expect EEXIST error
@@ -157,11 +169,15 @@ async function main() {
       path.join(binDir)
     )
     if (platform === 'darwin') {
-      copySync(path.join(binDir, 'uv'), path.join(binDir, 'uv-aarch64-apple-darwin'))
-      copySync(path.join(binDir, 'uv'), path.join(binDir, 'uv-x86_64-apple-darwin'))
-      copySync(path.join(binDir, 'uv'), path.join(binDir, 'uv-universal-apple-darwin'))
+      // copySync(path.join(binDir, 'uv'), path.join(binDir, 'uv-aarch64-apple-darwin'))
+      // copySync(path.join(binDir, 'uv'), path.join(binDir, 'uv-x86_64-apple-darwin'))
+      // copySync(path.join(binDir, 'uv'), path.join(binDir, 'uv-universal-apple-darwin'))
     } else if (platform === 'linux') {
-      copySync(path.join(binDir, 'uv'), path.join(binDir, 'uv-x86_64-unknown-linux-gnu'))
+      copyFile(path.join(binDir, 'uv'), path.join(binDir, 'uv-x86_64-unknown-linux-gnu'), (err) => {
+        if (err) {
+          console.log("Error Found:", err);
+        }
+      })
     }
   } catch (err) {
     // Expect EEXIST error
