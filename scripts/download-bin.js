@@ -1,7 +1,7 @@
 console.log('Script is running')
 // scripts/download.js
 import https from 'https'
-import fs, { mkdirSync } from 'fs'
+import fs, { copyFile, mkdirSync } from 'fs'
 import os from 'os'
 import path from 'path'
 import unzipper from 'unzipper'
@@ -133,7 +133,11 @@ async function main() {
       path.join(binDir)
     )
     if (platform === 'win32') {
-      copySync(path.join(binDir, 'bun.exe'), path.join(binDir, 'bun-x86_64-pc-windows-msvc.exe'))
+      copyFile(path.join(binDir, 'bun.exe'), path.join(binDir, 'bun-x86_64-pc-windows-msvc.exe'), (err) => {
+        if (err) {
+          console.log("Error Found:", err);
+        }
+      })
     }
   } catch (err) {
     // Expect EEXIST error
@@ -164,11 +168,15 @@ async function main() {
   }
   try {
     copySync(
-      path.join(tempBinDir, `uv-${uvPlatform}`, 'uv.exe'),
+      path.join(tempBinDir, 'uv.exe'),
       path.join(binDir)
     )
     if (platform === 'win32') {
-      copySync(path.join(binDir, 'uv.exe'), path.join(binDir, 'uv-x86_64-pc-windows-msvc.exe'))
+      copyFile(path.join(binDir, 'uv.exe'), path.join(binDir, 'uv-x86_64-pc-windows-msvc.exe'), (err) => {
+        if (err) {
+          console.log("Error Found:", err);
+        }
+      })
     }
   } catch (err) {
     // Expect EEXIST error
