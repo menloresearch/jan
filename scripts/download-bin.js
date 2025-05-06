@@ -100,7 +100,7 @@ async function main() {
   }
 
   // Adjust these URLs based on latest releases
-  const bunVersion = '1.2.10' // Example Bun version
+  const bunVersion = '1.2.8' // Example Bun version
   const bunUrl = `https://github.com/oven-sh/bun/releases/download/bun-v${bunVersion}/bun-${bunPlatform}.zip`
 
   const uvVersion = '0.6.17' // Example UV version
@@ -121,15 +121,19 @@ async function main() {
       }
     });
     
-    copySync(
-      path.join(tempBinDir, `bun-${bunPlatform}`, 'bun'),
-      path.join(binDir)
-    )
+    // copySync(
+    //   path.join(tempBinDir, `bun-${bunPlatform}`, 'bun'),
+    //   path.join(binDir)
+    // )
     if (platform === 'darwin') {
       // copySync(path.join(binDir, 'bun'), path.join(binDir, 'bun-aarch64-apple-darwin'))
       // copySync(path.join(binDir, 'bun'), path.join(binDir, 'bun-x86_64-apple-darwin'))
       // copySync(path.join(binDir, 'bun'), path.join(binDir, 'bun-universal-apple-darwin'))
     } else if (platform === 'linux') {
+      copySync(
+        path.join(tempBinDir, `bun-${bunPlatform}`, 'bun'),
+        path.join(binDir)
+      )
       copyFile(path.join(binDir, 'bun'), path.join(binDir, 'bun-x86_64-unknown-linux-gnu'), (err) => {
         if (err) {
           console.log("Error Found:", err);
@@ -164,15 +168,19 @@ async function main() {
   }
   await decompress(uvPath, tempBinDir)
   try {
-    copySync(
-      path.join(tempBinDir, `uv-${uvPlatform}`, 'uv'),
-      path.join(binDir)
-    )
+    // copySync(
+    //   path.join(tempBinDir, `uv-${uvPlatform}`, 'uv'),
+    //   path.join(binDir)
+    // )
     if (platform === 'darwin') {
       // copySync(path.join(binDir, 'uv'), path.join(binDir, 'uv-aarch64-apple-darwin'))
       // copySync(path.join(binDir, 'uv'), path.join(binDir, 'uv-x86_64-apple-darwin'))
       // copySync(path.join(binDir, 'uv'), path.join(binDir, 'uv-universal-apple-darwin'))
     } else if (platform === 'linux') {
+      copySync(
+        path.join(tempBinDir, `uv-${uvPlatform}`, 'uv'),
+        path.join(binDir)
+      )
       copyFile(path.join(binDir, 'uv'), path.join(binDir, 'uv-x86_64-unknown-linux-gnu'), (err) => {
         if (err) {
           console.log("Error Found:", err);
