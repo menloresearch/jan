@@ -62,12 +62,13 @@ pub fn run() {
             core::threads::create_thread_assistant,
             core::threads::modify_thread_assistant,
             // llama-cpp extension
-            core::utils::extensions::inference_llamacpp_extension::load, 
-            core::utils::extensions::inference_llamacpp_extension::unload
+            core::utils::extensions::inference_llamacpp_extension::server::load,
+            core::utils::extensions::inference_llamacpp_extension::server::unload,
         ])
         .manage(AppState {
             app_token: Some(generate_app_token()),
             mcp_servers: Arc::new(Mutex::new(HashMap::new())),
+            llama_server_process: Arc::new(Mutex::new(None)),
         })
         .setup(|app| {
             app.handle().plugin(

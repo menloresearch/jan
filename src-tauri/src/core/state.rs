@@ -2,12 +2,13 @@ use std::{collections::HashMap, sync::Arc};
 
 use rand::{distributions::Alphanumeric, Rng};
 use rmcp::{service::RunningService, RoleClient};
-use tokio::sync::Mutex;
+use tokio::{process::Child, sync::Mutex};
 
 #[derive(Default)]
 pub struct AppState {
     pub app_token: Option<String>,
     pub mcp_servers: Arc<Mutex<HashMap<String, RunningService<RoleClient, ()>>>>,
+    pub llama_server_process: Arc<Mutex<Option<Child>>>,
 }
 pub fn generate_app_token() -> String {
     rand::thread_rng()
