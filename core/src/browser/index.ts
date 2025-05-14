@@ -33,3 +33,5 @@ export * from './extensions'
  * @module
  */
 export * from './models'
+
+export * from './download'

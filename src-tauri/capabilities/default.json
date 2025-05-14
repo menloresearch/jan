@@ -51,6 +51,10 @@
         }
       ]
     },
-    "store:default"
+    "store:default",
+    {
+      "identifier": "fs:allow-open",
+      "allow": [{ "path": "$APPDATA/*" }]
+    }
   ]
 }

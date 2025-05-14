@@ -1,4 +1,4 @@
-import { CoreRoutes, APIRoutes } from '@janhq/core'
+import { CoreRoutes, APIRoutes, downloadFile } from '@janhq/core'
 import { invoke } from '@tauri-apps/api/core'
 
 // Define API routes based on different route types
@@ -50,6 +50,7 @@ export const tauriAPI = {
     }
   }, {}),
   openExternalUrl,
+  downloadFile,
   // Jan Server URL
   baseApiUrl: undefined, //process.env.API_BASE_URL ?? API_BASE_URL,
   pollingInterval: 5000,

@@ -61,6 +61,7 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
+    "@tauri-apps/plugin-fs": "^2.2.1",
     "rxjs": "^7.8.1",
     "ulidx": "^2.3.0"
   },
