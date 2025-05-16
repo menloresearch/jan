@@ -6,7 +6,7 @@
  * @module llamacpp-extension/src/index
  */
 
-import { RemoteOAIEngine, getJanDataFolderPath, fs, ModelCapability, Model } from '@janhq/core'
+import { RemoteOAIEngine, getJanDataFolderPath, fs, Model } from '@janhq/core'
 
 export enum Settings {
   port = 'port',
@@ -107,9 +107,34 @@ export default class LlamacppProvider extends RemoteOAIEngine {
           size: 0,
         },
         engine: this.provider,
-        capabilities: [ModelCapability.completion],
       }
     })
     return models
+  }
+
+  async pull(modelId: string) {
+    const downloadManager = window.core.extensionManager.getByName('@janhq/download-extension')
+
+    let parts = modelId.split(":")
+
+    // cortexso format
+    if (parts.length == 2) {
+      const modelName = parts[0]
+      const branch = parts[1]
+      const saveDir = `models/cortex.so/${modelName}/${branch}`
+      await downloadManager.downloadHfRepo(`cortexso/${modelName}`, saveDir, modelId, branch)
+    } else if (parts.length == 3) {
+      const author = parts[0]
+      const modelName = parts[1]
+      const file = parts[2]
+      const url = `https://huggingface.co/${author}/${modelName}/resolve/main/${file}`
+      const savePath = `models/huggingface.co/${author}/${modelName}/${file}`
+      await downloadManager.downloadFile(url, savePath, modelId)
+    }
+  }
+
+  async abortPull(modelId: string) {
+    const downloadManager = window.core.extensionManager.getByName('@janhq/download-extension')
+    await downloadManager.cancelDownload(modelId)
   }
 }
