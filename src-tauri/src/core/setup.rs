@@ -3,12 +3,9 @@ use std::{
     fs::{self, File},
     io::Read,
     path::PathBuf,
-    sync::{Arc, Mutex},
 };
 use tar::Archive;
-use tauri::{App, Emitter, Listener, Manager};
-use tauri_plugin_shell::process::CommandEvent;
-use tauri_plugin_shell::ShellExt;
+use tauri::{App, Emitter, Manager};
 use tauri_plugin_store::StoreExt;
 
 // MCP
@@ -203,102 +200,37 @@ pub fn setup_mcp(app: &App) {
     });
 }
 
-pub fn setup_sidecar(app: &App) -> Result<(), String> {
-    // Setup sidecar
+//fn copy_dir_all(src: PathBuf, dst: PathBuf) -> Result<(), String> {
+//    fs::create_dir_all(&dst).map_err(|e| e.to_string())?;
+//    log::info!("Copying from {:?} to {:?}", src, dst);
+//    for entry in fs::read_dir(src).map_err(|e| e.to_string())? {
+//        let entry = entry.map_err(|e| e.to_string())?;
+//        let ty = entry.file_type().map_err(|e| e.to_string())?;
+//        if ty.is_dir() {
+//            copy_dir_all(entry.path(), dst.join(entry.file_name())).map_err(|e| e.to_string())?;
+//        } else {
+//            fs::copy(entry.path(), dst.join(entry.file_name())).map_err(|e| e.to_string())?;
+//        }
+//    }
+//    Ok(())
+//}
 
-    let app_state = app.state::<AppState>();
-    let app_data_dir = get_jan_data_folder_path(app.handle().clone());
-    let mut sidecar_command = app.shell().sidecar("cortex-server").unwrap().args([
-        "--start-server",
-        "--port",
-        "39291",
-        "--config_file_path",
-        app_data_dir.join(".janrc").to_str().unwrap(),
-        "--data_folder_path",
-        app_data_dir.to_str().unwrap(),
-        "--cors",
-        "ON",
-        "--allowed_origins",
-        "http://localhost:3000,http://localhost:1420",
-        "config",
-        "--api_keys",
-        app_state.inner().app_token.as_deref().unwrap_or(""),
-    ]);
-
-    #[cfg(target_os = "windows")]
-    {
-        sidecar_command = sidecar_command.env("PATH", {
-            let app_data_dir = app.app_handle().path().app_data_dir().unwrap();
-            let dest = app_data_dir.to_str().unwrap();
-            let path = std::env::var("PATH").unwrap_or_default();
-            format!("{}{}{}", path, std::path::MAIN_SEPARATOR, dest)
-        });
-    }
-
-    #[cfg(not(target_os = "windows"))]
-    {
-        sidecar_command = sidecar_command.env("LD_LIBRARY_PATH", {
-            let app_data_dir = app.app_handle().path().app_data_dir().unwrap();
-            let dest = app_data_dir.to_str().unwrap();
-            let ld_library_path = std::env::var("LD_LIBRARY_PATH").unwrap_or_default();
-            format!("{}{}{}", ld_library_path, std::path::MAIN_SEPARATOR, dest)
-        });
-    }
-
-    let (mut rx, _child) = sidecar_command.spawn().expect("Failed to spawn sidecar");
-    let child = Arc::new(Mutex::new(Some(_child)));
-    let child_clone = child.clone();
-
-    tauri::async_runtime::spawn(async move {
-        // read events such as stdout
-        while let Some(event) = rx.recv().await {
-            if let CommandEvent::Stdout(line_bytes) = event {
-                let line = String::from_utf8_lossy(&line_bytes);
-                log::info!("Outputs: {:?}", line)
-            }
-        }
-    });
-
-    app.handle().listen("kill-sidecar", move |_| {
-        let mut child_guard = child_clone.lock().unwrap();
-        if let Some(actual_child) = child_guard.take() {
-            actual_child.kill().unwrap();
-        }
-    });
-    Ok(())
-}
-
-fn copy_dir_all(src: PathBuf, dst: PathBuf) -> Result<(), String> {
-    fs::create_dir_all(&dst).map_err(|e| e.to_string())?;
-    log::info!("Copying from {:?} to {:?}", src, dst);
-    for entry in fs::read_dir(src).map_err(|e| e.to_string())? {
-        let entry = entry.map_err(|e| e.to_string())?;
-        let ty = entry.file_type().map_err(|e| e.to_string())?;
-        if ty.is_dir() {
-            copy_dir_all(entry.path(), dst.join(entry.file_name())).map_err(|e| e.to_string())?;
-        } else {
-            fs::copy(entry.path(), dst.join(entry.file_name())).map_err(|e| e.to_string())?;
-        }
-    }
-    Ok(())
-}
-
-pub fn setup_engine_binaries(app: &App) -> Result<(), String> {
-    // Copy engine binaries to app_data
-    let app_data_dir = get_jan_data_folder_path(app.handle().clone());
-    let binaries_dir = app.handle().path().resource_dir().unwrap().join("binaries");
-    let themes_dir = app
-        .handle()
-        .path()
-        .resource_dir()
-        .unwrap()
-        .join("resources");
-
-    if let Err(e) = copy_dir_all(binaries_dir, app_data_dir.clone()) {
-        log::error!("Failed to copy binaries: {}", e);
-    }
-    if let Err(e) = copy_dir_all(themes_dir, app_data_dir.clone()) {
-        log::error!("Failed to copy themes: {}", e);
-    }
-    Ok(())
-}
+//pub fn setup_engine_binaries(app: &App) -> Result<(), String> {
+//    // Copy engine binaries to app_data
+//    let app_data_dir = app.handle().path().app_data_dir().unwrap();
+//    let binaries_dir = app.handle().path().resource_dir().unwrap().join("binaries");
+//    let themes_dir = app
+//        .handle()
+//        .path()
+//        .resource_dir()
+//        .unwrap()
+//        .join("resources");
+//
+//    if let Err(e) = copy_dir_all(binaries_dir, app_data_dir.clone()) {
+//        log::error!("Failed to copy binaries: {}", e);
+//    }
+//    if let Err(e) = copy_dir_all(themes_dir, app_data_dir.clone()) {
+//        log::error!("Failed to copy themes: {}", e);
+//    }
+//    Ok(())
+//}
