@@ -49,6 +49,9 @@ pub fn ensure_thread_dir_exists<R: Runtime>(
     Ok(())
 }
 
+
+pub mod extensions;
+
 // https://github.com/rust-lang/cargo/blob/rust-1.67.0/crates/cargo-util/src/paths.rs#L82-L107
 pub fn normalize_path(path: &Path) -> PathBuf {
     let mut components = path.components().peekable();
@@ -76,3 +79,4 @@ pub fn normalize_path(path: &Path) -> PathBuf {
     }
     ret
 }
+
