@@ -68,8 +68,8 @@ pub fn run() {
             core::utils::download::download_hf_repo,
             core::utils::download::cancel_download_task,
             // llama-cpp extension
-            core::utils::extensions::inference_llamacpp_extension::server::load,
-            core::utils::extensions::inference_llamacpp_extension::server::unload,
+            core::utils::extensions::inference_llamacpp_extension::server::load_llama_model,
+            core::utils::extensions::inference_llamacpp_extension::server::unload_llama_model,
         ])
         .manage(AppState {
             app_token: Some(generate_app_token()),

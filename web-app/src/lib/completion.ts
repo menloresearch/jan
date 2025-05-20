@@ -158,7 +158,7 @@ export const startModel = async (
 ): Promise<void> => {
   const providerObj = EngineManager.instance().get(normalizeProvider(provider))
   const modelObj = ModelManager.instance().get(model)
-  if (providerObj && modelObj) return providerObj?.loadModel(modelObj)
+  if (providerObj && modelObj) return providerObj?.load(modelObj)
 }
 
 /**
@@ -174,7 +174,7 @@ export const stopModel = async (
 ): Promise<void> => {
   const providerObj = EngineManager.instance().get(normalizeProvider(provider))
   const modelObj = ModelManager.instance().get(model)
-  if (providerObj && modelObj) return providerObj?.unloadModel(modelObj)
+  if (providerObj && modelObj) return providerObj?.unload(modelObj)
 }
 
 /**
