@@ -3,6 +3,7 @@ import { useConfig, DocsThemeConfig } from 'nextra-theme-docs'
 import LogoMark from '@/components/LogoMark'
 import FooterMenu from '@/components/FooterMenu'
 import JSONLD from '@/components/JSONLD'
+import VersionDropdown from '@/components/VersionDropdown'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import { LibraryBig, Blocks, BrainCircuit, Computer } from 'lucide-react'
@@ -52,7 +53,8 @@ const config: DocsThemeConfig = {
   },
   navbar: {
     extraContent: (
-      <div className="inline-flex items-center gap-x-2">
+      <div className="inline-flex items-center gap-x-4">
+        <VersionDropdown />
         <a href="https://discord.com/invite/FTk2MvZwJH" target="_blank">
           <BiLogoDiscordAlt className="text-xl text-black/60 dark:text-white/60" />
         </a>
@@ -126,14 +128,14 @@ const config: DocsThemeConfig = {
           name="description"
           content={
             frontMatter?.description ||
-            `Run LLMs like Mistral or Llama2 locally and offline on your computer, or connect to remote AI APIs like OpenAI’s GPT-4 or Groq.`
+            `Run LLMs like Mistral or Llama2 locally and offline on your computer, or connect to remote AI APIs like OpenAI's GPT-4 or Groq.`
           }
         />
         <meta
           name="og:description"
           content={
             frontMatter?.description ||
-            `Run LLMs like Mistral or Llama2 locally and offline on your computer, or connect to remote AI APIs like OpenAI’s GPT-4 or Groq.`
+            `Run LLMs like Mistral or Llama2 locally and offline on your computer, or connect to remote AI APIs like OpenAI's GPT-4 or Groq.`
           }
         />
         <link

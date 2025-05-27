@@ -1,0 +1,85 @@
+# Linux Installation
+
+This guide will help you install Jan Tauri on your Linux system.
+
+## System Requirements
+
+- Ubuntu 20.04+, Debian 11+, or other modern Linux distributions
+- 8GB RAM minimum (16GB recommended)
+- 10GB free disk space
+- Internet connection for initial setup
+- Vulkan-compatible GPU (for optimal performance)
+
+## Installation Steps
+
+1. **Download the Package**
+   - Visit our [GitHub releases page](https://github.com/menloresearch/jan/releases)
+   - Download the appropriate package for your distribution:
+     - `.deb` for Debian/Ubuntu
+     - `.AppImage` for other distributions
+
+2. **Install Jan Tauri**
+
+   ### Debian/Ubuntu (.deb)
+   ```bash
+   # Install the .deb package
+   sudo dpkg -i jan-tauri_*.deb
+   
+   # Install dependencies if needed
+   sudo apt-get install -f
+   ```
+
+   ### AppImage
+   ```bash
+   # Make the AppImage executable
+   chmod +x Jan-Tauri-*.AppImage
+   
+   # Run the application
+   ./Jan-Tauri-*.AppImage
+   ```
+
+3. **First Launch**
+   - Launch Jan Tauri from your application menu
+   - The application will check your system requirements
+   - You may need to grant additional permissions for hardware access
+
+4. **Initial Setup**
+   - You'll be prompted to download your first model
+   - Choose a model based on your system's capabilities
+   - Wait for the model to download and initialize
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Missing Dependencies**
+   ```bash
+   # Install common dependencies
+   sudo apt-get update
+   sudo apt-get install libgtk-3-0 libwebkit2gtk-4.0-dev
+   ```
+
+2. **Permission Issues**
+   - Ensure you have the necessary permissions to run the application
+   - Check if your user is in the appropriate groups
+   - Run with `sudo` if necessary (not recommended for regular use)
+
+3. **Model Download Issues**
+   - Check your internet connection
+   - Ensure you have enough disk space
+   - Try downloading a smaller model first
+   - Check system logs for any errors
+
+## Next Steps
+
+- [Configure your first model](/docs/tauri/model-management)
+- [Set up the local API server](/docs/tauri/local-api)
+- [Learn about Jan's data folder](/docs/tauri/data-folder)
+
+## Support
+
+If you encounter any issues not covered here:
+
+- Join our [Discord community](https://discord.com/invite/FTk2MvZwJH)
+- Check our [GitHub issues](https://github.com/menloresearch/jan/issues)
+- Read our [Troubleshooting Guide](/docs/tauri/troubleshooting) 

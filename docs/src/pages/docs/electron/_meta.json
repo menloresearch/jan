@@ -53,5 +53,10 @@
     "type": "page",
     "display": "hidden",
     "title": "Error Codes"
-  }
+  },
+  "installation": { "title": "Installation" },
+  "installation-linux": { "title": "Installation Linux" },
+  "installation-mac": { "title": "Installation Mac" },
+  "installation-windows": { "title": "Installation Windows" },
+  "quick-start": { "title": "Quick Start" }
 }

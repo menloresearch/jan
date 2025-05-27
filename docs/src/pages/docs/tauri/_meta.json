@@ -1,0 +1,9 @@
+{
+  "index": { "title": "Overview" },
+  "get-started": { "title": "Get Started" },
+  "installation": { "title": "Installation" },
+  "installation-linux": { "title": "Installation Linux" },
+  "installation-mac": { "title": "Installation Mac" },
+  "installation-windows": { "title": "Installation Windows" },
+  "quick-start": { "title": "Quick Start" }
+}

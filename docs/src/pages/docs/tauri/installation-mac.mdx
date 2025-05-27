@@ -1,0 +1,65 @@
+# macOS Installation
+
+This guide will help you install Jan Tauri on your macOS system.
+
+## System Requirements
+
+- macOS 10.15 (Catalina) or later
+- Apple Silicon (M1/M2/M3) or Intel processor
+- 8GB RAM minimum (16GB recommended)
+- 10GB free disk space
+- Internet connection for initial setup
+
+## Installation Steps
+
+1. **Download the Installer**
+   - Visit our [GitHub releases page](https://github.com/menloresearch/jan/releases)
+   - Download the latest `.dmg` file for macOS
+
+2. **Install Jan Tauri**
+   - Open the downloaded `.dmg` file
+   - Drag the Jan Tauri application to your Applications folder
+   - Launch Jan Tauri from your Applications folder
+
+3. **First Launch**
+   - You may see a security warning. This is normal for applications not from the Mac App Store
+   - Go to System Preferences > Security & Privacy
+   - Click "Open Anyway" to allow Jan Tauri to run
+
+4. **Initial Setup**
+   - The application will check your system requirements
+   - You'll be prompted to download your first model
+   - Choose a model based on your system's capabilities
+   - Wait for the model to download and initialize
+
+## Troubleshooting
+
+### Common Issues
+
+1. **"App is damaged" error**
+   - Open Terminal
+   - Run: `xattr -cr /Applications/Jan\ Tauri.app`
+   - Try launching the app again
+
+2. **Permission Issues**
+   - Ensure you have administrator privileges
+   - Check System Preferences > Security & Privacy for any blocked permissions
+
+3. **Model Download Issues**
+   - Check your internet connection
+   - Ensure you have enough disk space
+   - Try downloading a smaller model first
+
+## Next Steps
+
+- [Configure your first model](/docs/tauri/model-management)
+- [Set up the local API server](/docs/tauri/local-api)
+- [Learn about Jan's data folder](/docs/tauri/data-folder)
+
+## Support
+
+If you encounter any issues not covered here:
+
+- Join our [Discord community](https://discord.com/invite/FTk2MvZwJH)
+- Check our [GitHub issues](https://github.com/menloresearch/jan/issues)
+- Read our [Troubleshooting Guide](/docs/tauri/troubleshooting) 
