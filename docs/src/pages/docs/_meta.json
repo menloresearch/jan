@@ -1,0 +1,17 @@
+{
+  "index": {
+    "title": "Choose Your Instance",
+    "type": "page",
+    "theme": {
+      "breadcrumb": false
+    }
+  },
+  "electron": {
+    "title": "⚡ Electron",
+    "type": "page"
+  },
+  "tauri": {
+    "title": "🦀 Tauri",
+    "type": "page"
+  }
+}
