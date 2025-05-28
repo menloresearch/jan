@@ -315,7 +315,8 @@ function Hardware() {
                   <div className="flex items-center gap-2">
                     <Progress
                       value={
-                        ((hardwareData.ram?.total - hardwareData.ram?.available) /
+                        ((hardwareData.ram?.total -
+                          hardwareData.ram?.available) /
                           hardwareData.ram?.total) *
                         100
                       }
@@ -323,12 +324,34 @@ function Hardware() {
                     />
                     <span className="text-main-view-fg/80">
                       {(
-                        ((hardwareData.ram?.total - hardwareData.ram?.available) /
+                        ((hardwareData.ram?.total -
+                          hardwareData.ram?.available) /
                           hardwareData.ram?.total) *
                         100
                       ).toFixed(2)}
                       %
                     </span>
+                  </div>
+                }
+              />
+            </Card>
+
+            {/* Vulkan Settings */}
+            <Card title="Vulkan">
+              <CardItem
+                title="Enable Vulkan"
+                description="Enable Vulkan API for GPU acceleration"
+                actions={
+                  <div className="flex items-center gap-4">
+                    <Switch
+                    // checked={hardwareData.vulkan}
+                    // onCheckedChange={(checked) => {
+                    //   setHardwareData({
+                    //     ...hardwareData,
+                    //     vulkan: checked,
+                    //   })
+                    // }}
+                    />
                   </div>
                 }
               />
