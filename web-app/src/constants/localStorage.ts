@@ -11,6 +11,7 @@ export const localStorageKey = {
   settingMCPSevers: 'setting-mcp-servers',
   settingLocalApiServer: 'setting-local-api-server',
   settingHardware: 'setting-hardware',
+  settingVulkan: 'setting-vulkan',
   productAnalyticPrompt: 'productAnalyticPrompt',
   productAnalytic: 'productAnalytic',
 }
