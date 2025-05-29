@@ -27,6 +27,8 @@ import { MovingBorder } from './MovingBorder'
 import { useChat } from '@/hooks/useChat'
 import DropdownModelProvider from '@/containers/DropdownModelProvider'
 import { ModelLoader } from '@/containers/loaders/ModelLoader'
+import { Switch } from '@/components/ui/switch'
+import { useRAG } from '@/hooks/useRAG'
 
 type ChatInputProps = {
   className?: string
@@ -52,6 +54,10 @@ const ChatInput = ({
 
   const { selectedModel } = useModelProvider()
   const { sendMessage } = useChat()
+
+  // Global RAG hook
+  const { enabled: ragEnabled, setEnabled: setRagEnabled } = useRAG()
+
   const [message, setMessage] = useState('')
   const [uploadedFiles, setUploadedFiles] = useState<
     Array<{
@@ -72,7 +78,8 @@ const ChatInput = ({
       return
     }
     setMessage('')
-    sendMessage(prompt)
+    sendMessage(prompt, uploadedFiles)
+    setUploadedFiles([]) // Clear uploaded files after sending
   }
 
   useEffect(() => {
@@ -150,6 +157,33 @@ const ChatInput = ({
         return 'image/png'
       case 'pdf':
         return 'application/pdf'
+      case 'txt':
+        return 'text/plain'
+      case 'md':
+        return 'text/markdown'
+      case 'json':
+        return 'application/json'
+      case 'js':
+        return 'text/javascript'
+      case 'ts':
+        return 'text/typescript'
+      case 'py':
+        return 'text/x-python'
+      case 'html':
+        return 'text/html'
+      case 'css':
+        return 'text/css'
+      case 'csv':
+        return 'text/csv'
+      case 'docx':
+        return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+      case 'rs':
+        return 'text/x-rust'
+      case 'xml':
+        return 'application/xml'
+      case 'yaml':
+      case 'yml':
+        return 'application/x-yaml'
       default:
         return ''
     }
@@ -189,11 +223,24 @@ const ChatInput = ({
           'image/jpeg',
           'image/png',
           'application/pdf',
+          'text/plain',
+          'text/markdown',
+          'application/json',
+          'text/javascript',
+          'text/typescript',
+          'text/x-python',
+          'text/html',
+          'text/css',
+          'text/csv',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+          'text/x-rust',
+          'application/xml',
+          'application/x-yaml',
         ]
 
         if (!allowedTypes.includes(actualType)) {
           setMessage(
-            `File is not supported. Only JPEG, JPG, PNG, and PDF files are allowed.`
+            `File is not supported. Supported file types: images (JPG, PNG), documents (PDF, DOCX), text files (TXT, MD, CSV), code files (JS, TS, PY, RS, HTML, CSS), and data files (JSON, XML, YAML).`
           )
           // Reset file input to allow re-uploading
           if (fileInputRef.current) {
@@ -276,7 +323,7 @@ const ChatInput = ({
                 {uploadedFiles.map((file, index) => {
                   return (
                     <div
-                      key={index}
+                      key={`file-${file.name}-${index}`}
                       className={cn(
                         'relative border border-main-view-fg/5 rounded-lg',
                         file.type.startsWith('image/') ? 'size-14' : 'h-14 '
@@ -421,6 +468,15 @@ const ChatInput = ({
                     <IconAtom size={18} className="text-main-view-fg/50" />
                   </div>
                 )}
+
+                <div className="flex items-center gap-2 ml-2 pl-2 border-l border-main-view-fg/10">
+                  <span className="text-xs text-main-view-fg/70">RAG</span>
+                  <Switch
+                    checked={ragEnabled}
+                    onCheckedChange={setRagEnabled}
+                    className="scale-75"
+                  />
+                </div>
               </div>
 
               {showSpeedToken && (

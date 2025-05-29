@@ -3,6 +3,8 @@ use serde::{Deserialize, Serialize};
 use std::{fs, io, path::PathBuf};
 use tauri::{AppHandle, Manager, Runtime, State};
 use tauri_plugin_updater::UpdaterExt;
+use base64::{engine::general_purpose, Engine as _};
+use encoding_rs::UTF_8;
 
 use super::{server, setup, state::AppState};
 
@@ -314,6 +316,172 @@ fn copy_dir_recursive(src: &PathBuf, dst: &PathBuf) -> Result<(), io::Error> {
     }
 
     Ok(())
+}
+
+/// Extract text from file content based on file type
+#[tauri::command]
+pub async fn extract_text_from_file(
+    base64_content: String,
+    file_name: String,
+    file_type: String,
+) -> Result<String, String> {
+    log::info!("Extracting text from file: {} (type: {})", file_name, file_type);
+    
+    // Decode base64 content
+    let content_bytes = general_purpose::STANDARD
+        .decode(&base64_content)
+        .map_err(|e| format!("Failed to decode base64 content: {}", e))?;
+
+    // Determine file type from extension or MIME type
+    let file_extension = std::path::Path::new(&file_name)
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .unwrap_or("")
+        .to_lowercase();
+
+    match file_extension.as_str() {
+        // Plain text files
+        "txt" | "md" | "json" | "html" | "css" | "js" | "ts" | "py" | "rs" | "xml" | "yaml" | "yml" => {
+            extract_text_content(&content_bytes)
+        }
+        // DOCX files
+        "docx" => extract_docx_text(&content_bytes),
+        // PDF files
+        "pdf" => extract_pdf_text(&content_bytes),
+        _ => Err(format!("Unsupported file type: {}", file_extension)),
+    }
+}
+
+/// Extract text content from plain text files with encoding detection
+fn extract_text_content(content_bytes: &[u8]) -> Result<String, String> {
+    // Try UTF-8 first
+    if let Ok(text) = std::str::from_utf8(content_bytes) {
+        return Ok(text.to_string());
+    }
+
+    // Use encoding_rs for robust encoding detection
+    let (cow, _encoding_used, had_errors) = UTF_8.decode(content_bytes);
+    
+    if had_errors {
+        // Try to detect encoding from BOM
+        if let Some((encoding, _bom_length)) = encoding_rs::Encoding::for_bom(content_bytes) {
+            let (decoded_text, _, had_errors) = encoding.decode(content_bytes);
+            
+            if had_errors {
+                log::warn!("Text extraction had encoding errors, some characters may be corrupted");
+            }
+            
+            Ok(decoded_text.into_owned())
+        } else {
+            // Fallback to UTF-8 with replacement characters
+            log::warn!("Could not detect encoding, using UTF-8 with replacement characters");
+            Ok(cow.into_owned())
+        }
+    } else {
+        Ok(cow.into_owned())
+    }
+}
+
+/// Extract text from DOCX files
+fn extract_docx_text(content_bytes: &[u8]) -> Result<String, String> {
+    match docx_rs::read_docx(content_bytes) {
+        Ok(docx) => {
+            let mut text_content = String::new();
+            
+            // Extract text from document children
+            for child in &docx.document.children {
+                match child {
+                    docx_rs::DocumentChild::Paragraph(paragraph) => {
+                        for run in &paragraph.children {
+                            match run {
+                                docx_rs::ParagraphChild::Run(run) => {
+                                    for run_child in &run.children {
+                                        if let docx_rs::RunChild::Text(text) = run_child {
+                                            text_content.push_str(&text.text);
+                                        }
+                                    }
+                                }
+                                _ => {}
+                            }
+                        }
+                        text_content.push('\n');
+                    }
+                    _ => {}
+                }
+            }
+            
+            Ok(text_content.trim().to_string())
+        }
+        Err(e) => Err(format!("Failed to parse DOCX file: {}", e)),
+    }
+}
+
+/// Extract text from PDF files
+fn extract_pdf_text(content_bytes: &[u8]) -> Result<String, String> {
+    match pdf_extract::extract_text_from_mem(content_bytes) {
+        Ok(text) => Ok(text.trim().to_string()),
+        Err(e) => Err(format!("Failed to extract text from PDF: {}", e)),
+    }
+}
+
+/// Save base64 content to a file in the rag-docs directory and return the path
+#[tauri::command]
+pub async fn save_file(
+    base64_content: String,
+    file_name: String,
+    app_handle: tauri::AppHandle,
+) -> Result<String, String> {
+    log::info!("Saving file to rag-docs: {}", file_name);
+    
+    // Decode base64 content
+    let content_bytes = general_purpose::STANDARD
+        .decode(&base64_content)
+        .map_err(|e| format!("Failed to decode base64 content: {}", e))?;
+
+    // Get app data directory and create rag-docs subdirectory
+    let app_data_path = get_jan_data_folder_path(app_handle);
+    let rag_docs_dir = app_data_path.join("rag-docs");
+    
+    // Ensure rag-docs directory exists
+    if !rag_docs_dir.exists() {
+        std::fs::create_dir_all(&rag_docs_dir)
+            .map_err(|e| format!("Failed to create rag-docs directory: {}", e))?;
+    }
+
+    // Generate unique filename to avoid conflicts
+    let timestamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_millis();
+    
+    // Extract file extension from original filename
+    let extension = std::path::Path::new(&file_name)
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .unwrap_or("");
+    
+    // Create unique filename with timestamp prefix
+    let unique_filename = if extension.is_empty() {
+        format!("{}_{}", timestamp, file_name)
+    } else {
+        let stem = std::path::Path::new(&file_name)
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or("file");
+        format!("{}_{}.{}", timestamp, stem, extension)
+    };
+    
+    let file_path = rag_docs_dir.join(&unique_filename);
+
+    // Write content to file
+    std::fs::write(&file_path, &content_bytes)
+        .map_err(|e| format!("Failed to write to file: {}", e))?;
+
+    // Get the absolute path as string
+    let file_path_str = file_path.to_string_lossy().to_string();
+    
+    log::info!("File saved at: {}", file_path_str);
+    Ok(file_path_str)
 }
 
 #[tauri::command]
