@@ -7,8 +7,7 @@ use std::{
 use tar::Archive;
 use tauri::{App, Emitter, Manager};
 use tauri_plugin_store::StoreExt;
-use tokio::sync::Mutex; // Using tokio::sync::Mutex
-use tokio::time::{sleep, Duration};
+
 // MCP
 use super::{
     cmd::{get_jan_data_folder_path, get_jan_extensions_path},
