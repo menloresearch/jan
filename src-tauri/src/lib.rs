@@ -51,6 +51,8 @@ pub fn run() {
             core::cmd::handle_app_update,
             core::cmd::change_app_data_folder,
             core::cmd::reset_cortex_restart_count,
+            core::cmd::extract_text_from_file,
+            core::cmd::save_file,
             // MCP commands
             core::mcp::get_tools,
             core::mcp::call_tool,
@@ -58,6 +60,8 @@ pub fn run() {
             core::mcp::get_connected_servers,
             core::mcp::save_mcp_configs,
             core::mcp::get_mcp_configs,
+            core::mcp::get_mcp_server_status,
+            core::mcp::health_check_mcp_servers,
             // Threads
             core::threads::list_threads,
             core::threads::create_thread,

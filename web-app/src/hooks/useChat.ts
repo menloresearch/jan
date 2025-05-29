@@ -25,6 +25,7 @@ import { MCPTool } from '@/types/completion'
 import { listen } from '@tauri-apps/api/event'
 import { SystemEvent } from '@/types/events'
 import { stopModel, startModel } from '@/services/models'
+import { useRAG } from './useRAG'
 
 export const useChat = () => {
   const { prompt, setPrompt } = usePrompt()
@@ -45,6 +46,7 @@ export const useChat = () => {
   const { getCurrentThread: retrieveThread, createThread } = useThreads()
   const { getMessages, addMessage } = useMessages()
   const router = useRouter()
+  const { enabled: ragEnabled } = useRAG()
 
   const provider = useMemo(() => {
     return getProviderByName(selectedProvider)
@@ -58,7 +60,7 @@ export const useChat = () => {
     }
     setTools()
 
-    let unsubscribe = () => {}
+    let unsubscribe = () => { }
     listen(SystemEvent.MCP_UPDATE, setTools).then((unsub) => {
       // Unsubscribe from the event when the component unmounts
       unsubscribe = unsub
@@ -94,7 +96,13 @@ export const useChat = () => {
   ])
 
   const sendMessage = useCallback(
-    async (message: string) => {
+    async (message: string, uploadedFiles?: Array<{
+      name: string
+      type: string
+      size: number
+      base64: string
+      dataUrl: string
+    }>) => {
       const activeThread = await getCurrentThread()
 
       resetTokenSpeed()
@@ -103,9 +111,43 @@ export const useChat = () => {
       const abortController = new AbortController()
       setAbortController(activeThread.id, abortController)
       updateStreamingContent(emptyThreadContent)
-      addMessage(newUserThreadContent(activeThread.id, message))
+
+      // Initialize hidden context data and final message
+      let hiddenContextData: string | undefined = undefined
+      const finalMessage = message
+
+      // Process uploaded files if they exist
+      if (uploadedFiles && uploadedFiles.length > 0) {
+        const file = uploadedFiles[0] // Process first file for now
+
+        try {
+          const extractedText = await window.core?.api?.extractTextFromFile({
+            base64Content: file.base64,
+            fileName: file.name,
+            fileType: file.type
+          })
+          hiddenContextData = `[Extracted Content from ${file.name}]:\n${extractedText}\n\n`
+          toast.success(`Text extracted from "${file.name}"`)
+        } catch (error) {
+          console.error('Text extraction failed:', error)
+          toast.error(`Failed to extract text from "${file.name}": ${error}`)
+          hiddenContextData = `[Failed to extract content from ${file.name}]\n`
+        }
+      }
+
+      // Create user message with metadata
+      const userMessage = newUserThreadContent(activeThread.id, message)
+      if (uploadedFiles && uploadedFiles.length > 0 && hiddenContextData) { userMessage.metadata = {
+          ...userMessage.metadata,
+          hidden_llm_context: hiddenContextData,
+        }
+      }
+
+      addMessage(userMessage)
       setPrompt('')
+
       try {
+
         if (selectedModel?.id) {
           updateLoadingModel(true)
           await startModel(provider, selectedModel.id, abortController).catch(
@@ -114,12 +156,114 @@ export const useChat = () => {
           updateLoadingModel(false)
         }
 
+        if (ragEnabled) {
+          // TODO: refactor this to use a separate hook or service
+          const ragSystemPrompt = `
+# Document Knowledge Base Integration
+
+## Available Tools
+
+### rag_query_documents
+**Purpose**: Search for relevant information from indexed documents
+**Parameters**:
+- query_text (required): Search terms or natural language query
+- top_k (optional, default: 3): Number of results to retrieve (adjust based on query complexity)
+
+**Best Practices**:
+- Use specific, relevant keywords for targeted searches
+- For broad topics, start with general terms then refine with follow-up queries
+- Consider synonyms and related terms if initial queries yield limited results
+- Increase top_k (5-10) for complex questions requiring multiple perspectives
+
+### rag_list_data_sources
+**Purpose**: View available documents in the knowledge base
+**When to use**: 
+- When users ask about available resources
+- To understand the scope of information available
+- Before conducting searches to better target queries
+
+## Workflow Guidelines
+
+### 1. Query Assessment
+- **Always search first** when users ask questions that could benefit from document context
+- **Exception**: Only skip searching for purely computational, creative, or general knowledge tasks
+
+### 2. Search Strategy
+- **Single focused topic**: Use 1-2 targeted queries
+- **Complex/multi-faceted questions**: Use multiple complementary searches
+- **Unclear questions**: Start broad, then narrow based on initial results
+
+### 3. Response Construction
+- **Lead with retrieved information** when available and relevant
+- **Integrate context naturally** rather than simply appending it
+- **Synthesize multiple sources** when using several document chunks
+- **Acknowledge limitations** if relevant information isn't found
+
+## Citation Requirements
+
+### Format
+- Use clear source attribution: "According to [Document Name]... or "As stated in [Document Title]..."
+- Include page numbers or section references when available
+- For multiple sources: "Based on information from [Source A] and [Source B]..."
+
+### When to Cite
+- **Always cite** when directly referencing document content
+- **Distinguish** between document-sourced information and your general knowledge
+- **Be transparent** about the source of specific claims or data points
+
+## Response Framework
+
+'''
+1. Search the knowledge base using rag_query_documents
+2. Evaluate retrieved information for relevance and quality
+3. If insufficient, conduct additional targeted searches
+4. Construct response integrating:
+   - Retrieved document context (cited)
+   - Your analysis and synthesis
+   - Clear distinction between sources
+5. Acknowledge any limitations in available information
+'''
+
+## Error Handling
+
+- **No relevant results**: Acknowledge the limitation and provide general knowledge if appropriate
+- **Tool failures**: Inform the user and offer to help based on general knowledge
+- **Conflicting information**: Present multiple perspectives and note discrepancies
+
+## Quality Indicators
+
+✅ **Good Practice**:
+- Search before responding to relevant queries
+- Cite sources clearly and accurately
+- Synthesize information from multiple documents
+- Acknowledge when information comes from documents vs. general knowledge
+
+❌ **Avoid**:
+- Responding without searching when documents might be relevant
+- Vague or missing citations
+- Presenting document information as your own knowledge
+- Over-relying on single sources for complex topics
+`.trim()
+
+          if (currentAssistant?.instructions !== undefined) {
+            currentAssistant.instructions = `${currentAssistant.instructions}\n\n${ragSystemPrompt}`
+          }
+        }
+
         const builder = new CompletionMessagesBuilder(
+
+          // Add assistant instructions if available
           messages,
           currentAssistant?.instructions
         )
 
-        builder.addUserMessage(message)
+        // Prepare final message with hidden context if available
+        let messageWithContext = finalMessage
+        if (hiddenContextData) {
+          messageWithContext = `${hiddenContextData}${finalMessage}`
+        }
+
+        builder.addUserMessage(messageWithContext)
 
         let isCompleted = false
 
@@ -220,11 +364,13 @@ export const useChat = () => {
       updateStreamingContent,
       addMessage,
       setPrompt,
-      selectedModel,
+      selectedModel?.id,
+      selectedModel?.capabilities,
+      ragEnabled,
       currentAssistant,
       tools,
       updateLoadingModel,
-      updateTokenSpeed,
+      updateTokenSpeed
     ]
   )
 
