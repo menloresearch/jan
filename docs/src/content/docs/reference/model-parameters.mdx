@@ -1,0 +1,290 @@
+---
+title: Model Parameters Reference
+description: Complete reference for all model parameters in Jan, their effects, and recommended values.
+---
+
+This reference covers every parameter you can adjust when running AI models in Jan. Parameters control how models generate responses—from creativity level to response length.
+
+## Core Parameters
+
+### Temperature
+Controls randomness in responses.
+
+- **Type**: Float
+- **Range**: 0.0 - 2.0
+- **Default**: 0.7
+
+| Value | Effect | Best for |
+|-------|--------|----------|
+| 0.1-0.3 | Very focused, deterministic | Technical Q&A, factual responses |
+| 0.4-0.7 | Balanced creativity | General conversation |
+| 0.8-1.2 | Creative, varied responses | Creative writing, brainstorming |
+| 1.3+ | Highly random, experimental | Abstract creativity, unexpected outputs |
+
+**Example effects:**
+```
+Temperature 0.1: "The capital of France is Paris."
+Temperature 1.0: "Paris serves as France's capital city."
+Temperature 1.5: "France's heart beats in Paris, its eternal capital."
+```
+
+### Top P (Nucleus Sampling)
+Limits vocabulary to most probable tokens.
+
+- **Type**: Float
+- **Range**: 0.0 - 1.0
+- **Default**: 0.95
+
+| Value | Effect |
+|-------|--------|
+| 0.1 | Very limited vocabulary, repetitive |
+| 0.5 | Moderate vocabulary restriction |
+| 0.9 | Slight vocabulary filtering |
+| 1.0 | No vocabulary limitation |
+
+Lower values = more focused responses. Higher values = more diverse word choice.
+
+### Top K
+Limits choices to K most likely tokens.
+
+- **Type**: Integer
+- **Range**: 1 - 100
+- **Default**: 40
+
+| Value | Effect |
+|-------|--------|
+| 1 | Always picks most likely token (deterministic) |
+| 20 | Conservative word choice |
+| 40 | Balanced selection |
+| 80+ | Allows unusual word choices |
+
+### Max Tokens
+Maximum response length.
+
+- **Type**: Integer  
+- **Range**: 1 - 32768 (model dependent)
+- **Default**: 2048
+
+**Practical limits:**
+- **Short responses**: 50-200 tokens
+- **Paragraphs**: 200-500 tokens  
+- **Long form**: 1000+ tokens
+- **Articles**: 2000+ tokens
+
+Note: 1 token ≈ 0.75 words in English.
+
+### Stop Sequences
+Text that ends generation.
+
+- **Type**: Array of strings
+- **Default**: Model-specific
+
+Common stop sequences:
+- `["\n\n"]` - Stop at double newline
+- `["Human:", "AI:"]` - Stop at conversation markers
+- `["```"]` - Stop at code blocks
+
+## Advanced Parameters
+
+### Repeat Penalty
+Reduces repetitive text.
+
+- **Type**: Float
+- **Range**: 0.8 - 1.5
+- **Default**: 1.1
+
+| Value | Effect |
+|-------|--------|
+| 1.0 | No repetition penalty |
+| 1.1 | Slight repetition reduction |
+| 1.3 | Strong repetition avoidance |
+| 1.5+ | May harm coherence |
+
+### Frequency Penalty
+Penalizes frequently used tokens.
+
+- **Type**: Float
+- **Range**: -2.0 - 2.0
+- **Default**: 0.0
+
+- **Positive values**: Encourage diverse vocabulary
+- **Negative values**: Allow repetition
+- **0**: No frequency adjustment
+
+### Presence Penalty
+Penalizes any repeated token.
+
+- **Type**: Float
+- **Range**: -2.0 - 2.0  
+- **Default**: 0.0
+
+Similar to frequency penalty but applies regardless of frequency.
+
+## Context Parameters
+
+### Context Length
+Maximum conversation history.
+
+- **Type**: Integer
+- **Range**: 512 - 32768 (model dependent)
+- **Default**: Model maximum
+
+Longer context = better conversation memory, but slower processing.
+
+### Prompt Template
+How input is formatted for the model.
+
+- **Type**: String template
+- **Default**: Model-specific
+
+Common templates:
+```
+### Human: {prompt}
+### Assistant: {response}
+
+[INST] {prompt} [/INST] {response}
+
+<|im_start|>user
+{prompt}<|im_end|>
+<|im_start|>assistant
+{response}<|im_end|>
+```
+
+## Engine-Specific Parameters
+
+### Llama.cpp Parameters
+
+**n_threads**
+- CPU threads for processing
+- Default: Auto-detected
+- Range: 1 - CPU core count
+
+**n_gpu_layers**  
+- GPU acceleration layers
+- Default: 0 (CPU only)
+- Range: 0 - model layer count
+
+**mmap**
+- Memory mapping for large models
+- Default: true
+- Values: true, false
+
+**mlock**
+- Lock model in memory
+- Default: false  
+- Values: true, false
+
+### TensorRT-LLM Parameters
+
+**max_batch_size**
+- Concurrent requests
+- Default: 1
+- Range: 1 - 256
+
+**max_input_len**
+- Maximum input tokens
+- Default: 1024
+- Range: 1 - 32768
+
+**max_output_len**
+- Maximum output tokens  
+- Default: 1024
+- Range: 1 - 32768
+
+## Parameter Combinations
+
+### Recommended presets
+
+**Creative Writing**
+```yaml
+temperature: 0.9
+top_p: 0.95
+top_k: 40
+max_tokens: 2048
+repeat_penalty: 1.1
+```
+
+**Technical Support**
+```yaml
+temperature: 0.2
+top_p: 0.9
+top_k: 20
+max_tokens: 1024
+repeat_penalty: 1.05
+```
+
+**Code Generation**
+```yaml
+temperature: 0.1
+top_p: 0.95
+top_k: 50
+max_tokens: 2048
+stop_sequences: ["```", "\n\n#"]
+```
+
+**Brainstorming**
+```yaml
+temperature: 1.2
+top_p: 0.9
+top_k: 60
+max_tokens: 1024
+frequency_penalty: 0.3
+```
+
+## Performance Impact
+
+Parameters affecting speed:
+
+| Parameter | Impact | Notes |
+|-----------|--------|-------|
+| max_tokens | High | Longer responses = more processing |
+| temperature | Low | Minimal computational overhead |
+| top_k | Low | Slight increase with higher values |
+| context_length | High | Exponential memory usage |
+| n_gpu_layers | High | More layers = better GPU utilization |
+
+## Troubleshooting Parameters
+
+**Responses are too random**
+- Lower temperature (0.3-0.5)
+- Reduce top_k (20-30)
+- Lower top_p (0.8-0.9)
+
+**Responses are repetitive**
+- Increase repeat_penalty (1.2-1.3)
+- Add frequency_penalty (0.1-0.3)
+- Raise temperature slightly
+
+**Responses are cut off**
+- Increase max_tokens
+- Check stop_sequences
+- Verify context length
+
+**Poor performance**
+- Reduce context_length
+- Lower max_tokens
+- Optimize n_gpu_layers
+
+## Model-Specific Notes
+
+### Small models (3B-7B)
+- More sensitive to temperature changes
+- Benefit from higher repeat_penalty
+- Limited context understanding
+
+### Large models (13B+)
+- Handle higher temperatures better
+- More coherent with default parameters
+- Better instruction following
+
+### Code models
+- Often need specific stop sequences
+- Lower temperature recommended
+- May have unique prompt templates
+
+### Chat models
+- Optimized for conversation
+- Usually include built-in templates
+- Handle context switching well
+
+Remember: optimal parameters vary by model, task, and personal preference. Start with defaults and adjust based on output quality.

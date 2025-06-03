@@ -1,0 +1,75 @@
+---
+title: Configure HTTPS proxy
+description: Set up proxy connections and SSL settings for Jan
+sidebar:
+  order: 4
+---
+
+import { Steps, Aside, Code } from '@astrojs/starlight/components';
+
+Configure Jan to work through corporate proxies or secure network environments.
+
+## Set up HTTPS proxy
+
+HTTPS proxy encrypts data and helps bypass regional restrictions, though it may affect download speeds.
+
+<Steps>
+
+1. **Access proxy settings**
+
+   Go to **Settings** → **Advanced Settings** → **HTTPS Proxy**
+
+   ![HTTPS proxy settings](/images/docs/settings-13.png)
+
+2. **Enable proxy**
+
+   Toggle the proxy setting to **On**
+
+3. **Enter proxy details**
+
+   Use this format:
+
+   <Code code="http://<user>:<password>@<domain or IP>:<port>" lang="text" />
+
+   Where:
+   - `<user>`: Your proxy username (if required)
+   - `<password>`: Your proxy password (if required)  
+   - `<domain or IP>`: Proxy server domain or IP address
+   - `<port>`: Proxy server port number
+
+</Steps>
+
+<Aside type="note">
+HTTPS proxy affects model downloads but not remote model usage.
+</Aside>
+
+## Configure SSL certificates
+
+For corporate networks or development environments with custom certificates.
+
+<Steps>
+
+1. **Find SSL settings**
+
+   In **Settings** → **Advanced Settings**, look for **Ignore SSL Certificates**
+
+   ![SSL certificate settings](/images/docs/settings-14.png)
+
+2. **Enable if needed**
+
+   Turn this on when:
+   - Working with corporate proxies using internal certificates
+   - Testing in development environments  
+   - Connecting through specialized network security setups
+
+</Steps>
+
+<Aside type="caution">
+Only enable "Ignore SSL Certificates" if you trust your network environment.
+</Aside>
+
+## Troubleshooting proxy issues
+
+- **Slow downloads**: Proxy encryption/decryption affects speed
+- **Connection failures**: Verify proxy credentials and server details
+- **Certificate errors**: Enable "Ignore SSL Certificates" for internal networks

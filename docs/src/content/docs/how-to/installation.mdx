@@ -1,0 +1,201 @@
+---
+title: Installation Tutorial
+description: Install Jan and set up your first personal AI assistant in under 10 minutes.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+Get Jan running on your computer and download your first AI model. This takes about 10 minutes, assuming your internet doesn't decide to take a coffee break during the download.
+
+## What you'll have
+
+- Jan installed and actually working
+- Your first AI model downloaded 
+- A conversation with your new digital companion
+- Understanding of the basics (enough to be dangerous)
+
+## Requirements
+
+- **Time**: 10 minutes
+- **Skill**: Can install software
+- **Hardware**: A computer from this decade
+
+## Download Jan
+
+Choose your operating system and download the latest version:
+
+### Latest Release
+
+<CardGrid>
+  <LinkCard
+    title="Windows"
+    description="Download for Windows 10 or higher"
+    href="https://app.jan.ai/download/latest/win-x64"
+  />
+  <LinkCard
+    title="macOS"
+    description="Universal binary for Intel and Apple Silicon"
+    href="https://app.jan.ai/download/latest/mac-universal"
+  />
+  <LinkCard
+    title="Linux (deb)"
+    description="For Ubuntu, Debian, and derivatives"
+    href="https://app.jan.ai/download/latest/linux-amd64-deb"
+  />
+  <LinkCard
+    title="Linux (AppImage)"
+    description="Universal Linux package"
+    href="https://app.jan.ai/download/latest/linux-amd64-appimage"
+  />
+</CardGrid>
+
+### Beta Releases
+
+Try the latest features before they're stable:
+
+<CardGrid>
+  <LinkCard
+    title="Windows Beta"
+    href="https://app.jan.ai/download/beta/win-x64"
+  />
+  <LinkCard
+    title="macOS Beta"
+    href="https://app.jan.ai/download/beta/mac-universal"
+  />
+  <LinkCard
+    title="Linux Beta (deb)"
+    href="https://app.jan.ai/download/beta/linux-amd64-deb"
+  />
+  <LinkCard
+    title="Linux Beta (AppImage)"
+    href="https://app.jan.ai/download/beta/linux-amd64-appimage"
+  />
+</CardGrid>
+
+### Alternative Installation
+
+**Package Managers**:
+- **macOS**: `brew install --cask jan`
+- **Windows**: `choco install jan`
+- **Linux**: `snap install jan`
+
+**Previous Versions**: Visit [GitHub Releases](https://github.com/menloresearch/jan/releases) for older versions and source code.
+
+## System Requirements
+
+<Card title="Minimum Requirements" icon="laptop">
+- **RAM**: 8GB (16GB recommended)
+- **Storage**: 10GB free space (models require additional space)
+- **Network**: Internet for initial setup and model downloads
+</Card>
+
+### GPU Acceleration (Optional)
+
+For significantly better performance:
+
+- **NVIDIA**: GTX 1060+ with CUDA 11.7+
+- **AMD**: RX 580+ with Vulkan support
+- **Intel Arc**: A-series with latest drivers
+- **Apple Silicon**: M1/M2/M3 chips supported natively
+
+<Steps>
+
+1. **Download Jan**
+
+   Use one of the download links above to get Jan for your operating system.
+
+2. **Install the application**
+
+   **Windows:**
+   - Run the downloaded `.exe` file
+   - Follow the installation wizard
+   - Launch Jan from the Start Menu or desktop shortcut
+
+   **macOS:**
+   - Open the downloaded `.dmg` file
+   - Drag Jan to your Applications folder
+   - Launch Jan from Applications (you may need to allow it in Security & Privacy settings)
+
+   **Linux:**
+   - For `.deb`: Run `sudo dpkg -i jan-linux.deb`
+   - For `.AppImage`: Make it executable with `chmod +x Jan.AppImage` and run it
+
+3. **First launch**
+
+   Jan opens to an empty interface—no models pre-installed. We could have bundled a 40GB model, but your SSD probably appreciates the restraint.
+
+   ![Jan's initial interface](/docs/_assets/quick-start-01.png)
+
+4. **Download your first model**
+
+   Let's download a small, efficient model that's perfect for getting started:
+
+   1. Click on the **Hub** tab in the left sidebar
+   2. Look for a model like "Llama 3.2 3B" or "Phi-3 Mini" (these are good starter models)
+   3. Click on the model to see its details
+   4. Click the **Download** button
+
+   The download will start automatically. Depending on your internet connection, this might take a few minutes.
+
+   ![Downloading a model](/docs/_assets/model-management-01.png)
+
+5. **Wait for download completion**
+
+   You'll see a progress bar showing the download status. Once complete, the model will appear in your local models list.
+
+   :::tip[Model size matters]
+   Start with smaller models (3-7B parameters) as they're faster to download and use less computer memory. You can always download larger, more capable models later.
+   :::
+
+6. **Start your first conversation**
+
+   1. Click on **Threads** in the left sidebar (or the chat icon)
+   2. Click **Create new thread** or use the existing default thread
+   3. In the model selector at the bottom, choose the model you just downloaded
+   4. Type a simple message like "Hello! Can you introduce yourself?"
+   5. Press Enter or click the send button
+
+   ![First conversation](/docs/_assets/quick-start-02.png)
+
+7. **Explore the interface**
+
+   Once the AI responds, take a moment to explore:
+   
+   - **Left sidebar**: Navigate between Threads, Hub, and Settings
+   - **Right sidebar**: Configure the current model's behavior and parameters
+   - **Chat area**: Your conversation history
+   - **Bottom input**: Where you type your messages
+
+</Steps>
+
+## Congratulations! 🎉
+
+You've successfully installed Jan and had your first conversation with a local AI model. Your AI conversations are completely private and running entirely on your computer.
+
+## What's next?
+
+Now that you have Jan running, you might want to:
+
+- **Try different models**: Visit the Hub to download models optimized for different tasks
+- **Customize responses**: Learn about [assistant instructions](/how-to/custom-assistants) to tailor how the AI responds
+- **Explore settings**: Configure [GPU acceleration](/tutorials/gpu-setup) for faster responses
+- **Connect cloud models**: Add [API keys for cloud services](/tutorials/cloud-models) like OpenAI or Anthropic
+
+## Need help?
+
+If you encountered any issues during installation:
+
+- Check our [troubleshooting guide](/how-to/troubleshooting)
+- Join our [Discord community](https://discord.gg/FTk2MvZwJH) for help
+- Visit our [GitHub issues](https://github.com/menloresearch/jan/issues) to report bugs
+
+## Why local AI matters
+
+Jan runs on your computer, not someone else's:
+
+- ✅ **Privacy**: Your conversations stay with you (revolutionary concept)
+- ✅ **No subscriptions**: Local models are free (cloud models cost what they cost)
+- ✅ **Works offline**: Internet optional after initial download
+- ⚠️ **Uses your hardware**: Performance varies with your setup
+- ⚠️ **Storage requirements**: Models need space (2-40GB+ each)

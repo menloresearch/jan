@@ -1,0 +1,225 @@
+---
+title: Download & Manage Models
+description: How to download, install, and manage AI models in Jan from various sources including the Hub, HuggingFace, and local files.
+---
+
+import { Tabs, TabItem } from '@astrojs/starlight/components';
+
+This guide covers all the ways you can add AI models to Jan, from the built-in Hub to importing your own GGUF files. Choose the method that best fits your needs.
+
+## Quick overview
+
+Jan supports multiple ways to add models:
+
+- **🎯 Jan Hub** (Recommended): Curated, optimized models ready to use
+- **📁 Local Import**: Import GGUF files from your computer
+- **🤗 HuggingFace**: Download directly from the HuggingFace repository
+- **☁️ Cloud APIs**: Connect to external services like OpenAI
+
+## Method 1: Download from Jan Hub (Recommended)
+
+The Jan Hub provides models that are tested, optimized, and ready to use.
+
+### Steps to download
+
+1. **Open the Hub**
+   - Click **Hub** in the left sidebar
+   - Browse the available models
+
+2. **Choose a model**
+   - Models are organized by size and capability
+   - Look for compatibility badges that match your system
+   - Check the model description for intended use cases
+
+3. **Download the model**
+   - Click on any model to see its details
+   - Click **Download** to start the process
+   - The download progress will show in the bottom panel
+
+### Recommended models by use case
+
+| Use Case | Model | Size | Why it's good |
+|----------|-------|------|---------------|
+| **Getting started** | Phi-3 Mini | 2.3GB | Fast, efficient, good for general chat |
+| **General conversation** | Llama 3.2 7B | 4.1GB | Balanced performance and capability |
+| **Creative writing** | Mistral 7B | 4.1GB | Excellent for storytelling and creative tasks |
+| **Coding assistance** | CodeLlama 7B | 4.1GB | Specialized for programming tasks |
+| **Advanced tasks** | Llama 3.1 70B | 40GB+ | Most capable, requires powerful hardware |
+
+### Understanding model labels
+
+- **3B, 7B, 13B, 70B**: Parameter count (billions) - larger generally means more capable but slower
+- **Instruct**: Fine-tuned for following instructions and conversations
+- **Chat**: Optimized for conversational interactions
+- **Code**: Specialized for programming and code-related tasks
+
+## Method 2: Import local GGUF files
+
+If you have GGUF model files on your computer, you can import them directly.
+
+### What you need
+- A `.gguf` file (the standard format for local AI models)
+- Enough storage space (models range from 1GB to 100GB+)
+
+### Import steps
+
+1. **Access import function**
+   - Go to **Settings** → **Models** → **Import Model**
+   - Or drag and drop a `.gguf` file directly into Jan
+
+2. **Select your file**
+   - Click **Browse** to find your GGUF file
+   - Select the file and click **Open**
+
+3. **Configure the model**
+   - Jan will auto-detect most settings
+   - You can customize the model name and description
+   - Set appropriate parameters if needed
+
+4. **Complete import**
+   - Click **Import** to add the model to Jan
+   - The model will appear in your local models list
+
+### Where to find GGUF files
+- **HuggingFace**: Search for models with "GGUF" in the name
+- **Community sites**: Reddit, Discord communities often share links
+- **Model creators**: Many developers publish GGUF versions of their models
+
+## Method 3: Download from HuggingFace
+
+Access thousands of models directly from HuggingFace's repository.
+
+### Direct HuggingFace integration
+
+1. **Find a model on HuggingFace**
+   - Visit [huggingface.co/models](https://huggingface.co/models)
+   - Filter by "GGUF" format
+   - Copy the model repository URL
+
+2. **Add to Jan**
+   - In Jan, go to **Hub** → **HuggingFace** tab
+   - Paste the model URL or search by name
+   - Click **Download** on your chosen model
+
+### Popular HuggingFace models for Jan
+
+- `microsoft/Phi-3-mini-4k-instruct-gguf`
+- `meta-llama/Llama-2-7b-chat-gguf`
+- `mistralai/Mistral-7B-Instruct-v0.2-GGUF`
+
+## Method 4: Connect cloud APIs
+
+Use external AI services through Jan's unified interface.
+
+<Tabs>
+<TabItem label="OpenAI">
+
+1. **Get an API key**
+   - Sign up at [platform.openai.com](https://platform.openai.com)
+   - Generate an API key in your account settings
+   - Add billing information (required for API access)
+
+2. **Add to Jan**
+   - Go to **Settings** → **Extensions** → **OpenAI**
+   - Enter your API key
+   - Save the configuration
+
+3. **Use OpenAI models**
+   - In any thread, click the model selector
+   - Switch to the **Cloud** tab
+   - Select GPT-4, GPT-3.5, or other OpenAI models
+
+</TabItem>
+<TabItem label="Anthropic">
+
+1. **Get Claude API access**
+   - Sign up at [console.anthropic.com](https://console.anthropic.com)
+   - Generate an API key
+   - Ensure you have credits in your account
+
+2. **Configure in Jan**
+   - Go to **Settings** → **Extensions** → **Anthropic**
+   - Enter your API key and save
+
+3. **Access Claude models**
+   - Use the model selector in any thread
+   - Choose from Claude 3.5 Sonnet, Claude 3 Opus, etc.
+
+</TabItem>
+<TabItem label="Other providers">
+
+Jan also supports:
+- **Groq**: Ultra-fast inference for supported models
+- **Mistral AI**: Official Mistral models with API access
+- **Cohere**: Command models for various tasks
+- **Google Gemini**: Access to Gemini Pro and other Google models
+
+Each follows a similar setup process: get an API key, add it to Jan's settings, then use the models through the interface.
+
+</TabItem>
+</Tabs>
+
+## Managing your models
+
+### View installed models
+- Go to **Settings** → **Models** to see all downloaded models
+- Check storage usage and model details
+- Enable or disable models as needed
+
+### Update models
+- Models from the Hub may receive updates
+- You'll see update notifications in the Hub interface
+- Local and imported models need manual replacement
+
+### Remove models
+1. Go to **Settings** → **Models**
+2. Find the model you want to remove
+3. Click the **Delete** button
+4. Confirm the deletion
+
+:::caution[Storage space]
+AI models can be very large. A 70B parameter model might use 40GB+ of storage. Monitor your available disk space and remove unused models when needed.
+:::
+
+### Backup model configurations
+- Model settings are stored in Jan's data folder
+- Back up your configurations before major updates
+- See [Data Storage guide](/explanation/data-storage) for details
+
+## Troubleshooting downloads
+
+### Download fails or is slow
+- **Check internet connection**: Large models require stable, fast internet
+- **Verify storage space**: Ensure you have enough free disk space
+- **Restart download**: Failed downloads can usually be resumed
+
+### Model won't load
+- **Check system requirements**: Large models need sufficient RAM
+- **Verify file integrity**: Re-download if the file seems corrupted
+- **Update Jan**: Ensure you're using the latest version
+
+### Can't find a specific model
+- **Search HuggingFace**: Use the integrated search feature
+- **Check model format**: Ensure it's available in GGUF format
+- **Community resources**: Ask in Jan's Discord or GitHub discussions
+
+## Performance considerations
+
+### Choosing model size
+- **2-7B models**: Good for most tasks, work on modest hardware
+- **13-30B models**: More capable, need 16GB+ RAM
+- **70B+ models**: Best performance, require high-end hardware
+
+### Hardware recommendations
+- **8GB RAM**: Can run 3-7B models comfortably
+- **16GB RAM**: Good for 7-13B models
+- **32GB+ RAM**: Can handle larger models
+- **GPU acceleration**: Significantly speeds up larger models
+
+## Next steps
+
+Once you have models downloaded:
+- Learn about [model parameters](/reference/model-parameters) to optimize performance
+- Set up [GPU acceleration](/tutorials/gpu-setup) for better speed
+- Explore [custom assistants](/how-to/custom-assistants) to tailor model behavior
+- Try the [API server](/how-to/api-server) to use models with other applications

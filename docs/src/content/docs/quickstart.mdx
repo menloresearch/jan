@@ -1,0 +1,99 @@
+---
+title: Quickstart
+description: Get your personal AI assistant running in minutes. Download, install, and start chatting with local AI models.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Get Jan up and running on your computer. This comprehensive guide takes you from installation to your first AI conversation.
+
+## Step 1: Install Jan
+
+1. [Download Jan](https://jan.ai/download)
+2. Install the application on your system
+3. Launch Jan
+
+Once installed, you'll see Jan's interface with no models pre-installed. You can:
+- Download and run local AI models
+- Connect to cloud AI providers if desired
+
+![Jan's initial interface](/images/docs/quick-start-01.png)
+
+## Step 2: Download a Model
+
+Jan offers various local AI models, from smaller efficient models to larger more capable ones:
+
+1. Go to **Hub**
+2. Browse available models and click on any model to see details
+3. Choose a model that fits your needs & hardware specifications
+4. Click **Download** to begin
+
+<Aside type="note">
+Local models run directly on your computer, using your memory (RAM) and processing power. Choose models carefully based on your hardware specifications.
+</Aside>
+
+For more model installation methods, visit [Download Models](/how-to/download-models).
+
+![Download a Model](/images/docs/model-management-01.png)
+
+## Step 3: Turn on GPU Acceleration (Optional)
+
+While the model downloads, optimize your hardware setup. If you're on **Windows** or **Linux** with a compatible graphics card, you can significantly boost model performance by enabling GPU acceleration.
+
+1. Navigate to **Settings** → **Local Engine** → **Llama.cpp**
+2. At **llama-cpp Backend**, select appropriate backend. For example `windows-amd64-vulkan` for AMD graphics cards
+
+<Aside type="note">
+Ensure you have installed all required dependencies and drivers before enabling GPU acceleration.
+</Aside>
+
+![Turn on GPU acceleration](/images/docs/trouble-shooting-03.png)
+
+## Step 4: Customize Assistant Instructions
+
+Once your model downloads, customize how it responds by setting specific instructions:
+
+1. In any **Thread**, click the **Assistant** tab in the **right sidebar**
+2. Enter your instructions in **Instructions** field. For example: "You are an expert storyteller who writes engaging and imaginative stories for marketing campaigns. You think outside the box when putting your copywriting skills to the test."
+
+You can modify instructions anytime during conversations to adjust model behavior for that specific thread.
+
+![Assistant Instructions](/images/docs/quick-start-02.png)
+
+## Step 5: Start Chatting and Fine-tune Settings
+
+Now that your model is downloaded and instructions are set, begin chatting. Type your message in the **input field** at the bottom of the thread.
+
+You can further customize your experience by:
+- Adjusting [model parameters](/reference/model-parameters) in the **Model** tab
+- Trying different models for different tasks via the **model selector**
+- Creating new threads with different instructions and model configurations
+
+![Chat with a Model](/images/docs/model-parameters.png)
+
+## Step 6: Connect to Cloud Models (Optional)
+
+Jan supports both local and cloud-based models. Connect to providers including OpenAI (GPT-4o, o1), Anthropic (Claude), Groq, Mistral, and more:
+
+1. Open any **Thread**
+2. Click **Model** tab in the **right sidebar** or **model selector** in input field
+3. Choose the **Cloud** tab
+4. Select your preferred provider, click **Add (➕)** icon next to the provider
+5. Obtain a valid API key from your chosen provider
+6. Copy & insert your **API Key** in Jan
+
+![Connect Remote APIs](/images/docs/quick-start-03.png)
+
+## What's Next?
+
+Now that Jan is running, explore further:
+1. Learn how to [download and manage models](/how-to/download-models)
+2. Customize [application settings](/how-to/configure-settings)
+3. Understand [model parameters](/reference/model-parameters) for better control
+4. Set up the [local API server](/how-to/api-server) for external integrations
+
+## Need Help?
+
+- **Troubleshooting**: Check our [troubleshooting guide](/how-to/troubleshooting)
+- **Community**: Join our [Discord](https://discord.gg/FTk2MvZwJH)
+- **Bug reports**: Visit [GitHub Issues](https://github.com/menloresearch/jan/issues)

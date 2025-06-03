@@ -1,0 +1,108 @@
+---
+title: Manage privacy and data settings
+description: Control analytics, logs, and data folder location in Jan
+sidebar:
+  order: 2
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+Jan keeps everything local by default. Here's how to manage your privacy settings and data location.
+
+## Control analytics
+
+Jan collects no data by default. You can optionally help improve Jan by sharing anonymous usage data.
+
+<Steps>
+
+1. **Navigate to privacy settings**
+
+   Go to **Settings** → **Privacy**
+
+2. **Toggle analytics**
+
+   - **On**: Share anonymous usage data to help improve Jan
+   - **Off**: No data is collected (default)
+
+   ![Analytics settings](/images/docs/settings-07.png)
+
+3. **Review what's collected**
+
+   See our [privacy policy](/reference/privacy/) for details on anonymous data collection.
+
+</Steps>
+
+## Manage logs
+
+### View your logs
+
+<Steps>
+
+1. **Open log viewer**
+
+   In **Settings** → **Privacy** → **Logs**, click the folder icon
+
+   ![View logs](/images/docs/settings-08.png)
+
+2. **Access log files directly**
+
+   Logs are stored at:
+   - **App log**: `~/Library/Application Support/jan/data/logs/app.log`
+   - **Cortex log**: `~/Library/Application Support/jan/data/logs/cortex.log`
+
+</Steps>
+
+### Clear logs
+
+Jan automatically removes logs after 24 hours. To clear them manually:
+
+<Steps>
+
+1. **Navigate to log settings**
+
+   Go to **Settings** → **Privacy** → **Clear Logs**
+
+2. **Clear all logs**
+
+   Click **Clear** button
+
+   <Aside type="caution">
+   This action cannot be undone.
+   </Aside>
+
+   ![Clear logs](/images/docs/settings-09.png)
+
+</Steps>
+
+## Change data folder location
+
+Move your Jan data to a different location on your system.
+
+<Steps>
+
+1. **Access data folder settings**
+
+   Go to **Settings** → **Advanced Settings** → **Jan Data Folder**
+
+2. **Edit folder location**
+
+   Click the pencil icon next to the current folder path
+
+   ![Edit data folder](/images/docs/settings-12.png)
+
+3. **Select new location**
+
+   - Choose an empty directory
+   - Click **Select**
+
+4. **Confirm the move**
+
+   - Review the confirmation dialog
+   - Click **Yes, Proceed**
+   - Jan will restart automatically
+
+</Steps>
+
+<Aside type="note">
+Your original data folder remains intact. Jan duplicates your data to the new location.
+</Aside>

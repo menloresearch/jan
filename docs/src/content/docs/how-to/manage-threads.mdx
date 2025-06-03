@@ -1,0 +1,188 @@
+---
+title: Manage Threads & Conversations
+description: Organize, edit, and manage your AI conversation threads in Jan. Learn to create, rename, clean, and delete conversation history.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Jan organizes your AI conversations into threads, making it easy to track and revisit your interactions with different models and contexts.
+
+## Understanding Threads
+
+Threads are individual conversation contexts that:
+- Maintain conversation history and context
+- Keep specific assistant instructions and model settings  
+- Allow switching between different topics or model configurations
+- Store locally on your device for privacy
+
+Each thread is completely independent, so you can have different conversations running simultaneously.
+
+## Creating New Threads
+
+Start a fresh conversation for a new topic or different model configuration:
+
+1. **Click the New Thread** icon (pencil/square icon) in Jan's top navigation
+2. **Select your preferred model** in the Model Selector in the input field
+3. **Start chatting** with your first message
+
+![Create New Thread](/images/docs/threads-02.png)
+
+### When to Create New Threads
+
+- **Different topics**: Separate work discussions from creative projects
+- **Different models**: Test how various models handle the same question  
+- **Different contexts**: Switch between coding help and general conversation
+- **Fresh start**: Begin without previous conversation influencing responses
+
+## View Thread History
+
+Access and navigate your conversation history:
+
+1. **Open Jan** - the default screen shows **Threads**
+2. **In the left sidebar**, you can:
+   - View your complete thread list
+   - Scroll through conversation history
+   - Click any thread to open the full conversation
+
+![View Threads](/images/docs/threads-01.png)
+
+Thread titles are automatically generated from your first message, but you can customize them for better organization.
+
+## Edit Thread Titles
+
+Rename threads for better organization and easier identification:
+
+1. **Navigate to the thread** you want to rename in the left sidebar
+2. **Hover over the thread** and click the **three dots** (⋯) icon
+3. **Select "Edit Title"** (pencil icon)
+4. **Enter a new title** and save
+
+![Edit Thread](/images/docs/threads-03.png)
+
+### Good Thread Naming Practices
+
+- **Be descriptive**: "Python debugging help" vs "Thread 1"
+- **Include context**: "Marketing copy for Q1 campaign"
+- **Date important conversations**: "Code review - Dec 2024"
+- **Use consistent naming**: Develop a personal convention
+
+## Clean Threads
+
+Remove all messages while preserving thread settings and configuration:
+
+1. **Navigate to the target thread** in the left sidebar
+2. **Hover and click the three dots** (⋯) icon
+3. **Select "Clean Thread"** (brush icon)
+
+<Aside type="note">
+This deletes all messages but preserves thread settings, assistant instructions, and model configuration. Useful for starting fresh with the same setup.
+</Aside>
+
+![Clean Thread](/images/docs/threads-04.png)
+
+### When to Clean Threads
+
+- **Long conversations**: Reset context when threads become unwieldy
+- **Testing configurations**: Clear messages while keeping settings
+- **Privacy**: Remove sensitive conversation content
+- **Performance**: Reduce memory usage for very long threads
+
+## Delete Threads
+
+Completely remove threads you no longer need:
+
+<Aside type="caution">
+Thread deletion is permanent. There's no undo option, so ensure you want to remove the thread completely.
+</Aside>
+
+### Delete Individual Threads
+
+1. **Navigate to the thread** you want to delete in the left sidebar
+2. **Hover and click the three dots** (⋯) icon  
+3. **Select "Delete Thread"** (trash icon)
+4. **Confirm deletion** when prompted
+
+![Delete Thread](/images/docs/threads-05.png)
+
+### Delete All Threads at Once
+
+For complete conversation history removal:
+
+1. **Close Jan** completely
+2. **Open the [Jan Data Folder](/explanation/data-storage)**
+3. **Delete the `threads` folder**
+4. **Restart Jan**
+
+This removes all conversation history while preserving other settings and downloaded models.
+
+## Thread Storage and Privacy
+
+### Local Storage
+- All threads stored locally on your device
+- No cloud synchronization or external backup
+- Complete privacy and control over conversation data
+
+### Data Location
+Thread files are stored in your Jan data folder:
+- **Windows**: `%APPDATA%\jan\threads\`
+- **macOS**: `~/Library/Application Support/jan/threads/`
+- **Linux**: `~/.config/jan/threads/`
+
+### Backup Considerations
+Since threads only exist locally:
+- **Manual backup**: Copy the threads folder periodically
+- **Export important conversations**: Copy text manually for critical discussions
+- **No automatic recovery**: Deleted threads cannot be restored
+
+## Thread Performance
+
+### Memory Usage
+Long threads consume more memory:
+- **Model context limits**: Very long conversations may exceed model memory
+- **Performance impact**: Extremely long threads can slow responses
+- **Recommended action**: Start new threads for different topics
+
+### Context Windows
+Different models handle conversation length differently:
+- **Smaller models (3B-7B)**: May lose early conversation context
+- **Larger models (13B+)**: Better at maintaining long conversation context
+- **Token limits**: Each model has maximum conversation length limits
+
+## Troubleshooting Threads
+
+### Thread Won't Load
+- **Restart Jan**: Simple restart often resolves loading issues
+- **Check data folder**: Ensure threads folder exists and isn't corrupted
+- **File permissions**: Verify Jan can read/write to data directory
+
+### Missing Threads
+- **Check data folder location**: Threads might be in unexpected location
+- **Look for backup**: Check if Jan data folder was moved or backed up
+- **Recent updates**: Major updates sometimes change data locations
+
+### Slow Thread Performance
+- **Clean long threads**: Remove old messages to improve performance
+- **Reduce model context**: Lower context window in model settings
+- **Check available memory**: Ensure sufficient RAM for model and conversation
+
+## Integration with Models and Settings
+
+### Model Selection Per Thread
+Each thread can use different models:
+- Switch models mid-conversation
+- Compare responses from different models
+- Use specialized models for specific tasks
+
+### Assistant Instructions Per Thread
+Customize behavior per conversation:
+- Set different instructions for work vs. personal threads
+- Adjust tone and style per thread context
+- Save instructions for new threads globally
+
+## What's Next?
+
+After mastering thread management:
+- Learn about [custom assistant instructions](/how-to/custom-assistants)
+- Explore [model parameters](/reference/model-parameters) for better responses
+- Understand [local data storage](/explanation/data-storage) for backup strategies
+- Set up [GPU acceleration](/how-to/gpu-configuration) for faster responses

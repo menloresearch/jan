@@ -1,0 +1,244 @@
+---
+title: Configure Settings & Preferences
+description: Customize Jan's appearance, behavior, and system settings to match your preferences and workflow.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Personalize Jan's interface, behavior, and system settings. Access settings by clicking the gear icon in the bottom left corner of Jan.
+
+## Appearance & Interface
+
+### Change Theme
+
+Control Jan's visual appearance with different themes:
+
+1. **Go to Settings → Preferences → Appearance**
+2. **Choose your theme**:
+   - **Joi Light**: Clean, bright theme for daytime use
+   - **Joi Dark**: Dark theme with high contrast
+   - **Dark Dimmed**: Softer dark theme to reduce eye strain
+   - **Night Blue**: Dark theme with blue accents
+
+3. **Select background style** (for Joi themes):
+   - **Solid**: Traditional opaque background
+   - **Translucent**: Semi-transparent interface
+
+Changes apply immediately without restart.
+
+![Appearance Settings](/images/docs/settings-04.png)
+
+### Adjust Chat Width
+
+Optimize conversation display for your screen size:
+
+1. **Go to Settings → Preferences → Chat Width**
+2. **Choose layout**:
+   - **Full Width**: Maximizes chat area for longer messages and code
+   - **Compact Width**: Focused view for comfortable reading
+
+Best for different use cases:
+- **Full Width**: Code reviews, long-form content, wide screens
+- **Compact Width**: General conversation, reading comfort, large monitors
+
+![Chat Width Settings](/images/docs/settings-05.png)
+
+### Configure Spell Check
+
+Enable automatic spell checking for your messages:
+
+1. **Go to Settings → Preferences → Spell Check**
+2. **Toggle spell check** on or off
+3. **Changes apply immediately** for all new messages
+
+When enabled, misspelled words are underlined as you type.
+
+![Spell Check Settings](/images/docs/settings-06.png)
+
+### Show Scrolling Bars
+
+Make scroll bars visible across all windows:
+
+1. **Go to Settings → Preferences → Scrolling Bar**
+2. **Toggle on** to make scroll bars always visible
+3. **Leave off** for cleaner interface (scroll bars appear on hover)
+
+![Scrolling Bar Settings](/images/docs/settings-19.png)
+
+## Hardware Configuration
+
+### Monitor System Resources
+
+Check your computer's performance when running AI models:
+
+1. **Go to Settings → Hardware**
+2. **View real-time metrics**:
+   - **CPU usage**: Processor utilization percentage
+   - **RAM usage**: Memory consumption and available space
+   - **GPU status**: Graphics card utilization (if available)
+
+Use this information to:
+- Choose appropriate model sizes for your hardware
+- Monitor performance during conversations
+- Identify when to upgrade hardware
+
+<Aside type="note">
+See detailed minimum system requirements for [Mac](/docs/desktop/mac#compatibility), [Windows](/docs/desktop/windows#compatibility) & [Linux](/docs/desktop/linux#compatibility).
+</Aside>
+
+### Enable GPU Acceleration
+
+Significantly improve model performance with GPU acceleration:
+
+1. **Go to Settings → Hardware**
+2. **Check GPU detection**: Verify your graphics card is recognized
+3. **Go to Settings → Extensions → Inference Engine**
+4. **Select appropriate backend**:
+   - **CUDA**: NVIDIA GPUs (requires CUDA 11.7+)
+   - **Vulkan**: AMD, Intel Arc, or universal GPU support
+   - **CPU**: Fallback option (no GPU acceleration)
+
+5. **Restart Jan** after changing GPU settings
+
+**Troubleshooting GPU issues**:
+- Update graphics drivers to latest version
+- Ensure CUDA/Vulkan runtime is installed
+- Check GPU memory requirements vs. model size
+
+## Data & Privacy
+
+### Jan Data Folder
+
+All your data is stored locally in the Jan data folder:
+
+**Default locations**:
+- **Windows**: `%APPDATA%\jan`
+- **macOS**: `~/Library/Application Support/jan`  
+- **Linux**: `~/.config/jan`
+
+**What's stored**:
+- Downloaded AI models
+- Conversation history (threads)
+- Application settings and preferences
+- Extension configurations
+
+### Access Data Folder
+
+1. **Go to Settings → Advanced → Jan Data Folder**
+2. **Click "Open Folder"** to view in file manager
+3. **Browse contents**:
+   - `models/`: Downloaded AI model files
+   - `threads/`: Conversation history
+   - `settings/`: Application preferences
+   - `extensions/`: Extension data
+
+### Change Data Folder Location
+
+Move Jan's data to a different drive or location:
+
+1. **Close Jan completely**
+2. **Copy entire Jan data folder** to new location
+3. **Create shortcut/symlink** from original location to new location
+4. **Restart Jan** and verify everything works
+
+<Aside type="caution">
+Always backup your data folder before moving it. Conversations and models will be lost if the move fails.
+</Aside>
+
+## Advanced Settings
+
+### Proxy Configuration
+
+Configure Jan to work through corporate firewalls or proxies:
+
+1. **Go to Settings → Advanced → Proxy Settings**
+2. **Enter proxy details**:
+   - **HTTP Proxy**: For web traffic
+   - **HTTPS Proxy**: For secure connections
+   - **No Proxy**: Domains to bypass proxy
+
+3. **Test connection** after applying settings
+
+Common proxy formats:
+- `http://proxy.company.com:8080`
+- `http://username:password@proxy.com:3128`
+
+### Verbose Logging
+
+Enable detailed logging for troubleshooting:
+
+1. **Go to Settings → Advanced → Logging**
+2. **Enable verbose logs** for detailed error information
+3. **View logs**: Settings → Advanced → Open Logs Folder
+
+Verbose logging helps with:
+- Diagnosing connection issues
+- Troubleshooting model loading problems
+- Providing detailed bug reports
+
+## Keyboard Shortcuts Reference
+
+Jan includes built-in keyboard shortcuts for efficiency:
+
+### Thread Management
+- **⌘/Ctrl + N**: Create new thread
+- **⌘/Ctrl + Shift + Backspace**: Delete current thread
+- **⌘/Ctrl + Shift + C**: Clean current thread
+
+### Navigation
+- **⌘/Ctrl + B**: Toggle left panel
+- **⌘/Ctrl + Shift + B**: Toggle right panel
+- **⌘/Ctrl + ,**: Open settings
+
+### Message Input
+- **Enter**: Send message
+- **Shift + Enter**: Insert new line
+
+<Aside type="note">
+On Windows and Linux, use **Ctrl** instead of **⌘** (Command key).
+</Aside>
+
+## Reset Settings
+
+### Reset Individual Settings
+
+Most settings can be reset by:
+1. **Changing back to default values** in the settings interface
+2. **Toggling options** to reset them
+
+### Complete Reset
+
+To reset all settings:
+1. **Close Jan completely**
+2. **Backup important data** (threads, models)
+3. **Delete settings folder** in Jan data directory
+4. **Restart Jan** with default settings
+
+<Aside type="caution">
+This will reset ALL preferences, shortcuts, and configurations. Models and conversations are preserved.
+</Aside>
+
+## Troubleshooting Settings
+
+### Settings Not Saving
+- **Check file permissions** in Jan data folder
+- **Close other Jan instances** before changing settings
+- **Restart Jan** after major setting changes
+
+### Performance Issues After Changes
+- **Reset GPU settings** if models won't load
+- **Clear cache** in Jan data folder
+- **Reduce model context length** if memory issues occur
+
+### Interface Problems
+- **Switch themes** if display issues occur
+- **Reset appearance settings** to defaults
+- **Check system display scaling** settings
+
+## What's Next?
+
+After configuring settings:
+- **Test different themes** to find your preference
+- **Enable GPU acceleration** for better performance
+- **Set up keyboard shortcuts** for faster workflow
+- **Configure proxy settings** if behind corporate firewall

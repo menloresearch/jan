@@ -1,0 +1,156 @@
+---
+title: Create Custom Assistants
+description: Customize how your AI assistant behaves and responds by setting instructions and saving configurations.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Assistants are configuration profiles that determine how your AI should behave and respond. Each assistant consists of instructions that guide behavior, model settings for responses, and tool configurations.
+
+## What Are Assistants?
+
+An assistant is essentially a set of rules and preferences that shape how the AI interacts with you:
+
+- **Instructions**: Guide the AI's behavior and response style
+- **Model settings**: Control response generation parameters
+- **Tool configurations**: Enable features like knowledge retrieval
+
+Jan currently uses a single default assistant named **Jan** across all threads, with plans for multiple custom assistants in future updates.
+
+## Set Assistant Instructions
+
+Customize how Jan understands and responds to your queries by modifying assistant instructions:
+
+1. **Open any thread** and click the **Assistant** tab in the right sidebar
+2. **Enter custom instructions** in the Instructions input field
+3. **Click out of the field** to apply instructions to the current thread
+
+![Set Instructions](/images/docs/quick-start-02.png)
+
+### Best Practices for Instructions
+
+- **Be specific**: Clear, detailed instructions work better than vague ones
+- **Include format preferences**: Specify tone, style, or markdown formatting requirements
+- **Set context**: Define the assistant's role or expertise area
+- **Provide examples**: Show the type of responses you want
+
+### Example Instructions
+
+**Development Mentor:**
+```
+Act as a software development mentor focused on Python and JavaScript. 
+Provide detailed explanations with code examples when relevant.
+Use markdown formatting for code blocks.
+Always explain the "why" behind solutions, not just the "how".
+```
+
+**Casual Conversationalist:**
+```
+Respond in a casual, friendly tone. Keep explanations brief and use simple language.
+Provide examples when explaining complex topics.
+Use humor occasionally but stay helpful and professional.
+```
+
+**Technical Writer:**
+```
+Write clear, concise technical documentation. Use proper headings, bullet points, 
+and code examples. Always include troubleshooting tips when relevant.
+Structure responses with: Overview, Steps, Expected Results, Troubleshooting.
+```
+
+**Creative Assistant:**
+```
+You are a creative writing partner. Help brainstorm ideas, improve prose, and 
+suggest plot developments. Be encouraging and constructive with feedback.
+Ask clarifying questions to better understand creative goals.
+```
+
+## Apply Instructions to New Threads
+
+Save assistant instructions to automatically apply them to all new conversations:
+
+1. **In any thread**, click the **Assistant** tab in the right sidebar
+2. **Toggle the "Save instructions for new threads" slider**
+3. **When enabled**, all new threads will use these instructions as default
+
+<Aside type="note">
+This setting only affects new threads. Existing threads keep their current instructions unless manually changed.
+</Aside>
+
+![Assistant Slider](/images/docs/assistant-01.png)
+
+## Advanced Instruction Techniques
+
+### Role-Based Instructions
+Define a specific role for your assistant:
+```
+You are an expert data scientist with 10 years of experience in machine learning.
+Help analyze data problems and suggest appropriate ML approaches.
+Always consider data quality and ethical implications in your recommendations.
+```
+
+### Context-Aware Instructions
+Include information about your use case:
+```
+I'm a small business owner learning digital marketing. Explain concepts in simple terms
+and always relate examples to small business scenarios. Avoid jargon unless you explain it.
+Prioritize cost-effective solutions.
+```
+
+### Output Format Instructions
+Specify exactly how you want responses structured:
+```
+Structure all responses as:
+1. Quick Summary (2-3 sentences)
+2. Detailed Explanation
+3. Example or Code (if applicable)
+4. Next Steps or Related Topics
+
+Use bullet points for lists and bold text for key concepts.
+```
+
+## Troubleshooting Assistant Behavior
+
+### Instructions Aren't Working
+- **Check specificity**: Vague instructions lead to inconsistent behavior
+- **Verify saving**: Ensure you clicked out of the field or toggled the save setting
+- **Test in new thread**: Create a fresh thread to see if instructions apply
+- **Model limitations**: Some models follow instructions better than others
+
+### Inconsistent Responses
+- **Add more detail**: Include examples of desired vs. undesired responses
+- **Set boundaries**: Explicitly state what the assistant should NOT do
+- **Use system prompts**: Frame instructions as system-level behavior rules
+
+### Assistant "Forgets" Instructions
+- **Long conversations**: Models may lose track of instructions in very long threads
+- **Start new thread**: Begin fresh conversation to reset instruction context
+- **Repeat key points**: Include important preferences in your messages
+
+## Understanding Context Limits
+
+Different models have different context windows (memory limits):
+
+- **Smaller models (3B-7B)**: May lose instructions in longer conversations
+- **Larger models (13B+)**: Better at maintaining instruction consistency
+- **Context refresh**: Instructions are reapplied when starting new threads
+
+## Integration with Model Parameters
+
+Assistant instructions work together with [model parameters](/reference/model-parameters):
+
+- **Temperature**: Lower values make instructions more consistently followed
+- **Top P**: Affects how creatively the model interprets instructions
+- **System prompt**: Instructions become part of the model's system prompt
+
+<Aside type="tip">
+For best results, combine clear instructions with appropriate model parameters. Lower temperature (0.1-0.3) works well for factual assistants, while higher temperature (0.7-1.0) suits creative assistants.
+</Aside>
+
+## What's Next?
+
+Once you've set up your assistant:
+- Explore [model parameters](/reference/model-parameters) for fine-tuning
+- Learn about [thread management](/how-to/manage-threads) 
+- Set up [knowledge retrieval tools](/how-to/knowledge-retrieval) for enhanced capabilities
+- Try different models to see how they interpret your instructions

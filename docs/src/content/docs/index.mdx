@@ -1,0 +1,83 @@
+---
+title: Jan
+description: Open-source personal AI assistant that runs 100% offline on your computer. Available for Mac, Windows, and Linux.
+template: splash
+editUrl: false
+lastUpdated: false
+prev: false
+next: false
+hero:
+  tagline: Your personal AI assistant that runs completely offline
+  image:
+    file: ../../assets/houston.webp
+  actions:
+    - text: Download Jan
+      link: /download/
+      icon: right-arrow
+      variant: primary
+    - text: Get Started
+      link: /quickstart/
+      icon: right-arrow
+      variant: secondary
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+Jan is a personal AI assistant that runs entirely on your desktop. No cloud required, no data sent anywhere, no subscriptions. Just you and your AI, having conversations that stay between you two.
+
+Jan provides an OpenAI-compatible API that runs locally at `https://localhost:1337` (or a custom port). This enables you to power other applications running locally with AI capabilities, using your own downloaded models.
+
+## Key Features
+
+<CardGrid stagger>
+	<Card title="100% Offline" icon="laptop">
+		Run AI models completely offline with full privacy and control over your data.
+	</Card>
+	<Card title="Local & Cloud Models" icon="puzzle">
+		Download local models from HuggingFace or connect to cloud providers like OpenAI, Anthropic, and more.
+	</Card>
+	<Card title="OpenAI-Compatible API" icon="setting">
+		Local API server that's compatible with OpenAI's API for seamless integration.
+	</Card>
+	<Card title="Extensible" icon="add-document">
+		Customize Jan with extensions, similar to VSCode's extension system.
+	</Card>
+</CardGrid>
+
+## Quick Navigation
+
+<CardGrid>
+	<Card title="📚 Tutorials" icon="open-book">
+		Start here if you're new to Jan. Step-by-step guides to get you up and running.
+		
+		- [Installation Tutorial](/tutorials/installation/)
+		- [First Chat Tutorial](/tutorials/first-chat/)
+	</Card>
+	<Card title="📖 How-to Guides" icon="list-format">
+		Practical solutions for specific tasks and common use cases.
+		
+		- [Download Models](/how-to/download-models/)
+		- [Configure GPU](/how-to/gpu-setup/)
+	</Card>
+	<Card title="📋 Reference" icon="document">
+		Technical specifications, API documentation, and detailed configuration options.
+		
+		- [API Reference](/reference/api/)
+		- [Model Parameters](/reference/model-parameters/)
+	</Card>
+	<Card title="💡 Explanation" icon="information">
+		Understand the concepts, architecture, and philosophy behind Jan.
+		
+		- [Architecture Overview](/explanation/architecture/)
+		- [Privacy & Security](/explanation/privacy/)
+	</Card>
+</CardGrid>
+
+## Philosophy
+
+Jan belongs to you. Really:
+- Open source under the [Apache 2.0 license](https://github.com/menloresearch/jan/blob/dev/LICENSE) (use it, modify it, ship it)
+- [Local-first data storage](https://www.inkandswitch.com/local-first) (your files, your computer, your rules)
+- Works offline (the internet is optional, not required)
+- Your choice of AI models (local, cloud, or both)
+- No data collection (we literally can't see your conversations)

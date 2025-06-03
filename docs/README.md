@@ -1,66 +1,54 @@
-# Website & Docs
+# Starlight Starter Kit: Basics
 
-This website is built using [Nextra](https://nextra.site/), a modern static website generator.
+[![Built with Starlight](https://astro.badg.es/v2/built-with-starlight/tiny.svg)](https://starlight.astro.build)
 
-### Information Architecture
-
-We try to **keep routes consistent** to maintain SEO.
-
-- **`/guides/`**: Guides on how to use the Jan application. For end users who are directly using Jan.
-
-- **`/developer/`**: Developer docs on how to extend Jan. These pages are about what people can build with our software.
-
-- **`/api-reference/`**: Reference documentation for the Jan API server, written in Swagger/OpenAPI format.
-
-- **`/changelog/`**: A list of changes made to the Jan application with each release.
-
-- **`/blog/`**: A blog for the Jan application.
-
-## How to Contribute
-
-Refer to the [Contributing Guide](https://github.com/menloresearch/jan/blob/main/CONTRIBUTING.md) for more comprehensive information on how to contribute to the Jan project.
-
-### Pre-requisites and Installation
-
-- [Node.js](https://nodejs.org/en/) (version 20.0.0 or higher)
-- [yarn](https://yarnpkg.com/) (version 1.22.0 or higher)
-
-#### Installation
-
-```bash
-cd jan/docs
-yarn install
-yarn dev
+```
+bun create astro@latest -- --template starlight
 ```
 
-This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
+[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/withastro/starlight/tree/main/examples/basics)
+[![Open with CodeSandbox](https://assets.codesandbox.io/github/button-edit-lime.svg)](https://codesandbox.io/p/sandbox/github/withastro/starlight/tree/main/examples/basics)
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/withastro/starlight&create_from_path=examples/basics)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fwithastro%2Fstarlight%2Ftree%2Fmain%2Fexamples%2Fbasics&project-name=my-starlight-docs&repository-name=my-starlight-docs)
 
-#### Build
+> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
 
-```bash
-yarn build
+## 🚀 Project Structure
+
+Inside of your Astro + Starlight project, you'll see the following folders and files:
+
+```
+.
+├── public/
+├── src/
+│   ├── assets/
+│   ├── content/
+│   │   ├── docs/
+│   └── content.config.ts
+├── astro.config.mjs
+├── package.json
+└── tsconfig.json
 ```
 
-This command generates static content into the `build` directory and can be served using any static contents hosting service.
+Starlight looks for `.md` or `.mdx` files in the `src/content/docs/` directory. Each file is exposed as a route based on its file name.
 
-### Deployment
+Images can be added to `src/assets/` and embedded in Markdown with a relative link.
 
-Using SSH:
+Static assets, like favicons, can be placed in the `public/` directory.
 
-```bash
-USE_SSH=true yarn deploy
-```
+## 🧞 Commands
 
-Not using SSH:
+All commands are run from the root of the project, from a terminal:
 
-```bash
-GIT_USER=<Your GitHub username> yarn deploy
-```
+| Command                   | Action                                           |
+| :------------------------ | :----------------------------------------------- |
+| `bun install`             | Installs dependencies                            |
+| `bun dev`             | Starts local dev server at `localhost:4321`      |
+| `bun build`           | Build your production site to `./dist/`          |
+| `bun preview`         | Preview your build locally, before deploying     |
+| `bun astro ...`       | Run CLI commands like `astro add`, `astro check` |
+| `bun astro -- --help` | Get help using the Astro CLI                     |
 
-If you are using GitHub pages for hosting, this command is a convenient way to build the website and push to the `gh-pages` branch.
+## 👀 Want to learn more?
 
-### Preview URL, Pre-release and Publishing Documentation
-
-- When a pull request is created, the preview URL will be automatically commented on the pull request.
-
-- The documentation will then be published to [https://jan.ai/](https://jan.ai/) when the pull request is merged to `main`.
+Check out [Starlight’s docs](https://starlight.astro.build/), read [the Astro documentation](https://docs.astro.build), or jump into the [Astro Discord server](https://astro.build/chat).

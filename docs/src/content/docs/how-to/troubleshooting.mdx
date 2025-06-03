@@ -1,0 +1,216 @@
+---
+title: Troubleshoot Issues
+description: Solutions for common Jan problems, from installation issues to performance optimization.
+---
+
+Common issues and their solutions. If these don't help, join our [Discord](https://discord.gg/FTk2MvZwJH) for community support.
+
+## Installation Issues
+
+### "Jan won't start on macOS"
+**Symptoms**: App crashes immediately or shows "damaged" warning
+
+**Solutions**:
+1. **Allow in Security Settings**: System Settings → Privacy & Security → Allow Jan
+2. **Remove quarantine**: Run `xattr -d com.apple.quarantine /Applications/Jan.app`
+3. **Reinstall**: Download fresh copy from [jan.ai](https://jan.ai/download)
+
+### "Windows Defender blocks Jan"
+**Symptoms**: Installation blocked or files quarantined
+
+**Solutions**:
+1. **Add exception**: Windows Security → Virus & threat protection → Add exclusion
+2. **Disable real-time protection**: Temporarily during installation
+3. **Download from official source**: Ensure you're using the official installer
+
+### "Linux AppImage won't execute"
+**Symptoms**: Double-click doesn't work, permission errors
+
+**Solutions**:
+```bash
+# Make executable
+chmod +x Jan-linux-x86_64.AppImage
+
+# Run from terminal
+./Jan-linux-x86_64.AppImage
+
+# If FUSE issues, extract and run
+./Jan-linux-x86_64.AppImage --appimage-extract
+./squashfs-root/AppRun
+```
+
+## Model Issues
+
+### "Model downloads fail"
+**Symptoms**: Downloads stop, timeout errors, corrupted files
+
+**Solutions**:
+1. **Check internet**: Stable connection required for large files
+2. **Retry download**: Jan can resume interrupted downloads
+3. **Clear cache**: Settings → Advanced → Clear download cache
+4. **Use VPN**: Some regions have restricted access to model repositories
+
+### "Model won't load"
+**Symptoms**: Error messages when selecting model, crashes during loading
+
+**Solutions**:
+1. **Check RAM**: Ensure sufficient memory (8GB+ for 7B models)
+2. **Verify file integrity**: Re-download if corruption suspected
+3. **Update Jan**: Newer versions support more model formats
+4. **Check logs**: Help → Open Logs for detailed error information
+
+### "Responses are very slow"
+**Symptoms**: Long wait times, high CPU usage, fan noise
+
+**Solutions**:
+1. **Enable GPU acceleration**: Settings → Engines → Configure GPU
+2. **Use smaller models**: Switch to 3B or 7B parameter models
+3. **Reduce context length**: Lower in model settings
+4. **Close other apps**: Free up system resources
+
+## Performance Optimization
+
+### GPU Not Working
+**Check GPU detection**:
+1. **Settings → Hardware**: Verify GPU is detected
+2. **Update drivers**: Latest NVIDIA/AMD drivers required
+3. **Check CUDA version**: NVIDIA requires CUDA 11.7+
+
+**Enable GPU acceleration**:
+```
+Settings → Engines → Llama.cpp → Backend
+Select: cuda, vulkan, or opencl (depending on your GPU)
+```
+
+### Out of Memory Errors
+**Solutions by RAM amount**:
+
+**8GB RAM**:
+- Use 3B models max
+- Enable memory mapping: Settings → Advanced → Enable mmap
+- Close browser tabs and other apps
+
+**16GB RAM**:
+- 7B models comfortable
+- 13B models possible with optimization
+- Monitor memory usage in Activity Monitor/Task Manager
+
+**32GB+ RAM**:
+- Most models will work
+- Can run multiple models simultaneously
+- Enable model preloading for faster switching
+
+### Disk Space Issues
+**Jan models are large**:
+- **Phi-3 Mini**: 2.3GB
+- **Llama 3.2 7B**: 4.1GB  
+- **Llama 3.1 70B**: 40GB+
+
+**Free up space**:
+1. **Remove unused models**: Settings → Models → Delete
+2. **Change storage location**: Settings → Advanced → Data Directory
+3. **Use external drive**: Move Jan data folder to external storage
+
+## Network and API Issues
+
+### "Can't connect to localhost:1337"
+**Symptoms**: API calls fail, external apps can't connect
+
+**Solutions**:
+1. **Check server status**: Settings → API Server → Status should be "Running"
+2. **Restart API server**: Toggle off/on in settings
+3. **Firewall settings**: Allow Jan through firewall
+4. **Port conflicts**: Change port if 1337 is occupied
+
+### Cloud API Keys Not Working
+**Common issues**:
+
+**OpenAI**:
+- Verify API key format starts with `sk-`
+- Check billing account has credit
+- Ensure key has appropriate permissions
+
+**Anthropic**:
+- API key format: `sk-ant-api03-...`
+- Account must have Claude API access
+- Check usage limits and billing
+
+## Data and Configuration
+
+### "Lost conversations"
+**Recovery options**:
+1. **Check data folder**: Conversations stored in threads directory
+2. **Restore from backup**: If you backed up Jan data folder
+3. **Check different user accounts**: Conversations are per-user
+
+**Prevent future loss**:
+- **Regular backups**: Copy Jan data folder periodically
+- **Export important conversations**: Copy text manually
+- **Sync across devices**: Manual file copying only
+
+### "Settings reset after update"
+**Common causes**:
+- Major version updates may reset some settings
+- Corrupted configuration files
+- Changed data directory location
+
+**Solutions**:
+1. **Reconfigure manually**: Most settings need quick reset
+2. **Import backed up config**: If you saved settings
+3. **Check Jan data folder location**: May have moved during update
+
+### "Extensions not working"
+**Symptoms**: Missing features, error messages, crashes
+
+**Solutions**:
+1. **Update extensions**: Settings → Extensions → Check for updates
+2. **Disable problematic extensions**: Identify and disable problematic ones
+3. **Clear extension cache**: Settings → Advanced → Reset extensions
+4. **Reinstall Jan**: Fresh installation if extensions corrupt
+
+## Getting Help
+
+### Collect Diagnostic Information
+Before asking for help, gather:
+
+1. **System information**:
+   - OS version
+   - RAM amount
+   - GPU type
+   - Jan version
+
+2. **Log files**:
+   - Help → Open Logs
+   - Copy recent error messages
+   - Include relevant timestamps
+
+3. **Steps to reproduce**:
+   - What you were trying to do
+   - Exact error messages
+   - When the problem started
+
+### Where to Get Support
+
+**Community Discord**: [discord.gg/FTk2MvZwJH](https://discord.gg/FTk2MvZwJH)
+- **#🆘|get-help**: Technical support
+- **#general**: General questions
+- **#model-discussions**: Model-specific issues
+
+**GitHub Issues**: [github.com/menloresearch/jan/issues](https://github.com/menloresearch/jan/issues)
+- Bug reports
+- Feature requests
+- Technical discussions
+
+**Documentation**: Search these docs first
+- Most common issues covered
+- Updated with each release
+- Includes step-by-step solutions
+
+### Before Reporting Bugs
+
+1. **Search existing issues**: Problem might be known
+2. **Try latest version**: Bug might be fixed
+3. **Test with minimal setup**: Disable extensions, try default model
+4. **Provide reproduction steps**: Clear, step-by-step instructions
+
+The community is helpful, but detailed problem descriptions get faster solutions.

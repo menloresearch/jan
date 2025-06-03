@@ -1,0 +1,241 @@
+---
+title: Use the Local API Server
+description: Set up and use Jan's built-in API server for integration with external applications and services.
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Jan includes a built-in API server compatible with OpenAI's API specification, allowing you to interact with AI models through a local HTTP interface. Use Jan as a drop-in replacement for OpenAI's API, running entirely on your computer.
+
+The API server provides direct access to your downloaded models without requiring external services or internet connectivity.
+
+![Local API Server](/images/docs/api-server.png)
+
+## Start the Server
+
+### Step 1: Configure and Start
+
+1. **Navigate to Local API Server** in Jan's interface
+2. **Configure server settings** (see [Server Settings](#server-settings) below)
+3. **Click Start Server** button
+4. **Wait for confirmation** in the logs panel: `JAN API listening at: http://127.0.0.1:1337`
+
+### Step 2: Test the Server
+
+The quickest way to test your server:
+
+1. **Click API Playground** button to open the testing interface
+2. **Select a model** from the dropdown menu in Jan's interface
+3. **Try a simple chat completion request**
+4. **View the response** in real-time
+
+### Step 3: Use the API
+
+The API follows OpenAI's specification, making it compatible with existing OpenAI tools and libraries.
+
+## Server Settings
+
+### Host Address Options
+
+**127.0.0.1 (Recommended)**:
+- Only accessible from your computer
+- Most secure option for personal use
+- Blocks external network access
+
+**0.0.0.0**:
+- Makes server accessible from other devices on your network
+- Use with caution and only when necessary
+- Potential security implications
+
+### Port Configuration
+
+- **Default**: `1337`
+- **Range**: Any number between 1-65535
+- **Avoid**: Common ports (80, 443, 3000, 8080) used by other applications
+- **Test**: Ensure port isn't already in use
+
+### API Prefix
+
+- **Default**: `/v1`
+- **Purpose**: Defines base path for all API endpoints
+- **Example**: `http://127.0.0.1:1337/v1/chat/completions`
+- **Customizable**: Change if needed for specific integrations
+
+### Cross-Origin Resource Sharing (CORS)
+
+CORS controls which websites can access your API—important for web applications.
+
+**Enable CORS when**:
+- Building web applications that need API access
+- Using browser extensions that connect to Jan
+- Developing frontend applications locally
+
+**Keep CORS disabled when**:
+- Only using API from local applications
+- Security is a primary concern
+- No browser-based access needed
+
+### Verbose Server Logs
+
+Enable for detailed information:
+- Complete API request details
+- Error messages and debugging information
+- Server status and performance updates
+- Useful for troubleshooting integration issues
+
+## API Usage Examples
+
+### Basic Chat Completion
+
+```bash
+curl -X POST http://127.0.0.1:1337/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "llama3.2-1b-instruct",
+    "messages": [
+      {"role": "user", "content": "Hello, how are you?"}
+    ]
+  }'
+```
+
+### Streaming Response
+
+```bash
+curl -X POST http://127.0.0.1:1337/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "llama3.2-1b-instruct",
+    "messages": [
+      {"role": "user", "content": "Write a short story"}
+    ],
+    "stream": true
+  }'
+```
+
+### Using with Python
+
+```python
+import openai
+
+# Point to your local Jan server
+client = openai.OpenAI(
+    base_url="http://127.0.0.1:1337/v1",
+    api_key="not-needed-for-local-server"
+)
+
+response = client.chat.completions.create(
+    model="llama3.2-1b-instruct",
+    messages=[
+        {"role": "user", "content": "Hello from Python!"}
+    ]
+)
+
+print(response.choices[0].message.content)
+```
+
+## Integration Examples
+
+### VS Code with Continue.dev
+
+1. **Install Continue.dev extension** in VS Code
+2. **Configure to use local server**:
+   ```json
+   {
+     "models": [
+       {
+         "title": "Jan Local",
+         "provider": "openai",
+         "model": "llama3.2-1b-instruct",
+         "apiBase": "http://127.0.0.1:1337/v1"
+       }
+     ]
+   }
+   ```
+
+### Cursor IDE
+
+1. **Open Cursor settings**
+2. **Add custom model**:
+   - Provider: OpenAI API Compatible
+   - Base URL: `http://127.0.0.1:1337/v1`
+   - Model: Use exact model name from Jan
+
+### Custom Applications
+
+Use any OpenAI-compatible library by changing the base URL to your local Jan server.
+
+## Troubleshooting
+
+<Aside type="tip">
+Enable **Verbose Server Logs** for detailed error messages and debugging information.
+</Aside>
+
+### Common Issues
+
+**Server won't start**:
+- Check if port is already in use by another application
+- Verify admin/sudo rights if needed for port binding
+- Ensure firewall allows local connections
+
+**API requests fail**:
+- Confirm server is running and showing "listening" message
+- Verify model is loaded in Jan interface
+- Check API endpoint URL matches server settings exactly
+- Ensure model name in request matches Jan's exact model name
+
+**Model name errors**:
+- Use exact model name shown in Jan (e.g., `llama3.2-1b-instruct`)
+- Check model is downloaded and available
+- Verify model isn't still downloading
+
+**Connection refused**:
+- Confirm correct host address (127.0.0.1 vs localhost)
+- Check port number matches configuration
+- Verify JSON request format is correct
+
+### CORS Errors in Web Apps
+
+**When using from web browsers**:
+- Enable CORS in server settings
+- Verify request origin is allowed
+- Check web app's request URL matches server address exactly
+- Review browser console for specific error messages
+
+### Performance Issues
+
+**Slow API responses**:
+- Monitor system resources (CPU, RAM, GPU usage)
+- Reduce context length in requests
+- Lower number of GPU layers (`ngl` parameter)
+- Close other resource-intensive applications
+
+**Server crashes**:
+- Check available system memory
+- Verify model size is appropriate for hardware
+- Review logs for out-of-memory errors
+- Consider using smaller models
+
+## Security Considerations
+
+### Local Network Access
+
+When using `0.0.0.0` host address:
+- API becomes accessible to other devices on your network
+- Consider firewall rules to limit access
+- Monitor for unauthorized usage
+- Use strong network security
+
+### API Key Authentication
+
+The local server doesn't require authentication by default:
+- Suitable for local development and personal use
+- Consider adding authentication for network-accessible setups
+- Review Cortex documentation for advanced security options
+
+## What's Next?
+
+After setting up the API server:
+- Learn about [model parameters](/reference/model-parameters) for API requests
+- Set up [GPU acceleration](/tutorials/gpu-setup) for better performance
+- Explore [integrations with development tools](/integrations)
+- Configure [custom assistants](/how-to/custom-assistants) for specialized API behavior

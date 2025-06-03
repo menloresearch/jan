@@ -1,0 +1,202 @@
+---
+title: First Chat Tutorial
+description: Learn how to have effective conversations with AI models in Jan, customize responses, and understand model behavior.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+
+This tutorial assumes you've already [installed Jan](/tutorials/installation) and downloaded at least one model. You'll learn how to have effective conversations, customize AI behavior, and understand what makes conversations with local AI different.
+
+## What you'll learn
+
+By the end of this tutorial, you'll know how to:
+- Start new conversations and organize them into threads
+- Customize how the AI responds using assistant instructions
+- Adjust model parameters for different conversation styles
+- Switch between models for different types of tasks
+
+## Before you start
+
+- **Prerequisites**: Jan installed with at least one model downloaded
+- **Time required**: 15-20 minutes
+- **Skill level**: Beginner
+
+<Steps>
+
+1. **Create a new conversation thread**
+
+   Threads in Jan are separate conversation contexts, like different chat windows:
+
+   1. Click **Threads** in the left sidebar
+   2. Click **New Thread** (+ button) or "Create new thread"
+   3. Give your thread a descriptive name like "Creative Writing" or "Technical Questions"
+
+   Each thread maintains its own conversation history and can use different models or settings.
+
+2. **Choose your model**
+
+   Different models excel at different tasks:
+
+   1. In your thread, look for the model selector (usually at the bottom of the chat)
+   2. Click it to see your available models
+   3. For this tutorial, choose any model you've downloaded
+
+   :::tip[Model selection tips]
+   - **Smaller models (3-7B)**: Faster responses, good for simple conversations
+   - **Larger models (13B+)**: More capable but slower, better for complex tasks
+   - **Specialized models**: Some are optimized for coding, creative writing, or specific languages
+   :::
+
+3. **Customize the AI's personality and behavior**
+
+   This is where Jan shines compared to other AI tools. You can completely customize how the AI responds:
+
+   1. Look for the **Assistant** tab in the right sidebar
+   2. In the **Instructions** field, write how you want the AI to behave
+
+   Try this example instruction:
+   ```
+   You are a helpful writing coach. Provide constructive feedback on writing, 
+   suggest improvements, and encourage creativity. Keep responses encouraging 
+   but honest about areas for improvement.
+   ```
+
+   ![Assistant Instructions](/docs/_assets/quick-start-02.png)
+
+4. **Start with a simple conversation**
+
+   Let's test your customized assistant:
+
+   1. Type a message in the chat input
+   2. Try: "I'm working on a short story about time travel. Can you help me brainstorm some unique plot ideas?"
+   3. Press Enter and wait for the response
+
+   Notice how the AI's response reflects the instructions you provided.
+
+5. **Experiment with different conversation styles**
+
+   Try changing the instructions to see how it affects responses:
+
+   **For technical help:**
+   ```
+   You are a knowledgeable tech support specialist. Provide clear, 
+   step-by-step solutions. Always ask clarifying questions if needed.
+   ```
+
+   **For casual conversation:**
+   ```
+   You are a friendly, casual conversation partner. Use humor when 
+   appropriate and show genuine interest in topics.
+   ```
+
+   **For learning:**
+   ```
+   You are a patient tutor. Explain concepts clearly, provide examples, 
+   and check understanding before moving to advanced topics.
+   ```
+
+6. **Adjust model parameters**
+
+   Fine-tune how the model generates responses:
+
+   1. Click the **Model** tab in the right sidebar
+   2. Experiment with these key settings:
+
+   - **Temperature (0.1-1.5)**: Lower = more focused/consistent, Higher = more creative/random
+   - **Max Tokens**: Limits response length
+   - **Top P**: Controls response diversity
+
+   ![Model Parameters](/docs/_assets/model-parameters.png)
+
+   :::note[Parameter effects]
+   - **Temperature 0.3**: Great for factual Q&A, technical support
+   - **Temperature 0.7**: Balanced for general conversation
+   - **Temperature 1.0+**: Best for creative writing, brainstorming
+   :::
+
+7. **Try different types of conversations**
+
+   Test your setup with various conversation types:
+
+   **Creative tasks:**
+   - "Write a haiku about artificial intelligence"
+   - "Help me plan a fantasy world for my novel"
+
+   **Problem-solving:**
+   - "I need to organize my daily schedule better"
+   - "What are some strategies for learning a new language?"
+
+   **Technical questions:**
+   - "Explain machine learning in simple terms"
+   - "How do I choose the right programming language for my project?"
+
+8. **Manage multiple conversations**
+
+   Create different threads for different purposes:
+
+   1. Create a new thread called "Work Projects"
+   2. Set up assistant instructions for professional communication
+   3. Switch between threads to maintain different conversation contexts
+
+   This way, your creative writing assistant won't interfere with your work-related conversations.
+
+</Steps>
+
+## Understanding conversation flow
+
+### Context and memory
+- Each thread maintains conversation history
+- The AI remembers previous messages in the same thread
+- Longer conversations may hit token limits (the AI's memory capacity)
+
+### Response quality
+- Local models may respond differently than cloud AI services
+- Response time depends on your computer's performance
+- Quality varies by model size and specialization
+
+## Troubleshooting conversations
+
+**If responses seem inconsistent:**
+- Check your assistant instructions for clarity
+- Try adjusting temperature settings
+- Consider if the model is appropriate for your task
+
+**If responses are too slow:**
+- Try a smaller model
+- Enable [GPU acceleration](/tutorials/gpu-setup)
+- Reduce max token settings
+
+**If responses are cut off:**
+- Increase the max tokens parameter
+- Break complex requests into smaller parts
+
+## Advanced conversation techniques
+
+### Conversation starters that work well
+- Be specific about what you want
+- Provide context for complex topics
+- Ask for step-by-step explanations when needed
+
+### Effective prompting
+```
+Good: "Help me write a professional email declining a meeting invitation, 
+keeping a friendly tone and suggesting alternative times."
+
+Less effective: "Write an email."
+```
+
+## What's next?
+
+Now that you're comfortable with basic conversations:
+
+- Learn to [set up GPU acceleration](/tutorials/gpu-setup) for faster responses
+- Explore [different models](/how-to/download-models) for specialized tasks
+- Try [connecting cloud models](/tutorials/cloud-models) for comparison
+- Set up the [API server](/how-to/api-server) to use Jan with other applications
+
+## Key takeaways
+
+1. **Threads organize conversations**: Use different threads for different topics or purposes
+2. **Instructions shape behavior**: Well-written assistant instructions dramatically improve response quality
+3. **Parameters control style**: Temperature and other settings fine-tune how the model responds
+4. **Local AI is different**: Responses may vary from cloud services, but you have complete control and privacy

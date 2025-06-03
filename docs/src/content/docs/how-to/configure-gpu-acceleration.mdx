@@ -1,0 +1,48 @@
+---
+title: Configure GPU acceleration
+description: Set up GPU acceleration to improve local model performance in Jan
+sidebar:
+  order: 1
+---
+
+import { Steps, Aside } from '@astrojs/starlight/components';
+
+GPU acceleration significantly improves performance when running local AI models. Here's how to set it up properly.
+
+<Steps>
+
+1. **Install GPU drivers and dependencies**
+
+   <Aside type="caution">
+   Ensure you have installed all required GPU drivers before enabling acceleration. See the [Windows GPU setup](/guides/install/windows/#gpu-acceleration) or [Linux GPU setup](/guides/install/linux/#gpu-acceleration) guides.
+   </Aside>
+
+2. **Configure the backend**
+
+   Navigate to **Settings** → **Local Engine** → **Llama.cpp**
+
+   ![Hardware configuration](/images/docs/trouble-shooting-03.png)
+
+3. **Select your GPU backend**
+
+   In the **llama-cpp Backend** section, choose the appropriate backend:
+   - `windows-amd64-vulkan` for AMD graphics cards
+   - `windows-amd64-cuda` for NVIDIA graphics cards
+   - See our [llama.cpp guide](/reference/engines/llama-cpp/) for all options
+
+4. **Optimize GPU layers**
+
+   In your model settings, adjust the `ngl` (number of GPU layers):
+   - **Start with 35 layers** for 8GB VRAM
+   - **Increase** if you have more VRAM available
+   - **Decrease** if you see out-of-memory errors
+
+</Steps>
+
+## Performance optimization
+
+- **Monitor VRAM usage** - keep it under 90%
+- **Higher NGL** = more VRAM used, faster performance
+- **Lower NGL** = less VRAM used, slower performance
+
+If you experience issues, reduce the number of GPU layers or ensure your system meets the [minimum requirements](/guides/install/).

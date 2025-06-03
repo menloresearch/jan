@@ -1,0 +1,119 @@
+---
+title: Privacy & Security
+description: How Jan protects your privacy through local processing and what data stays on your device.
+---
+
+Jan's privacy model is simple: your conversations don't leave your computer. Here's what that actually means.
+
+## Local processing
+
+When you chat with Jan:
+- AI processing happens on your device
+- No data sent to external servers (unless you choose cloud models)
+- Conversation history stored locally
+- No analytics, telemetry, or "usage insights" collected
+
+This isn't a marketing claim—it's an architectural requirement. Jan literally can't phone home with your data because it doesn't have the infrastructure to receive it.
+
+## Data storage
+
+Everything stays in your [Jan data folder](/explanation/data-storage):
+
+- **Conversations**: Thread history, assistant configurations
+- **Models**: Downloaded AI models and their settings  
+- **User preferences**: Interface settings, extensions
+- **Cache**: Temporary files for performance
+
+Location depends on your OS:
+- **Windows**: `%APPDATA%\jan`
+- **macOS**: `~/Library/Application Support/jan`
+- **Linux**: `~/.config/jan`
+
+## When data might leave your device
+
+Jan gives you the choice to use cloud AI services:
+
+- **OpenAI models**: Your messages go to OpenAI's servers
+- **Anthropic models**: Conversations processed by Anthropic
+- **Other cloud providers**: Each has their own data policies
+
+These connections are opt-in. You add API keys, you decide what to send. Local models never trigger external requests.
+
+## Network connections
+
+Jan makes network requests for:
+- **Model downloads**: From HuggingFace, Jan Hub, or other model repositories
+- **Updates**: Application updates (can be disabled)
+- **Cloud models**: Only when you configure and use them
+
+That's it. No background analytics, no crash reporting, no "improving our services."
+
+## Security considerations
+
+### Local models
+- Run in isolated processes
+- No network access unless explicitly configured
+- Model files validated before execution
+- Sandboxed from system resources
+
+### Cloud models
+- API keys stored locally with system encryption
+- Connections use HTTPS/TLS
+- No logging of API requests by Jan
+- You control which conversations use cloud services
+
+### Extension system
+- Extensions run in controlled environments
+- Limited system access
+- Community extensions undergo basic security review
+- You can review extension source code
+
+## Comparing privacy models
+
+| Aspect | Jan (Local) | Cloud AI Services |
+|--------|-------------|-------------------|
+| Data processing | Your device | Company servers |
+| Conversation storage | Local only | Varies by provider |
+| Model updates | Manual/optional | Automatic |
+| Data retention | Until you delete | Provider dependent |
+| Access logs | None | Varies |
+| Third-party sharing | None | See terms of service |
+
+## Trust, but verify
+
+Jan is [open source](https://github.com/menloresearch/jan) under Apache 2.0. You can:
+- Review the source code
+- Build from source
+- Audit network traffic
+- Fork and modify
+
+The privacy claims aren't just promises—they're verifiable.
+
+## Privacy best practices
+
+To maximize privacy with Jan:
+
+1. **Use local models**: Download models instead of using cloud APIs
+2. **Review extensions**: Check what community extensions do before installing
+3. **Monitor network**: Use tools like Little Snitch (macOS) or Wireshark to verify traffic
+4. **Backup wisely**: Encrypt backups of your Jan data folder
+5. **Secure your device**: Jan is only as secure as your computer
+
+## Common questions
+
+**Q: Does Jan phone home for analytics?**  
+A: No. Zero telemetry by design.
+
+**Q: Are my conversations used to train models?**  
+A: Local conversations aren't sent anywhere. Cloud conversations follow each provider's policies.
+
+**Q: Can Jan access other files on my computer?**  
+A: Only files you explicitly import or share. No background file scanning.
+
+**Q: What about automatic updates?**  
+A: Jan checks for updates but doesn't auto-install. You choose when to update.
+
+**Q: How do I know Jan isn't secretly collecting data?**  
+A: Check the source code, monitor network traffic, or trust that a business model based on privacy probably shouldn't violate privacy.
+
+The real privacy protection isn't in our policies—it's in the architecture. Local processing means your data stays local, period.

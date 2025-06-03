@@ -1,0 +1,71 @@
+---
+title: Hardware requirements and monitoring
+description: System requirements and performance monitoring for Jan
+sidebar:
+  order: 2
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Understanding your system requirements and monitoring performance when running local AI models.
+
+## System requirements
+
+<Aside type="tip">
+See detailed minimum requirements for [Mac](/guides/install/mac/#compatibility), [Windows](/guides/install/windows/#compatibility), and [Linux](/guides/install/linux/#compatibility).
+</Aside>
+
+### CPU requirements
+
+- **Usage during model operation**: 20-90% is normal
+- **Performance impact**: Higher CPU utilization improves processing speed
+- **Recommendation**: Modern multi-core processor for best performance
+
+### Memory (RAM) requirements
+
+- **Free memory needed**: Keep at least **4GB free** when running local models
+- **Model-specific**: Different models require different amounts of RAM
+- **Optimization**: Close other applications if usage approaches maximum
+
+### GPU requirements (optional)
+
+- **VRAM monitoring**: Keep usage under 90% for optimal performance
+- **Performance benefit**: Significantly faster inference with GPU acceleration
+- **Compatibility**: See [GPU setup guides](/how-to/configure-gpu-acceleration/) for supported hardware
+
+## Performance monitoring
+
+Access hardware monitoring through **Settings** → **Hardware**.
+
+### CPU and RAM monitoring
+
+- Real-time usage display
+- Historical performance data
+- Threshold warnings for high usage
+
+### GPU monitoring (when enabled)
+
+- VRAM usage tracking
+- GPU utilization metrics
+- Performance optimization suggestions
+
+## Optimization guidelines
+
+### For CPU-only systems
+
+- Close unnecessary applications
+- Use smaller models for better performance
+- Monitor temperature to prevent throttling
+
+### For GPU-accelerated systems
+
+- Adjust `ngl` (GPU layers) in model settings:
+  - **Start with 35 layers** for 8GB VRAM
+  - **Increase** for more VRAM
+  - **Decrease** if out-of-memory errors occur
+
+### Performance troubleshooting
+
+- **High memory usage**: Use smaller models or increase system RAM
+- **Slow inference**: Enable GPU acceleration or upgrade hardware
+- **Out-of-memory errors**: Reduce model size or GPU layers

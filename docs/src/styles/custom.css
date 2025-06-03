@@ -1,0 +1,26 @@
+/* Custom Jan.ai documentation styles */
+
+:root {
+  --sl-color-accent-low: #0f1419;
+  --sl-color-accent: #00d4aa;
+  --sl-color-accent-high: #00f7cc;
+}
+
+/* Subtle improvements for readability */
+.sl-markdown-content {
+  line-height: 1.7;
+}
+
+/* Code blocks with better contrast */
+.expressive-code {
+  --ec-codeBg: #1a1a1a;
+}
+
+/* Tables with better spacing */
+.sl-markdown-content table {
+  margin: 1.5rem 0;
+}
+
+.sl-markdown-content th {
+  background-color: var(--sl-color-gray-6);
+}
