@@ -6,6 +6,17 @@ import { emit } from '@tauri-apps/api/event'
 import { SystemEvent } from '@/types/events'
 import { stopAllModels } from '@/services/models'
 
+// Type declaration for Tauri API
+declare global {
+  interface Window {
+    __TAURI__?: {
+      process?: {
+        relaunch?: () => Promise<void>
+      }
+    }
+  }
+}
+
 export interface UpdateState {
   isUpdateAvailable: boolean
   updateInfo: Update | null
@@ -158,11 +169,18 @@ export const useAppUpdater = () => {
 
       let downloaded = 0
       let contentLength = 0
+      let isDownloadComplete = false
       await stopAllModels()
       emit(SystemEvent.KILL_SIDECAR)
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
       await updateState.updateInfo.downloadAndInstall((event) => {
+        // Prevent processing events after download is complete
+        if (isDownloadComplete) {
+          console.log('Ignoring event after download completion:', event.event)
+          return
+        }
+
         switch (event.event) {
           case 'Started':
             contentLength = event.data.contentLength || 0
@@ -198,7 +216,8 @@ export const useAppUpdater = () => {
             break
           }
           case 'Finished':
-            console.log('Download finished')
+            isDownloadComplete = true
+            console.log('Download finished - setting completion flag')
             setUpdateState((prev) => ({
               ...prev,
               isDownloading: false,
@@ -211,7 +230,73 @@ export const useAppUpdater = () => {
         }
       })
 
-      await window.core?.api?.relaunch()
+      // Platform-specific relaunch handling for Linux AppImage
+      try {
+        // Check if we're on Linux (AppImage has specific requirements)
+        const isLinux = navigator.userAgent.toLowerCase().includes('linux')
+
+        if (isLinux) {
+          console.log(
+            'Linux platform detected, using delayed relaunch for AppImage'
+          )
+          // Give the system more time to complete the AppImage update process
+          await new Promise((resolve) => setTimeout(resolve, 3000))
+
+          // Try multiple relaunch methods for Linux
+          try {
+            await window.core?.api?.relaunch()
+          } catch (primaryRelaunchError) {
+            console.warn(
+              'Primary relaunch failed, trying alternative method:',
+              primaryRelaunchError
+            )
+
+            // Alternative relaunch using Tauri's process API
+            if (window.__TAURI__?.process?.relaunch) {
+              await window.__TAURI__.process.relaunch()
+            } else {
+              throw new Error('No relaunch method available')
+            }
+          }
+        } else {
+          // Windows and macOS - use standard relaunch
+          await window.core?.api?.relaunch()
+        }
+
+        console.log('Update installed and app relaunched')
+      } catch (relaunchError) {
+        console.error('Error during relaunch:', relaunchError)
+
+        // For Linux AppImage, the update might have succeeded even if relaunch failed
+        const isLinux = navigator.userAgent.toLowerCase().includes('linux')
+        if (isLinux) {
+          console.log(
+            'Linux AppImage update completed, but automatic restart failed'
+          )
+
+          // Ensure download state is properly reset
+          setUpdateState((prev) => ({
+            ...prev,
+            isDownloading: false,
+            downloadProgress: 1,
+          }))
+
+          // Don't treat this as a download error - the update was successful
+          events.emit(AppEvent.onAppUpdateDownloadSuccess, {})
+
+          // Show a different message for manual restart
+          setTimeout(() => {
+            events.emit(AppEvent.onAppUpdateDownloadError, {
+              message:
+                'Update downloaded successfully! Please restart the application manually to complete the update.',
+            })
+          }, 1000)
+          return
+        } else {
+          // For other platforms, relaunch failure is a real error
+          throw relaunchError
+        }
+      }
 
       console.log('Update installed')
     } catch (error) {
