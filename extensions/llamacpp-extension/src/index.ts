@@ -214,11 +214,7 @@ export default class llamacpp_extension extends AIEngine {
 
     let modelInfos: modelInfo[] = []
     for (const modelId of modelIds) {
-      const path = await joinPath([
-        modelsDir,
-        modelId,
-        'model.yml',
-      ])
+      const path = await joinPath([modelsDir, modelId, 'model.yml'])
       const modelConfig = await invoke<ModelConfig>('read_yaml', { path })
 
       const modelInfo = {
@@ -284,7 +280,9 @@ export default class llamacpp_extension extends AIEngine {
     }
 
     let modelPath = await maybeDownload(opts.modelPath, 'model.gguf')
-    let mmprojPath = opts.mmprojPath ? await maybeDownload(opts.mmprojPath, 'mmproj.gguf') : undefined
+    let mmprojPath = opts.mmprojPath
+      ? await maybeDownload(opts.mmprojPath, 'mmproj.gguf')
+      : undefined
 
     if (downloadItems.length > 0) {
       let downloadCompleted = false
@@ -375,7 +373,7 @@ export default class llamacpp_extension extends AIEngine {
   override async load(modelId: string): Promise<sessionInfo> {
     const sInfo = this.findSessionByModel(modelId)
     if (sInfo) {
-        throw new Error("Model already loaded!!")
+      throw new Error('Model already loaded!!')
     }
     const args: string[] = []
     const cfg = this.config
@@ -523,7 +521,9 @@ export default class llamacpp_extension extends AIEngine {
     if (!response.ok) {
       const errorData = await response.json().catch(() => null)
       throw new Error(
-        `API request failed with status ${response.status}: ${JSON.stringify(errorData)}`
+        `API request failed with status ${response.status}: ${JSON.stringify(
+          errorData
+        )}`
       )
     }
 
@@ -577,7 +577,8 @@ export default class llamacpp_extension extends AIEngine {
   }
 
   override async chat(
-    opts: chatCompletionRequest
+    opts: chatCompletionRequest,
+    abortController?: AbortController
   ): Promise<chatCompletion | AsyncIterable<chatCompletionChunk>> {
     const sessionInfo = this.findSessionByModel(opts.model)
     if (!sessionInfo) {
@@ -599,12 +600,15 @@ export default class llamacpp_extension extends AIEngine {
       method: 'POST',
       headers,
       body,
+      signal: abortController?.signal,
     })
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => null)
       throw new Error(
-        `API request failed with status ${response.status}: ${JSON.stringify(errorData)}`
+        `API request failed with status ${response.status}: ${JSON.stringify(
+          errorData
+        )}`
       )
     }
 
@@ -612,11 +616,7 @@ export default class llamacpp_extension extends AIEngine {
   }
 
   override async delete(modelId: string): Promise<void> {
-    const modelDir = await joinPath([
-      this.providerPath,
-      'models',
-      modelId,
-    ])
+    const modelDir = await joinPath([this.providerPath, 'models', modelId])
 
     if (!(await fs.existsSync(await joinPath([modelDir, 'model.yml'])))) {
       throw new Error(`Model ${modelId} does not exist`)
