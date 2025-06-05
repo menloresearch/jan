@@ -120,9 +120,7 @@ export const useChat = () => {
       try {
         if (selectedModel?.id) {
           updateLoadingModel(true)
-          await startModel(provider, selectedModel.id, abortController).catch(
-            console.error
-          )
+          await startModel(provider, selectedModel.id).catch(console.error)
           updateLoadingModel(false)
         }
 
@@ -154,10 +152,6 @@ export const useChat = () => {
             availableTools,
             currentAssistant.parameters?.stream === false ? false : true,
             currentAssistant.parameters as unknown as Record<string, object>
-            // TODO: replace it with according provider setting later on
-            // selectedProvider === 'llama.cpp' && availableTools.length > 0
-            //   ? false
-            //   : true
           )
 
           if (!completion) throw new Error('No completion received')
@@ -194,7 +188,7 @@ export const useChat = () => {
             accumulatedText.length === 0 &&
             toolCalls.length === 0 &&
             activeThread.model?.id &&
-            provider.provider === 'llama.cpp'
+            provider.provider === 'llamacpp'
           ) {
             await stopModel(activeThread.model.id, 'cortex')
             throw new Error('No response received from the model')

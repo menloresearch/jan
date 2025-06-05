@@ -46,7 +46,7 @@ const SettingsMenu = () => {
   const { t } = useTranslation()
   const { providers } = useModelProvider()
   const firstItemProvider =
-    providers.length > 0 ? providers[0].provider : 'llama.cpp'
+    providers.length > 0 ? providers[0].provider : 'llamacpp'
   const matches = useMatches()
   const isActive = matches.some(
     (match) =>

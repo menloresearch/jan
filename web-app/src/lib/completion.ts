@@ -17,7 +17,6 @@ import {
   TokenJS,
 } from 'token.js'
 import { ulid } from 'ulidx'
-import { normalizeProvider } from './models'
 import { MCPTool } from '@/types/completion'
 import { CompletionMessagesBuilder } from './messages'
 import { ChatCompletionMessageToolCall } from 'openai/resources'
@@ -174,9 +173,9 @@ export const stopModel = async (
   provider: string,
   model: string
 ): Promise<void> => {
-  const providerObj = EngineManager.instance().get(normalizeProvider(provider))
+  const providerObj = EngineManager.instance().get(provider)
   const modelObj = ModelManager.instance().get(model)
-  if (providerObj && modelObj) return providerObj?.unload(modelObj)
+  if (providerObj && modelObj) return providerObj?.unload(model).then(() => {})
 }
 
 /**

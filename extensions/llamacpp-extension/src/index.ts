@@ -522,7 +522,9 @@ export default class llamacpp_extension extends AIEngine {
     if (!response.ok) {
       const errorData = await response.json().catch(() => null)
       throw new Error(
-        `API request failed with status ${response.status}: ${JSON.stringify(errorData)}`
+        `API request failed with status ${response.status}: ${JSON.stringify(
+          errorData
+        )}`
       )
     }
 
@@ -576,7 +578,8 @@ export default class llamacpp_extension extends AIEngine {
   }
 
   override async chat(
-    opts: chatCompletionRequest
+    opts: chatCompletionRequest,
+    abortController?: AbortController
   ): Promise<chatCompletion | AsyncIterable<chatCompletionChunk>> {
     const sessionInfo = this.findSessionByModel(opts.model)
     if (!sessionInfo) {
@@ -598,12 +601,15 @@ export default class llamacpp_extension extends AIEngine {
       method: 'POST',
       headers,
       body,
+      signal: abortController?.signal,
     })
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => null)
       throw new Error(
-        `API request failed with status ${response.status}: ${JSON.stringify(errorData)}`
+        `API request failed with status ${response.status}: ${JSON.stringify(
+          errorData
+        )}`
       )
     }
 

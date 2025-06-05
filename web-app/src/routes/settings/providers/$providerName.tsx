@@ -7,7 +7,7 @@ import { Switch } from '@/components/ui/switch'
 import { open } from '@tauri-apps/plugin-dialog'
 import {
   getActiveModels,
-  importModel,
+  pullModel,
   startModel,
   stopModel,
 } from '@/services/models'
@@ -244,7 +244,7 @@ function ProviderDetail() {
                 className={cn(
                   'flex flex-col gap-3',
                   provider &&
-                    provider.provider === 'llama.cpp' &&
+                    provider.provider === 'llamacpp' &&
                     'flex-col-reverse'
                 )}
               >
@@ -355,7 +355,7 @@ function ProviderDetail() {
                         Models
                       </h1>
                       <div className="flex items-center gap-2">
-                        {provider && provider.provider !== 'llama.cpp' && (
+                        {provider && provider.provider !== 'llamacpp' && (
                           <>
                             <Button
                               variant="link"
@@ -386,7 +386,7 @@ function ProviderDetail() {
                             <DialogAddModel provider={provider} />
                           </>
                         )}
-                        {provider && provider.provider === 'llama.cpp' && (
+                        {provider && provider.provider === 'llamacpp' && (
                           <Button
                             variant="link"
                             size="sm"
@@ -402,10 +402,15 @@ function ProviderDetail() {
                                   },
                                 ],
                               })
+                              // If the dialog returns a file path, extract just the file name
+                              const fileName =
+                                typeof selectedFile === 'string'
+                                  ? selectedFile.split(/[\\/]/).pop()
+                                  : undefined
 
-                              if (selectedFile) {
+                              if (selectedFile && fileName) {
                                 try {
-                                  await importModel(selectedFile)
+                                  await pullModel(fileName, selectedFile)
                                 } catch (error) {
                                   console.error(
                                     'Failed to import model:',
@@ -465,46 +470,40 @@ function ProviderDetail() {
                                 provider={provider}
                                 modelId={model.id}
                               />
-                              {provider &&
-                                provider.provider === 'llama.cpp' && (
-                                  <div className="ml-2">
-                                    {activeModels.some(
-                                      (activeModel) =>
-                                        activeModel.id === model.id
-                                    ) ? (
-                                      <Button
-                                        size="sm"
-                                        variant="destructive"
-                                        onClick={() =>
-                                          handleStopModel(model.id)
-                                        }
-                                      >
-                                        Stop
-                                      </Button>
-                                    ) : (
-                                      <Button
-                                        size="sm"
-                                        disabled={loadingModels.includes(
-                                          model.id
-                                        )}
-                                        onClick={() =>
-                                          handleStartModel(model.id)
-                                        }
-                                      >
-                                        {loadingModels.includes(model.id) ? (
-                                          <div className="flex items-center gap-2">
-                                            <IconLoader
-                                              size={16}
-                                              className="animate-spin"
-                                            />
-                                          </div>
-                                        ) : (
-                                          'Start'
-                                        )}
-                                      </Button>
-                                    )}
-                                  </div>
-                                )}
+                              {provider && provider.provider === 'llamacpp' && (
+                                <div className="ml-2">
+                                  {activeModels.some(
+                                    (activeModel) => activeModel.id === model.id
+                                  ) ? (
+                                    <Button
+                                      size="sm"
+                                      variant="destructive"
+                                      onClick={() => handleStopModel(model.id)}
+                                    >
+                                      Stop
+                                    </Button>
+                                  ) : (
+                                    <Button
+                                      size="sm"
+                                      disabled={loadingModels.includes(
+                                        model.id
+                                      )}
+                                      onClick={() => handleStartModel(model.id)}
+                                    >
+                                      {loadingModels.includes(model.id) ? (
+                                        <div className="flex items-center gap-2">
+                                          <IconLoader
+                                            size={16}
+                                            className="animate-spin"
+                                          />
+                                        </div>
+                                      ) : (
+                                        'Start'
+                                      )}
+                                    </Button>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           }
                         />

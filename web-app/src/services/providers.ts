@@ -80,12 +80,12 @@ export const getProviders = async (): Promise<ModelProvider[]> => {
 
   for (const [key, value] of EngineManager.instance().engines) {
     // TODO: Remove this when the cortex extension is removed
-    const providerName = key === 'cortex' ? 'llama.cpp' : key
+    const providerName = key === 'cortex' ? 'llamacpp' : key
 
     const models =
       ((await fetchModels()) ?? []).filter(
         (model) =>
-          (model.engine === 'llama-cpp' ? 'llama.cpp' : model.engine) ===
+          (model.engine === 'llama-cpp' ? 'llamacpp' : model.engine) ===
             providerName &&
           'status' in model &&
           model.status === 'downloaded'
@@ -203,7 +203,7 @@ export const updateSettings = async (
   providerName: string,
   settings: ProviderSetting[]
 ): Promise<void> => {
-  const provider = providerName === 'llama.cpp' ? 'cortex' : providerName
+  const provider = providerName === 'llamacpp' ? 'cortex' : providerName
   return ExtensionManager.getInstance()
     .getEngine(provider)
     ?.updateSettings(
