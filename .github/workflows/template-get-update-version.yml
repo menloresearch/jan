@@ -55,7 +55,10 @@ jobs:
             LATEST_TAG=$(get_latest_tag)
             
             # Remove the 'v' and append the build number to the version
-            new_version="${LATEST_TAG#v}-${GITHUB_RUN_NUMBER}"
+            # Offset the GitHub run number to ensure version is greater than old Electron builds
+            offset=1800
+            adjusted_build_number=$((GITHUB_RUN_NUMBER + offset))
+            new_version="${LATEST_TAG#v}-$adjusted_build_number"
             echo "New version: $new_version"
             echo "::set-output name=new_version::$new_version"
           fi
