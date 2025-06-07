@@ -69,7 +69,7 @@ export const useChat = () => {
     }
     setTools()
 
-    let unsubscribe = () => {}
+    let unsubscribe = () => { }
     listen(SystemEvent.MCP_UPDATE, setTools).then((unsub) => {
       // Unsubscribe from the event when the component unmounts
       unsubscribe = unsub
@@ -105,7 +105,13 @@ export const useChat = () => {
   ])
 
   const sendMessage = useCallback(
-    async (message: string) => {
+    async (message: string, uploadedFiles?: Array<{
+      name: string
+      type: string
+      size: number
+      base64: string
+      dataUrl: string
+    }>) => {
       const activeThread = await getCurrentThread()
 
       resetTokenSpeed()
@@ -114,10 +120,15 @@ export const useChat = () => {
       const abortController = new AbortController()
       setAbortController(activeThread.id, abortController)
       updateStreamingContent(emptyThreadContent)
-      addMessage(newUserThreadContent(activeThread.id, message))
+
+      // Create user message
+      const userMessage = newUserThreadContent(activeThread.id, message)
+      addMessage(userMessage)
       updateThreadTimestamp(activeThread.id)
       setPrompt('')
+
       try {
+
         if (selectedModel?.id) {
           updateLoadingModel(true)
           await startModel(provider, selectedModel.id, abortController).catch(
@@ -131,7 +142,16 @@ export const useChat = () => {
           currentAssistant?.instructions
         )
 
-        builder.addUserMessage(message)
+        // Add user message or file content to builder
+        if (uploadedFiles && uploadedFiles.length > 0) {
+          const file = uploadedFiles[0] // Process first file for now
+          builder.addFileContent(message, {
+            file_data: file.base64,
+            filename: file.name
+          })
+        } else {
+          builder.addUserMessage(message)
+        }
 
         let isCompleted = false
 
@@ -242,7 +262,8 @@ export const useChat = () => {
       addMessage,
       updateThreadTimestamp,
       setPrompt,
-      selectedModel,
+      selectedModel?.id,
+      selectedModel?.capabilities,
       currentAssistant,
       tools,
       updateLoadingModel,

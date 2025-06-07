@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::{fs, io, path::PathBuf};
 use tauri::{AppHandle, Manager, Runtime, State};
+use base64::{engine::general_purpose, Engine as _};
 
 use super::{server, setup, state::AppState};
 
@@ -15,22 +16,34 @@ impl AppConfiguration {
     pub fn default() -> Self {
         Self {
             data_folder: String::from("./data"), // Set a default value for the data_folder
-                                                 // Add other fields with default values as needed
+            // Add other fields with default values as needed
         }
     }
 }
 
-#[tauri::command]
-pub fn get_app_configurations<R: Runtime>(app_handle: tauri::AppHandle<R>) -> AppConfiguration {
-    let mut app_default_configuration = AppConfiguration::default();
-
-    if std::env::var("CI").unwrap_or_default() == "e2e" {
-        return app_default_configuration;
+/// Merge missing fields from default configuration into existing JSON configuration
+fn merge_missing_fields(
+    json_value: &mut serde_json::Value,
+    default_data_folder: String,
+) {
+    if let Some(obj) = json_value.as_object_mut() {
+        // Set default data_folder if missing
+        if !obj.contains_key("data_folder") {
+            obj.insert(
+                "data_folder".to_string(),
+                serde_json::Value::String(default_data_folder),
+            );
+        }
     }
+}
 
-    let configuration_file = get_configuration_file_path(app_handle.clone());
-
-    let default_data_folder = default_data_folder_path(app_handle.clone());
+/// Load configuration from file or create default
+fn load_or_create_configuration(
+    configuration_file: &PathBuf,
+    default_data_folder: String,
+) -> AppConfiguration {
+    let mut app_default_configuration = AppConfiguration::default();
+    app_default_configuration.data_folder = default_data_folder.clone();
 
     if !configuration_file.exists() {
         log::info!(
@@ -38,11 +51,9 @@ pub fn get_app_configurations<R: Runtime>(app_handle: tauri::AppHandle<R>) -> Ap
             configuration_file
         );
 
-        app_default_configuration.data_folder = default_data_folder;
-
         if let Err(err) = fs::write(
-            &configuration_file,
-            serde_json::to_string(&app_default_configuration).unwrap(),
+            configuration_file,
+            serde_json::to_string_pretty(&app_default_configuration).unwrap(),
         ) {
             log::error!("Failed to create default config: {}", err);
         }
@@ -50,17 +61,9 @@ pub fn get_app_configurations<R: Runtime>(app_handle: tauri::AppHandle<R>) -> Ap
         return app_default_configuration;
     }
 
-    match fs::read_to_string(&configuration_file) {
-        Ok(content) => match serde_json::from_str::<AppConfiguration>(&content) {
-            Ok(app_configurations) => app_configurations,
-            Err(err) => {
-                log::error!(
-                    "Failed to parse app config, returning default config instead. Error: {}",
-                    err
-                );
-                app_default_configuration
-            }
-        },
+    // Read and parse existing configuration
+    match fs::read_to_string(configuration_file) {
+        Ok(content) => parse_and_update_configuration(content, configuration_file, default_data_folder),
         Err(err) => {
             log::error!(
                 "Failed to read app config, returning default config instead. Error: {}",
@@ -71,22 +74,87 @@ pub fn get_app_configurations<R: Runtime>(app_handle: tauri::AppHandle<R>) -> Ap
     }
 }
 
+/// Parse configuration content and update missing fields
+fn parse_and_update_configuration(
+    content: String,
+    configuration_file: &PathBuf,
+    default_data_folder: String,
+) -> AppConfiguration {
+    let app_default_configuration = AppConfiguration {
+        data_folder: default_data_folder.clone(),
+        ..AppConfiguration::default()
+    };
+
+    // Parse the JSON into a generic Value first to handle missing fields
+    match serde_json::from_str::<serde_json::Value>(&content) {
+        Ok(mut json_value) => {
+            // Merge missing fields with defaults
+            merge_missing_fields(&mut json_value, default_data_folder);
+
+            // Save the updated configuration back to file
+            let updated_content = serde_json::to_string_pretty(&json_value).unwrap();
+            if let Err(err) = fs::write(configuration_file, updated_content) {
+                log::error!("Failed to update config with missing fields: {}", err);
+            }
+
+            // Now try to deserialize the updated JSON into AppConfiguration
+            match serde_json::from_value::<AppConfiguration>(json_value) {
+                Ok(app_configurations) => app_configurations,
+                Err(err) => {
+                    log::error!(
+                        "Failed to parse app config after updating, returning default config instead. Error: {}",
+                        err
+                    );
+                    app_default_configuration
+                }
+            }
+        }
+        Err(err) => {
+            log::error!(
+                "Failed to parse app config JSON, returning default config instead. Error: {}",
+                err
+            );
+            app_default_configuration
+        }
+    }
+}
+
 #[tauri::command]
-pub fn update_app_configuration(
+pub fn get_app_configurations<R: Runtime>(app_handle: tauri::AppHandle<R>) -> AppConfiguration {
+    if std::env::var("CI").unwrap_or_default() == "e2e" {
+        return AppConfiguration::default();
+    }
+
+    let configuration_file = get_configuration_file_path(app_handle.clone());
+    let default_data_folder = default_data_folder_path(app_handle.clone());
+
+    let app_config = load_or_create_configuration(&configuration_file, default_data_folder);
+    
+    log::info!("Loaded app configuration: {:?}", app_config);
+    
+    app_config
+}
+
+#[tauri::command]
+pub async fn update_app_configuration(
     app_handle: tauri::AppHandle,
     configuration: AppConfiguration,
 ) -> Result<(), String> {
-    let configuration_file = get_configuration_file_path(app_handle);
+    let configuration_file = get_configuration_file_path(app_handle.clone());
     log::info!(
         "update_app_configuration, configuration_file: {:?}",
         configuration_file
     );
 
+    // Write the configuration to file
     fs::write(
         configuration_file,
         serde_json::to_string(&configuration).map_err(|e| e.to_string())?,
     )
-    .map_err(|e| e.to_string())
+    .map_err(|e| e.to_string())?;
+
+
+    Ok(())
 }
 
 #[tauri::command]
@@ -283,6 +351,68 @@ fn copy_dir_recursive(src: &PathBuf, dst: &PathBuf) -> Result<(), io::Error> {
     Ok(())
 }
 
+
+
+/// Save base64 content to a file in the rag-docs directory and return the path
+#[tauri::command]
+pub async fn save_file(
+    base64_content: String,
+    file_name: String,
+    app_handle: tauri::AppHandle,
+) -> Result<String, String> {
+    log::info!("Saving file to rag-docs: {}", file_name);
+    
+    // Decode base64 content
+    let content_bytes = general_purpose::STANDARD
+        .decode(&base64_content)
+        .map_err(|e| format!("Failed to decode base64 content: {}", e))?;
+
+    // Get app data directory and create rag-docs subdirectory
+    let app_data_path = get_jan_data_folder_path(app_handle);
+    let rag_docs_dir = app_data_path.join("rag-docs");
+    
+    // Ensure rag-docs directory exists
+    if !rag_docs_dir.exists() {
+        std::fs::create_dir_all(&rag_docs_dir)
+            .map_err(|e| format!("Failed to create rag-docs directory: {}", e))?;
+    }
+
+    // Generate unique filename to avoid conflicts
+    let timestamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_millis();
+    
+    // Extract file extension from original filename
+    let extension = std::path::Path::new(&file_name)
+        .extension()
+        .and_then(|ext| ext.to_str())
+        .unwrap_or("");
+    
+    // Create unique filename with timestamp prefix
+    let unique_filename = if extension.is_empty() {
+        format!("{}_{}", timestamp, file_name)
+    } else {
+        let stem = std::path::Path::new(&file_name)
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .unwrap_or("file");
+        format!("{}_{}.{}", timestamp, stem, extension)
+    };
+    
+    let file_path = rag_docs_dir.join(&unique_filename);
+
+    // Write content to file
+    std::fs::write(&file_path, &content_bytes)
+        .map_err(|e| format!("Failed to write to file: {}", e))?;
+
+    // Get the absolute path as string
+    let file_path_str = file_path.to_string_lossy().to_string();
+    
+    log::info!("File saved at: {}", file_path_str);
+    Ok(file_path_str)
+}
+
 #[tauri::command]
 pub async fn reset_cortex_restart_count(state: State<'_, AppState>) -> Result<(), String> {
     let mut count = state.cortex_restart_count.lock().await;
@@ -292,7 +422,7 @@ pub async fn reset_cortex_restart_count(state: State<'_, AppState>) -> Result<()
 }
 
 #[tauri::command]
-pub fn change_app_data_folder(
+pub async fn change_app_data_folder(
     app_handle: tauri::AppHandle,
     new_data_folder: String,
 ) -> Result<(), String> {
@@ -331,7 +461,7 @@ pub fn change_app_data_folder(
     configuration.data_folder = new_data_folder;
 
     // Save the updated configuration
-    update_app_configuration(app_handle, configuration)
+    update_app_configuration(app_handle, configuration).await
 }
 
 #[tauri::command]
