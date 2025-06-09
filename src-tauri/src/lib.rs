@@ -1,13 +1,12 @@
 mod core;
 use core::{
     cmd::get_jan_data_folder_path,
-    setup::{self, setup_engine_binaries, setup_mcp, setup_sidecar},
+    setup::{self, setup_mcp},
     state::{generate_app_token, AppState},
     utils::download::DownloadManagerState,
 };
 use std::{collections::HashMap, sync::Arc};
 
-use tauri::Emitter;
 use tokio::sync::Mutex;
 
 use reqwest::blocking::Client;
@@ -57,7 +56,6 @@ pub fn run() {
             core::cmd::stop_server,
             core::cmd::read_logs,
             core::cmd::change_app_data_folder,
-            core::cmd::reset_cortex_restart_count,
             // MCP commands
             core::mcp::get_tools,
             core::mcp::call_tool,
@@ -79,18 +77,27 @@ pub fn run() {
             core::threads::get_thread_assistant,
             core::threads::create_thread_assistant,
             core::threads::modify_thread_assistant,
+            // generic utils
+            core::utils::write_yaml,
+            core::utils::read_yaml,
+            core::utils::decompress,
+            core::utils::is_library_available,
             // Download
             core::utils::download::download_files,
             core::utils::download::cancel_download_task,
             // hardware
             core::hardware::get_system_info,
             core::hardware::get_system_usage,
+            // llama-cpp extension
+            core::utils::extensions::inference_llamacpp_extension::server::load_llama_model,
+            core::utils::extensions::inference_llamacpp_extension::server::unload_llama_model,
+            core::utils::extensions::inference_llamacpp_extension::server::generate_api_key,
         ])
         .manage(AppState {
             app_token: Some(generate_app_token()),
             mcp_servers: Arc::new(Mutex::new(HashMap::new())),
             download_manager: Arc::new(Mutex::new(DownloadManagerState::default())),
-            cortex_restart_count: Arc::new(Mutex::new(0)),
+            llama_server_process: Arc::new(Mutex::new(HashMap::new())),
         })
         .setup(|app| {
             app.handle().plugin(
@@ -113,19 +120,13 @@ pub fn run() {
                 log::error!("Failed to install extensions: {}", e);
             }
             setup_mcp(app);
-            setup_sidecar(app).expect("Failed to setup sidecar");
-            setup_engine_binaries(app).expect("Failed to setup engine binaries");
             Ok(())
         })
-        .on_window_event(|window, event| match event {
+        .on_window_event(|_window, event| match event {
             tauri::WindowEvent::CloseRequested { .. } => {
-                if window.label() == "main" {
-                    let client = Client::new();
-                    let url = "http://127.0.0.1:39291/processManager/destroy";
-                    let _ = client.delete(url).send();
-
-                    window.emit("kill-sidecar", ()).unwrap();
-                }
+                let client = Client::new();
+                let url = "http://127.0.0.1:39291/processManager/destroy";
+                let _ = client.delete(url).send();
             }
             _ => {}
         })
