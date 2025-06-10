@@ -108,7 +108,7 @@ export const deleteModel = async (id: string) => {
  */
 export const getActiveModels = async (provider?: string) => {
   // getEngine(provider)
-  return []
+  return getEngine(provider).getLoadedModels()
 }
 
 /**

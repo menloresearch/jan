@@ -84,13 +84,16 @@ function ProviderDetail() {
   const navigate = useNavigate()
 
   useEffect(() => {
+    function update() {
+      // Fetch active models from the provider
+      getActiveModels().then((models) =>
+        setActiveModels(models.map((model) => ({ id: model }) as ActiveModel))
+      )
+    }
     // Initial data fetch
-    getActiveModels().then(setActiveModels)
 
     // Set up interval for real-time updates
-    const intervalId = setInterval(() => {
-      getActiveModels().then(setActiveModels)
-    }, 5000)
+    const intervalId = setInterval(() => update(), 5000)
 
     return () => clearInterval(intervalId)
   }, [setActiveModels])
