@@ -28,6 +28,8 @@ import { stopModel, startModel } from '@/services/models'
 
 import { useToolApproval } from '@/hooks/useToolApproval'
 import { useToolAvailable } from '@/hooks/useToolAvailable'
+import { ExtensionManager } from '@/lib/extension'
+import { chatCompletionRequestMessage } from '@janhq/core'
 
 export const useChat = () => {
   const { prompt, setPrompt } = usePrompt()
@@ -109,7 +111,7 @@ export const useChat = () => {
       const activeThread = await getCurrentThread()
 
       resetTokenSpeed()
-      if (!activeThread || !provider) return
+      if (!activeThread || !provider || !selectedModel) return
       const messages = getMessages(activeThread.id)
       const abortController = new AbortController()
       setAbortController(activeThread.id, abortController)
@@ -118,11 +120,9 @@ export const useChat = () => {
       updateThreadTimestamp(activeThread.id)
       setPrompt('')
       try {
-        if (selectedModel?.id) {
-          updateLoadingModel(true)
-          await startModel(provider, selectedModel.id).catch(console.error)
-          updateLoadingModel(false)
-        }
+        updateLoadingModel(true)
+        await startModel(provider, selectedModel.id).catch(console.error)
+        updateLoadingModel(false)
 
         const builder = new CompletionMessagesBuilder(
           messages,
@@ -143,6 +143,7 @@ export const useChat = () => {
 
         // TODO: Later replaced by Agent setup?
         const followUpWithToolUse = true
+
         while (!isCompleted && !abortController.signal.aborted) {
           const completion = await sendCompletion(
             activeThread,

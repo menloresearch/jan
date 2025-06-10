@@ -152,7 +152,7 @@ export default class llamacpp_extension extends AIEngine {
       try {
         await this.unload(sInfo.model_id)
       } catch (error) {
-        console.error(`Failed to unload model ${sInfo.modelId}:`, error)
+        console.error(`Failed to unload model ${sInfo.model_id}:`, error)
       }
     }
 
@@ -597,9 +597,10 @@ export default class llamacpp_extension extends AIEngine {
     }
     const baseUrl = `http://localhost:${sessionInfo.port}/v1`
     const url = `${baseUrl}/chat/completions`
+    console.log('Session Info:', sessionInfo, sessionInfo.api_key)
     const headers = {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${sessionInfo.apiKey}`,
+      'Authorization': `Bearer ${sessionInfo.api_key}`,
     }
 
     const body = JSON.stringify(opts)

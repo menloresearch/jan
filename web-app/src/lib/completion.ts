@@ -5,6 +5,7 @@ import {
   MessageStatus,
   EngineManager,
   ModelManager,
+  chatCompletionRequestMessage,
 } from '@janhq/core'
 import { invoke } from '@tauri-apps/api/core'
 import {
@@ -21,6 +22,7 @@ import { MCPTool } from '@/types/completion'
 import { CompletionMessagesBuilder } from './messages'
 import { ChatCompletionMessageToolCall } from 'openai/resources'
 import { callTool } from '@/services/mcp'
+import { ExtensionManager } from './extension'
 
 /**
  * @fileoverview Helper functions for creating thread content.
@@ -127,32 +129,41 @@ export const sendCompletion = async (
     // TODO: Retrieve from extension settings
     baseURL: provider.base_url,
   })
+  const engine = ExtensionManager.getInstance().getEngine(provider.provider)
 
   // TODO: Add message history
-  const completion = stream
-    ? await tokenJS.chat.completions.create(
-        {
-          stream: true,
+  const completion = engine
+    ? await engine.chat({
+        messages: messages as chatCompletionRequestMessage[],
+        model: thread.model?.id,
+        // tools: normalizeTools(tools),
+        // tool_choice: tools.length ? 'auto' : undefined,
+        ...params,
+      })
+    : stream
+      ? await tokenJS.chat.completions.create(
+          {
+            stream: true,
+            provider: providerName,
+            model: thread.model?.id,
+            messages,
+            tools: normalizeTools(tools),
+            tool_choice: tools.length ? 'auto' : undefined,
+            ...params,
+          },
+          {
+            signal: abortController.signal,
+          }
+        )
+      : await tokenJS.chat.completions.create({
+          stream: false,
           provider: providerName,
           model: thread.model?.id,
           messages,
           tools: normalizeTools(tools),
           tool_choice: tools.length ? 'auto' : undefined,
           ...params,
-        },
-        {
-          signal: abortController.signal,
-        }
-      )
-    : await tokenJS.chat.completions.create({
-        stream: false,
-        provider: providerName,
-        model: thread.model?.id,
-        messages,
-        tools: normalizeTools(tools),
-        tool_choice: tools.length ? 'auto' : undefined,
-        ...params,
-      })
+        })
   return completion
 }
 
