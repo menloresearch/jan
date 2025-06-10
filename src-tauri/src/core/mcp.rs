@@ -104,6 +104,7 @@ async fn start_mcp_server<R: Runtime>(
             let bun_x_path = format!("{}/bun", bin_path.display());
             cmd = Command::new(bun_x_path);
             cmd.arg("x");
+            cmd.arg("--bun");
             cmd.env("BUN_INSTALL", cache_dir.to_str().unwrap().to_string());
         }
 
@@ -116,7 +117,8 @@ async fn start_mcp_server<R: Runtime>(
             cmd.arg("run");
             cmd.env("UV_CACHE_DIR", cache_dir.to_str().unwrap().to_string());
         }
-        #[cfg(windows)] {
+        #[cfg(windows)]
+        {
             cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW: prevents shell window on Windows
         }
         let app_path_str = app_path.to_str().unwrap().to_string();

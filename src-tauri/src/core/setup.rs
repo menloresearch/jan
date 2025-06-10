@@ -10,9 +10,9 @@ use tauri::{App, Emitter, Listener, Manager};
 use tauri_plugin_shell::process::{CommandChild, CommandEvent};
 use tauri_plugin_shell::ShellExt;
 use tauri_plugin_store::StoreExt;
-use tokio::time::{sleep, Duration};
-use tokio::{process::Command, sync::Mutex}; // Using tokio::sync::Mutex
-                                            // MCP
+use tokio::sync::Mutex;
+use tokio::time::{sleep, Duration}; // Using tokio::sync::Mutex
+                                    // MCP
 use super::{
     cmd::{get_jan_data_folder_path, get_jan_extensions_path},
     mcp::run_mcp_commands,
