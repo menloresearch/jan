@@ -67,6 +67,7 @@ pub fn run() {
             core::mcp::get_mcp_configs,
             core::mcp::activate_mcp_server,
             core::mcp::deactivate_mcp_server,
+            core::mcp::handle_app_update,
             // Threads
             core::threads::list_threads,
             core::threads::create_thread,

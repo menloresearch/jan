@@ -5,7 +5,8 @@ use std::fs;
 use std::{collections::HashMap, env, sync::Arc, time::Duration};
 use tauri::{AppHandle, Emitter, Runtime, State};
 use tokio::{process::Command, sync::Mutex, time::timeout};
-
+use tauri_plugin_updater::UpdaterExt;
+use reqwest::blocking::Client;
 use super::{cmd::get_jan_data_folder_path, state::AppState};
 
 const DEFAULT_MCP_CONFIG: &str = r#"{"mcpServers":{"browsermcp":{"command":"npx","args":["@browsermcp/mcp"],"env":{},"active":false},"fetch":{"command":"uvx","args":["mcp-server-fetch"],"env":{},"active":false},"filesystem":{"command":"npx","args":["-y","@modelcontextprotocol/server-filesystem","/path/to/other/allowed/dir"],"env":{},"active":false},"playwright":{"command":"npx","args":["@playwright/mcp","--isolated"],"env":{},"active":false},"sequential-thinking":{"command":"npx","args":["-y","@modelcontextprotocol/server-sequential-thinking"],"env":{},"active":false},"tavily":{"command":"npx","args":["-y","tavily-mcp"],"env":{"TAVILY_API_KEY": "tvly-YOUR_API_KEY-here"},"active":false}}}"#;
@@ -408,4 +409,40 @@ mod tests {
         // Clean up the mock config file
         std::fs::remove_file(config_path).expect("Failed to remove config file");
     }
+}
+
+#[tauri::command]
+pub async fn handle_app_update(app: tauri::AppHandle) -> tauri_plugin_updater::Result<()> {
+    if let Some(update) = app.updater()?.check().await? {
+        let mut downloaded = 0;
+
+        // alternatively we could also call update.download() and update.install() separately
+        log::info!(
+            "Has update {} {} {}",
+            update.version,
+            update.current_version,
+            update.download_url
+        );
+        update
+            .download_and_install(
+                |chunk_length, content_length| {
+                    downloaded += chunk_length;
+                    log::info!("downloaded {downloaded} from {content_length:?}");
+                },
+                || {
+                    log::info!("download finished");
+                },
+            )
+            .await?;
+
+        log::info!("update installed");
+        let client = Client::new();
+        let url = "http://127.0.0.1:39291/processManager/destroy";
+        let _ = client.delete(url).send();
+        app.restart();
+    } else {
+        log::info!("Cannot parse response or update is not available");
+    }
+
+    Ok(())
 }
