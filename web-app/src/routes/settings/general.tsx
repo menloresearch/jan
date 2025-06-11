@@ -25,7 +25,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import {
-  factoryReset,
+  // factoryReset,
   getJanDataFolder,
   relocateJanDataFolder,
 } from '@/services/app'
@@ -82,7 +82,7 @@ function General() {
 
   const resetApp = async () => {
     // TODO: Loading indicator
-    await factoryReset()
+    // await factoryReset()
   }
 
   const handleOpenLogs = async () => {

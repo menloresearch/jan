@@ -20,7 +20,7 @@ import { twMerge } from 'tailwind-merge'
 import { getConnectedServers } from '@/services/mcp'
 import { useToolApproval } from '@/hooks/useToolApproval'
 import { toast } from 'sonner'
-import { invoke } from '@tauri-apps/api/core'
+// import { invoke } from '@tauri-apps/api/core'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const Route = createFileRoute(route.settings.mcp_servers as any)({
@@ -161,48 +161,48 @@ function MCPServers() {
       setLoadingServers((prev) => ({ ...prev, [serverKey]: true }))
       const config = getServerConfig(serverKey)
       if (active && config) {
-        invoke('activate_mcp_server', {
-          name: serverKey,
-          config: {
-            ...(config ?? (mcpServers[serverKey] as MCPServerConfig)),
-            active,
-          },
-        })
-          .then(() => {
-            // Save single server
-            editServer(serverKey, {
-              ...(config ?? (mcpServers[serverKey] as MCPServerConfig)),
-              active,
-            })
-            syncServers()
-            toast.success(
-              `Server ${serverKey} is now ${active ? 'active' : 'inactive'}.`
-            )
-            getConnectedServers().then(setConnectedServers)
-          })
-          .catch((error) => {
-            editServer(serverKey, {
-              ...(config ?? (mcpServers[serverKey] as MCPServerConfig)),
-              active: false,
-            })
-            toast.error(error, {
-              description:
-                'Please check the parameters according to the tutorial.',
-            })
-          })
-          .finally(() => {
-            setLoadingServers((prev) => ({ ...prev, [serverKey]: false }))
-          })
+        // invoke('activate_mcp_server', {
+        //   name: serverKey,
+        //   config: {
+        //     ...(config ?? (mcpServers[serverKey] as MCPServerConfig)),
+        //     active,
+        //   },
+        // })
+        //   .then(() => {
+        //     // Save single server
+        //     editServer(serverKey, {
+        //       ...(config ?? (mcpServers[serverKey] as MCPServerConfig)),
+        //       active,
+        //     })
+        //     syncServers()
+        //     toast.success(
+        //       `Server ${serverKey} is now ${active ? 'active' : 'inactive'}.`
+        //     )
+        //     getConnectedServers().then(setConnectedServers)
+        //   })
+        //   .catch((error) => {
+        //     editServer(serverKey, {
+        //       ...(config ?? (mcpServers[serverKey] as MCPServerConfig)),
+        //       active: false,
+        //     })
+        //     toast.error(error, {
+        //       description:
+        //         'Please check the parameters according to the tutorial.',
+        //     })
+        //   })
+        //   .finally(() => {
+        //     setLoadingServers((prev) => ({ ...prev, [serverKey]: false }))
+        //   })
       } else {
         editServer(serverKey, {
           ...(config ?? (mcpServers[serverKey] as MCPServerConfig)),
           active,
         })
         syncServers()
-        invoke('deactivate_mcp_server', { name: serverKey }).finally(() => {
-          getConnectedServers().then(setConnectedServers)
-          setLoadingServers((prev) => ({ ...prev, [serverKey]: false }))
-        })
+        // invoke('deactivate_mcp_server', { name: serverKey }).finally(() => {
+        //   getConnectedServers().then(setConnectedServers)
+        //   setLoadingServers((prev) => ({ ...prev, [serverKey]: false }))
+        // })
       }
     }
   }

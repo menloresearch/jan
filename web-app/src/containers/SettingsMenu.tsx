@@ -20,26 +20,10 @@ const menuSettings = [
     title: 'common.keyboardShortcuts',
     route: route.settings.shortcuts,
   },
-  {
-    title: 'Hardware',
-    route: route.settings.hardware,
-  },
-  {
-    title: 'MCP Servers',
-    route: route.settings.mcp_servers,
-  },
-  {
-    title: 'Local API Server',
-    route: route.settings.local_api_server,
-  },
-  {
-    title: 'HTTPS Proxy',
-    route: route.settings.https_proxy,
-  },
-  {
-    title: 'Extensions',
-    route: route.settings.extensions,
-  },
+  // {
+  //   title: 'MCP Servers',
+  //   route: route.settings.mcp_servers,
+  // },
 ]
 
 const SettingsMenu = () => {

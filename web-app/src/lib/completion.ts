@@ -5,8 +5,8 @@ import {
   MessageStatus,
   EngineManager,
   ModelManager,
-} from '@janhq/core'
-import { invoke } from '@tauri-apps/api/core'
+} from "@janhq/core";
+// import { invoke } from '@tauri-apps/api/core'
 import {
   ChatCompletionMessageParam,
   ChatCompletionTool,
@@ -15,13 +15,13 @@ import {
   models,
   StreamCompletionResponse,
   TokenJS,
-} from 'token.js'
-import { ulid } from 'ulidx'
-import { normalizeProvider } from './models'
-import { MCPTool } from '@/types/completion'
-import { CompletionMessagesBuilder } from './messages'
-import { ChatCompletionMessageToolCall } from 'openai/resources'
-import { callTool } from '@/services/mcp'
+} from "token.js";
+import { ulid } from "ulidx";
+import { normalizeProvider } from "./models";
+import { MCPTool } from "@/types/completion";
+import { CompletionMessagesBuilder } from "./messages";
+import { ChatCompletionMessageToolCall } from "openai/resources";
+import { callTool } from "@/services/mcp";
 
 /**
  * @fileoverview Helper functions for creating thread content.
@@ -33,9 +33,9 @@ import { callTool } from '@/services/mcp'
  */
 export const newUserThreadContent = (
   threadId: string,
-  content: string
+  content: string,
 ): ThreadMessage => ({
-  type: 'text',
+  type: "text",
   role: ChatCompletionRole.User,
   content: [
     {
@@ -47,12 +47,12 @@ export const newUserThreadContent = (
     },
   ],
   id: ulid(),
-  object: 'thread.message',
+  object: "thread.message",
   thread_id: threadId,
   status: MessageStatus.Ready,
   created_at: 0,
   completed_at: 0,
-})
+});
 /**
  * @fileoverview Helper functions for creating thread content.
  * These functions are used to create thread content objects
@@ -64,9 +64,9 @@ export const newUserThreadContent = (
 export const newAssistantThreadContent = (
   threadId: string,
   content: string,
-  metadata: Record<string, unknown> = {}
+  metadata: Record<string, unknown> = {},
 ): ThreadMessage => ({
-  type: 'text',
+  type: "text",
   role: ChatCompletionRole.Assistant,
   content: [
     {
@@ -78,29 +78,29 @@ export const newAssistantThreadContent = (
     },
   ],
   id: ulid(),
-  object: 'thread.message',
+  object: "thread.message",
   thread_id: threadId,
   status: MessageStatus.Ready,
   created_at: 0,
   completed_at: 0,
   metadata,
-})
+});
 
 /**
  * Empty thread content object.
  * @returns
  */
 export const emptyThreadContent: ThreadMessage = {
-  type: 'text',
+  type: "text",
   role: ChatCompletionRole.Assistant,
   id: ulid(),
-  object: 'thread.message',
-  thread_id: '',
+  object: "thread.message",
+  thread_id: "",
   content: [],
   status: MessageStatus.Ready,
   created_at: 0,
   completed_at: 0,
-}
+};
 
 /**
  * @fileoverview Helper function to send a completion request to the model provider.
@@ -116,20 +116,21 @@ export const sendCompletion = async (
   abortController: AbortController,
   tools: MCPTool[] = [],
   stream: boolean = true,
-  params: Record<string, object> = {}
+  params: Record<string, object> = {},
 ): Promise<StreamCompletionResponse | CompletionResponse | undefined> => {
-  if (!thread?.model?.id || !provider) return undefined
+  if (!thread?.model?.id || !provider) return undefined;
 
-  let providerName = provider.provider as unknown as keyof typeof models
+  let providerName = provider.provider as unknown as keyof typeof models;
 
   if (!Object.keys(models).some((key) => key === providerName))
-    providerName = 'openai-compatible'
+    providerName = "openai-compatible";
 
   const tokenJS = new TokenJS({
-    apiKey: provider.api_key ?? (await invoke('app_token')),
+    // apiKey: provider.api_key ?? (await invoke('app_token')),
+    apiKey: provider.api_key,
     // TODO: Retrieve from extension settings
     baseURL: provider.base_url,
-  })
+  });
 
   // TODO: Add message history
   const completion = stream
@@ -140,12 +141,12 @@ export const sendCompletion = async (
           model: thread.model?.id,
           messages,
           tools: normalizeTools(tools),
-          tool_choice: tools.length ? 'auto' : undefined,
+          tool_choice: tools.length ? "auto" : undefined,
           ...params,
         },
         {
           signal: abortController.signal,
-        }
+        },
       )
     : await tokenJS.chat.completions.create({
         stream: false,
@@ -153,17 +154,17 @@ export const sendCompletion = async (
         model: thread.model?.id,
         messages,
         tools: normalizeTools(tools),
-        tool_choice: tools.length ? 'auto' : undefined,
+        tool_choice: tools.length ? "auto" : undefined,
         ...params,
-      })
-  return completion
-}
+      });
+  return completion;
+};
 
 export const isCompletionResponse = (
-  response: StreamCompletionResponse | CompletionResponse
+  response: StreamCompletionResponse | CompletionResponse,
 ): response is CompletionResponse => {
-  return 'choices' in response
-}
+  return "choices" in response;
+};
 
 /**
  * @fileoverview Helper function to stop a model.
@@ -174,12 +175,12 @@ export const isCompletionResponse = (
  */
 export const stopModel = async (
   provider: string,
-  model: string
+  model: string,
 ): Promise<void> => {
-  const providerObj = EngineManager.instance().get(normalizeProvider(provider))
-  const modelObj = ModelManager.instance().get(model)
-  if (providerObj && modelObj) return providerObj?.unloadModel(modelObj)
-}
+  const providerObj = EngineManager.instance().get(normalizeProvider(provider));
+  const modelObj = ModelManager.instance().get(model);
+  if (providerObj && modelObj) return providerObj?.unloadModel(modelObj);
+};
 
 /**
  * @fileoverview Helper function to normalize tools for the chat completion request.
@@ -188,19 +189,19 @@ export const stopModel = async (
  * @returns
  */
 export const normalizeTools = (
-  tools: MCPTool[]
+  tools: MCPTool[],
 ): ChatCompletionTool[] | undefined => {
-  if (tools.length === 0) return undefined
+  if (tools.length === 0) return undefined;
   return tools.map((tool) => ({
-    type: 'function',
+    type: "function",
     function: {
       name: tool.name,
       description: tool.description?.slice(0, 1024),
       parameters: tool.inputSchema,
       strict: false,
     },
-  }))
-}
+  }));
+};
 
 /**
  * @fileoverview Helper function to extract tool calls from the completion response.
@@ -210,43 +211,43 @@ export const normalizeTools = (
 export const extractToolCall = (
   part: CompletionResponseChunk,
   currentCall: ChatCompletionMessageToolCall | null,
-  calls: ChatCompletionMessageToolCall[]
+  calls: ChatCompletionMessageToolCall[],
 ) => {
-  const deltaToolCalls = part.choices[0].delta.tool_calls
+  const deltaToolCalls = part.choices[0].delta.tool_calls;
   // Handle the beginning of a new tool call
   if (deltaToolCalls?.[0]?.index !== undefined && deltaToolCalls[0]?.function) {
-    const index = deltaToolCalls[0].index
+    const index = deltaToolCalls[0].index;
 
     // Create new tool call if this is the first chunk for it
     if (!calls[index]) {
       calls[index] = {
         id: deltaToolCalls[0]?.id || ulid(),
         function: {
-          name: deltaToolCalls[0]?.function?.name || '',
-          arguments: deltaToolCalls[0]?.function?.arguments || '',
+          name: deltaToolCalls[0]?.function?.name || "",
+          arguments: deltaToolCalls[0]?.function?.arguments || "",
         },
-        type: 'function',
-      }
-      currentCall = calls[index]
+        type: "function",
+      };
+      currentCall = calls[index];
     } else {
       // Continuation of existing tool call
-      currentCall = calls[index]
+      currentCall = calls[index];
 
       // Append to function name or arguments if they exist in this chunk
       if (
         deltaToolCalls[0]?.function?.name &&
         currentCall!.function.name !== deltaToolCalls[0]?.function?.name
       ) {
-        currentCall!.function.name += deltaToolCalls[0].function.name
+        currentCall!.function.name += deltaToolCalls[0].function.name;
       }
 
       if (deltaToolCalls[0]?.function?.arguments) {
-        currentCall!.function.arguments += deltaToolCalls[0].function.arguments
+        currentCall!.function.arguments += deltaToolCalls[0].function.arguments;
       }
     }
   }
-  return calls
-}
+  return calls;
+};
 
 /**
  * @fileoverview Helper function to process the completion response.
@@ -265,18 +266,18 @@ export const postMessageProcessing = async (
   abortController: AbortController,
   approvedTools: Record<string, string[]> = {},
   showModal?: (toolName: string, threadId: string) => Promise<boolean>,
-  allowAllMCPPermissions: boolean = false
+  allowAllMCPPermissions: boolean = false,
 ) => {
   // Handle completed tool calls
   if (calls.length) {
     for (const toolCall of calls) {
-      if (abortController.signal.aborted) break
-      const toolId = ulid()
+      if (abortController.signal.aborted) break;
+      const toolId = ulid();
       const toolCallsMetadata =
         message.metadata?.tool_calls &&
         Array.isArray(message.metadata?.tool_calls)
           ? message.metadata?.tool_calls
-          : []
+          : [];
       message.metadata = {
         ...(message.metadata ?? {}),
         tool_calls: [
@@ -287,10 +288,10 @@ export const postMessageProcessing = async (
               id: toolId,
             },
             response: undefined,
-            state: 'pending',
+            state: "pending",
           },
         ],
-      }
+      };
 
       // Check if tool is approved or show modal for approval
       const approved =
@@ -298,7 +299,7 @@ export const postMessageProcessing = async (
         approvedTools[message.thread_id]?.includes(toolCall.function.name) ||
         (showModal
           ? await showModal(toolCall.function.name, message.thread_id)
-          : true)
+          : true);
 
       const result = approved
         ? await callTool({
@@ -307,27 +308,27 @@ export const postMessageProcessing = async (
               ? JSON.parse(toolCall.function.arguments)
               : {},
           }).catch((e) => {
-            console.error('Tool call failed:', e)
+            console.error("Tool call failed:", e);
             return {
               content: [
                 {
-                  type: 'text',
+                  type: "text",
                   text: `Error calling tool ${toolCall.function.name}: ${e.message}`,
                 },
               ],
               error: true,
-            }
+            };
           })
         : {
             content: [
               {
-                type: 'text',
-                text: 'The user has chosen to disallow the tool call.',
+                type: "text",
+                text: "The user has chosen to disallow the tool call.",
               },
             ],
-          }
+          };
 
-      if ('error' in result && result.error) break
+      if ("error" in result && result.error) break;
 
       message.metadata = {
         ...(message.metadata ?? {}),
@@ -339,13 +340,13 @@ export const postMessageProcessing = async (
               id: toolId,
             },
             response: result,
-            state: 'ready',
+            state: "ready",
           },
         ],
-      }
-      builder.addToolMessage(result.content[0]?.text ?? '', toolCall.id)
+      };
+      builder.addToolMessage(result.content[0]?.text ?? "", toolCall.id);
       // update message metadata
     }
-    return message
+    return message;
   }
-}
+};

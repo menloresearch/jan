@@ -1,5 +1,5 @@
 import { AIEngine, BaseExtension, ExtensionTypeEnum } from "@janhq/core";
-import { convertFileSrc, invoke } from "@tauri-apps/api/core";
+// import { convertFileSrc, invoke } from "@tauri-apps/api/core";
 
 /**
  * Extension manifest object.
@@ -144,20 +144,21 @@ export class ExtensionManager {
    * @returns An array of extensions.
    */
   async getActive(): Promise<Extension[]> {
-    const res = await invoke("get_active_extensions");
-    if (!res || !Array.isArray(res)) return [];
-
-    const extensions: Extension[] = res.map((ext: ExtensionManifest) => {
-      return new Extension(
-        ext.url,
-        ext.name,
-        ext.productName,
-        ext.active,
-        ext.description,
-        ext.version,
-      );
-    });
-    return extensions;
+    // const res = await invoke("get_active_extensions");
+    // if (!res || !Array.isArray(res)) return [];
+    //
+    // const extensions: Extension[] = res.map((ext: ExtensionManifest) => {
+    //   return new Extension(
+    //     ext.url,
+    //     ext.name,
+    //     ext.productName,
+    //     ext.active,
+    //     ext.description,
+    //     ext.version,
+    //   );
+    // });
+    // return extensions;
+    return;
   }
 
   /**
@@ -210,17 +211,17 @@ export class ExtensionManager {
    * @returns {Promise.<Array.<Extension> | false>} extension as defined by the main process. Has property cancelled set to true if installation was cancelled in the main process.
    */
   async install(extensions: ExtensionManifest[]) {
-    if (typeof window === "undefined") {
-      return;
-    }
-    const res = (await invoke("install_extension", {
-      extensions,
-    })) as ExtensionManifest[];
-    return res.map(async (ext: ExtensionManifest) => {
-      const extension = new Extension(ext.name, ext.url);
-      await this.activateExtension(extension);
-      return extension;
-    });
+    // if (typeof window === "undefined") {
+    //   return;
+    // }
+    // const res = (await invoke("install_extension", {
+    //   extensions,
+    // })) as ExtensionManifest[];
+    // return res.map(async (ext: ExtensionManifest) => {
+    //   const extension = new Extension(ext.name, ext.url);
+    //   await this.activateExtension(extension);
+    //   return extension;
+    // });
   }
 
   /**
@@ -230,10 +231,10 @@ export class ExtensionManager {
    * @returns {Promise.<boolean>} Whether uninstalling the extensions was successful.
    */
   uninstall(extensions: string[], reload = true) {
-    if (typeof window === "undefined") {
-      return;
-    }
-    return invoke("uninstall_extension", { extensions, reload });
+    // if (typeof window === "undefined") {
+    //   return;
+    // }
+    // return invoke("uninstall_extension", { extensions, reload });
   }
 
   /**

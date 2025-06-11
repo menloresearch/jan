@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { listen } from '@tauri-apps/api/event'
-import { invoke } from '@tauri-apps/api/core'
+// import { listen } from '@tauri-apps/api/event'
+// import { invoke } from '@tauri-apps/api/core'
 import { t } from 'i18next'
 import {
   Dialog,
@@ -18,13 +18,13 @@ export function CortexFailureDialog() {
   useEffect(() => {
     let unlisten: (() => void) | undefined
     const setupListener = async () => {
-      unlisten = await listen<null>(
-        'cortex_max_restarts_reached',
-        (event) => {
-          console.log('Cortex max restarts reached event received:', event)
-          setShowDialog(true)
-        }
-      )
+      // unlisten = await listen<null>(
+      //   'cortex_max_restarts_reached',
+      //   (event) => {
+      //     console.log('Cortex max restarts reached event received:', event)
+      //     setShowDialog(true)
+      //   }
+      // )
     }
 
     setupListener()
@@ -38,7 +38,7 @@ export function CortexFailureDialog() {
 
   const handleRestartJan = async () => {
     try {
-      await invoke('relaunch')
+      // await invoke('relaunch')
     } catch (error) {
       console.error('Failed to relaunch app:', error)
       alert(

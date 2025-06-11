@@ -4,7 +4,7 @@ import ProvidersMenu from '@/containers/ProvidersMenu'
 import { useModelProvider } from '@/hooks/useModelProvider'
 import { cn, getProviderTitle } from '@/lib/utils'
 import { Switch } from '@/components/ui/switch'
-import { open } from '@tauri-apps/plugin-dialog'
+// import { open } from '@tauri-apps/plugin-dialog'
 import {
   getActiveModels,
   importModel,
@@ -245,8 +245,8 @@ function ProviderDetail() {
                 className={cn(
                   'flex flex-col gap-3',
                   provider &&
-                    provider.provider === 'llama.cpp' &&
-                    'flex-col-reverse'
+                  provider.provider === 'llama.cpp' &&
+                  'flex-col-reverse'
                 )}
               >
                 {/* Settings */}
@@ -260,19 +260,19 @@ function ProviderDetail() {
                           controllerProps={setting.controller_props}
                           className={cn(
                             setting.key === 'api-key' &&
-                              'third-step-setup-remote-provider'
+                            'third-step-setup-remote-provider'
                           )}
                           onChange={(newValue) => {
                             if (provider) {
                               const newSettings = [...provider.settings]
-                              // Handle different value types by forcing the type
-                              // Use type assertion to bypass type checking
+                                // Handle different value types by forcing the type
+                                // Use type assertion to bypass type checking
 
-                              ;(
-                                newSettings[settingIndex].controller_props as {
-                                  value: string | boolean | number
-                                }
-                              ).value = newValue
+                                ; (
+                                  newSettings[settingIndex].controller_props as {
+                                    value: string | boolean | number
+                                  }
+                                ).value = newValue
 
                               // Create update object with updated settings
                               const updateObj: Partial<ModelProvider> = {
@@ -311,7 +311,7 @@ function ProviderDetail() {
                         title={setting.title}
                         column={
                           setting.controller_type === 'input' &&
-                          setting.controller_props.type !== 'number'
+                            setting.controller_props.type !== 'number'
                             ? true
                             : false
                         }
@@ -329,7 +329,7 @@ function ProviderDetail() {
                                     rel="noopener noreferrer"
                                     className={cn(
                                       setting.key === 'api-key' &&
-                                        'second-step-setup-remote-provider'
+                                      'second-step-setup-remote-provider'
                                     )}
                                   />
                                 )
@@ -361,33 +361,33 @@ function ProviderDetail() {
                             {!predefinedProviders.some(
                               (p) => p.provider === provider.provider
                             ) && (
-                              <Button
-                                variant="link"
-                                size="sm"
-                                className="hover:no-underline"
-                                onClick={handleRefreshModels}
-                                disabled={refreshingModels}
-                              >
-                                <div className="cursor-pointer flex items-center justify-center rounded hover:bg-main-view-fg/15 bg-main-view-fg/10 transition-all duration-200 ease-in-out px-1.5 py-1 gap-1">
-                                  {refreshingModels ? (
-                                    <IconLoader
-                                      size={18}
-                                      className="text-main-view-fg/50 animate-spin"
-                                    />
-                                  ) : (
-                                    <IconRefresh
-                                      size={18}
-                                      className="text-main-view-fg/50"
-                                    />
-                                  )}
-                                  <span className="text-main-view-fg/70">
-                                    {refreshingModels
-                                      ? 'Refreshing...'
-                                      : 'Refresh'}
-                                  </span>
-                                </div>
-                              </Button>
-                            )}
+                                <Button
+                                  variant="link"
+                                  size="sm"
+                                  className="hover:no-underline"
+                                  onClick={handleRefreshModels}
+                                  disabled={refreshingModels}
+                                >
+                                  <div className="cursor-pointer flex items-center justify-center rounded hover:bg-main-view-fg/15 bg-main-view-fg/10 transition-all duration-200 ease-in-out px-1.5 py-1 gap-1">
+                                    {refreshingModels ? (
+                                      <IconLoader
+                                        size={18}
+                                        className="text-main-view-fg/50 animate-spin"
+                                      />
+                                    ) : (
+                                      <IconRefresh
+                                        size={18}
+                                        className="text-main-view-fg/50"
+                                      />
+                                    )}
+                                    <span className="text-main-view-fg/70">
+                                      {refreshingModels
+                                        ? 'Refreshing...'
+                                        : 'Refresh'}
+                                    </span>
+                                  </div>
+                                </Button>
+                              )}
                             <DialogAddModel provider={provider} />
                           </>
                         )}
@@ -397,16 +397,17 @@ function ProviderDetail() {
                             size="sm"
                             className="hover:no-underline"
                             onClick={async () => {
-                              const selectedFile = await open({
-                                multiple: false,
-                                directory: false,
-                                filters: [
-                                  {
-                                    name: 'GGUF',
-                                    extensions: ['gguf'],
-                                  },
-                                ],
-                              })
+                              let selectedFile
+                              // const selectedFile = await open({
+                              //   multiple: false,
+                              //   directory: false,
+                              //   filters: [
+                              //     {
+                              //       name: 'GGUF',
+                              //       extensions: ['gguf'],
+                              //     },
+                              //   ],
+                              // })
 
                               if (selectedFile) {
                                 try {
