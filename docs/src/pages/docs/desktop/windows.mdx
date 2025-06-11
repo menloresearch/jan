@@ -1,6 +1,6 @@
 ---
 title: Windows
-description: Get started quickly with Jan, a ChatGPT-alternative that runs on your own computer, with a local API server. Learn how to install Jan and select an AI model to start chatting.
+description: Run AI models locally on your Windows machine with Jan. Quick setup guide for local inference and chat.
 keywords:
   [
     Jan,
@@ -22,195 +22,209 @@ keywords:
 
 import { Tabs, Callout, Steps } from 'nextra/components'
 import FAQBox from '@/components/FaqBox'
+import { Settings } from 'lucide-react'
 
 
 # Windows Installation
-To install Jan desktop on Windows, follow the steps below:
 ## Compatibility
-
-Ensure that your system meets the following requirements to use Jan effectively:
-<Tabs items={['OS', 'CPU', 'RAM', 'GPU', 'Disk']}>
-<Tabs.Tab>
-- Windows 10 or higher.
-</Tabs.Tab>
-<Tabs.Tab>
+System requirements:
+- **Operating System**: Windows 10 or higher.
+- **CPU**
 <Tabs items={['Intel', 'AMD']}>
 <Tabs.Tab>
-<Callout type="info">
-- Jan supports a processor that can handle AVX2. For the full list, please see [here](https://en.wikipedia.org/wiki/Advanced_Vector_Extensions#CPUs_with_AVX2).
-- We support older processors with AVX and AVX-512, though this is not recommended.
-</Callout>
-- Haswell processors (Q2 2013) and newer.
-- Tiger Lake (Q3 2020) and newer for Celeron and Pentium processors.
+- Intel: Haswell (Q2 2013) or newer
+- Intel Celeron/Pentium: Tiger Lake (Q3 2020) or newer
 </Tabs.Tab>
 <Tabs.Tab>
-<Callout type="info">
-- Jan supports a processor that can handle AVX2. For the full list, please see [here](https://en.wikipedia.org/wiki/Advanced_Vector_Extensions#CPUs_with_AVX2).
-- We support older processors with AVX and AVX-512, though this is not recommended.
-</Callout>
 - Excavator processors (Q2 2015) and newer.
 </Tabs.Tab>
 </Tabs>
+
+<Callout type="info">
+Processor must support **AVX2 or newer**. See [full list of supported processors](https://en.wikipedia.org/wiki/Advanced_Vector_Extensions#CPUs_with_AVX2).
+Performance is significantly degraded on AVX-only processors.
+</Callout>
+
+- **Memory (RAM)**
+  - 8GB → up to 3B parameter models (int4)
+  - 16GB → up to 7B parameter models (int4)
+  - 32GB → up to 13B parameter models (int4)
+
+<Callout type="info">
+Newer RAM generations provide better performance.
+</Callout>
+
+- **GPU**:
+  - 6GB → up to 3B parameter models
+  - 8GB → up to 7B parameter models
+  - 12GB → up to 13B parameter models
+
+<Callout type="info">
+Minimum 6GB VRAM recommended for NVIDIA, AMD, or Intel Arc GPUs.
+</Callout>
+
+- **Storage:** 10GB free space minimum for app and models
+
+
+## Install Jan
+
+<Steps>
+
+### Step 1: Download Application
+
+<Tabs items={['Stable Release', 'Beta Release', 'Nightly Release']}>
+<Tabs.Tab>
+- [Download Stable Jan](https://app.jan.ai/download/latest/win-x64)
+- Official Website: [Download Jan](https://jan.ai/download)
 </Tabs.Tab>
 <Tabs.Tab>
-- 8GB for running up to 3B models (int4).
-- 16GB for running up to 7B models (int4).
-- 32GB for running up to 13B models (int4).
 
-<Callout type="info">
-We support DDR2 RAM as the minimum requirement but recommend using newer generations of RAM for improved performance.
+Beta: Contains newer features but may be unstable
 
+[Download Beta Jan](https://app.jan.ai/download/beta/win-x64)
+
+<Callout type="warning">
+May be unstable
 </Callout>
 </Tabs.Tab>
-<Tabs.Tab>    
-- 6GB can load the 3B model (int4) with `ngl` at 120 ~ full speed on CPU/ GPU.
-- 8GB can load the 7B model (int4) with `ngl` at 120 ~ full speed on CPU/ GPU.
-- 12GB can load the 13B model (int4) with `ngl` at 120 ~ full speed on CPU/ GPU.
-    
-<Callout type="info">
-Having at least 6GB VRAM when using NVIDIA, AMD, or Intel Arc GPUs is recommended.
+<Tabs.Tab>
 
+Nightly: Development build with latest features
+
+[Download Nightly Jan](https://app.jan.ai/download/nightly/win-x64)
+
+<Callout type="warning">
+Unstable development build
 </Callout>
-</Tabs.Tab>
-<Tabs.Tab>     
-- At least 10GB for app storage and model download.
 </Tabs.Tab>
 </Tabs>
-## Installing Jan
 
-To install Jan, follow the steps below:
+### Step 2: Install Application
 
-### Step 1: Download the Jan Application
+1. Run the downloaded `.exe` file
+2. Wait for installation to complete
+3. Launch Jan
 
-Jan provides two types of releases:
-<Tabs items={['Stable Releases', 'Nightly Releases']}>
-<Tabs.Tab>
-#### Stable Releases
-
-The stable release is a stable version of Jan. You can download a stable release Jan app via the following:
-
-- **Official Website**: [https://jan.ai](https://jan.ai/)
-- **Jan GitHub repository**: [Github](https://github.com/janhq/jan/releases)
-
-<Callout type="info">
-Make sure to verify the URL to ensure that it's the official Jan website and GitHub repository.
-</Callout>
-</Tabs.Tab>
-<Tabs.Tab>
-#### Nightly Releases
-
-The nightly Release allows you to test out new features and get a sneak peek at what might be included in future stable releases. You can download this version via:
-
-- **Jan GitHub repository**: [Github](https://github.com/janhq/jan/actions/workflows/jan-electron-build-nightly.yml)
-
-<Callout type="info">
-Keep in mind that this build might crash frequently and may contain bugs!
-</Callout>
-</Tabs.Tab>
-</Tabs>
-### Step 2: Install the Jan Application
-
-1. Once you have downloaded the Jan app `.exe` file, open the file.
-2. Wait for Jan to be completely installed on your machine.
-3. Once installed, you can access Jan on your machine.
+</Steps>
 
 ## Data Folder
 
-By default, Jan is installed in the following directory:
+Default installation path:
 
-```
+```sh
 # Default installation directory
-~/Users/<YourUsername>/AppData/Roaming/Jan/data
-
+~\Users\<YourUsername>\AppData\Roaming\Jan\data
 ```
 
-<Callout type="info">
-- Please see the [Jan Data Folder](/docs/data-folder) for more details about the data folder structure.
-</Callout>
+See [Jan Data Folder](/docs/data-folder) for complete folder structure details.
+
 
 ## GPU Acceleration
 
-Once Jan is installed and you have a GPU, you can use your GPU to accelerate the model's performance.
+<Tabs items={['NVIDIA GPU', 'AMD GPU', 'Intel Arc GPU']}>
 
-### NVIDIA GPU
+<Tabs.Tab>
 
-To enable the use of your NVIDIA GPU in the Jan app, follow the steps below:
+<Steps>
 
-<Callout type="info">
-Ensure that you have installed the following to use NVIDIA GPU:
-- NVIDIA GPU with CUDA Toolkit 11.7 or higher.
-- NVIDIA driver 470.63.01 or higher.
-</Callout>
+### Step 1: Verify Hardware & Install Dependencies
+**1.1. Check GPU Detection**
 
-1. Open Jan application.
-2. Go to **Settings** -> **Advanced Settings** -> **GPU Acceleration**.
-3. Enable and choose the NVIDIA GPU you want.
-4. A success notification saying **Successfully turned on GPU acceleration** will appear when GPU acceleration is activated.
+Verify GPU is recognized:
+- Right-click desktop > NVIDIA Control Panel
+- Or check Device Manager > Display Adapters
 
-<Callout type="info">
-While **Vulkan** can enable Nvidia GPU acceleration in the Jan app, **CUDA** is recommended for faster performance.
-</Callout>
+**1.2. Install Required components**
+**NVIDIA Driver:**
+1. Install [NVIDIA Driver](https://www.nvidia.com/en-us/drivers/) (version **470.63.01 or higher**)
+2. Verify installation:
 
-### AMD GPU
+```sh
+nvidia-smi
+```
 
-To enable the use of your AMD GPU in the Jan app, you need to activate the Vulkan support first by following the steps below:
+**CUDA Toolkit:**
+1. Install [CUDA toolkit](https://developer.nvidia.com/cuda-downloads) (**11.7 or higher**)
+2. Verify installation:
 
-1. Open Jan application.
-2. Go to **Settings** -> **Advanced Settings** -> enable the **Experimental Mode**.
-3. Enable the **Vulkan Support** under the **GPU Acceleration**.
-4. Enable the **GPU Acceleration** and choose the AMD GPU you want to use.
-5. A success notification saying **Successfully turned on GPU acceleration** will appear when GPU acceleration is activated.
+```sh
+nvcc --version
+```
+### Step 2: Enable GPU Acceleration
+1. Navigate to **Settings** (<Settings width={16} height={16} style={{display:"inline"}}/>) > **Local Engine** > **Llama.cpp**
+2. Select appropriate backend in **llama-cpp Backend**. See [our guide](/docs/local-engines/llama-cpp).
 
-### Intel Arc GPU
+</Steps>
 
-To enable the use of your Intel Arc GPU in the Jan app, you need to activate the Vulkan support first by following the steps below:
+</Tabs.Tab>
 
-1. Open Jan application.
-2. Go to **Settings** -> **Advanced Settings** -> enable the **Experimental Mode**.
-3. Enable the **Vulkan Support** under the **GPU Acceleration**.
-4. Enable the **GPU Acceleration** and choose the Intel Arc GPU you want to use.
-5. A success notification saying **Successfully turned on GPU acceleration** will appear when GPU acceleration is activated.
+<Tabs.Tab>
+AMD GPUs require **Vulkan** support.
+
+1. Navigate to **Settings** (<Settings width={16} height={16} style={{display:"inline"}}/>) > **Local Engine** > **Llama.cpp**
+2. Select appropriate backend in **llama-cpp Backend**. See [our guide](/docs/local-engines/llama-cpp).
+
+</Tabs.Tab>
+
+<Tabs.Tab>
+Intel Arc GPUs require **Vulkan** support.
+
+1. Navigate to **Settings** (<Settings width={16} height={16} style={{display:"inline"}}/>) > **Local Engine** > **Llama.cpp**
+2. Select appropriate backend in **llama-cpp Backend**. See [our guide](/docs/local-engines/llama-cpp).
+</Tabs.Tab>
+</Tabs>
 
 
-## Uninstalling Jan
+## Uninstall Jan
 
-To uninstall Jan, follow the steps below:
+<Steps>
 
-### Step 1: Open the Control Panels
+### Step 1: Remove Application through Control Panel
 
-1. Open the **Control Panels**.
-2. Click **Uninstall Program** under the **Programs** section.
+1. Open **Control Panels**
+2. Go to **Programs** section
+3. Click **Uninstall Program**
+4. Search for **Jan**
+5. Click the **Three Dots Icon** > **Uninstall**
+6. Click **Uninstall** again to confirm
+7. Click **OK**
 
-### Step 2: Uninstall Jan App
+### Step 2: Clean Up Remaining Files
 
-1. Search for **Jan**.
-2. Click the **three dots icon** -> **Uninstall**.
-3. Click **Uninstall** once again to confirm the action.
-4. Click **OK**.
-5. A message will appear: **"Do you also want to delete the DEFAULT Jan data folder at C:\Users\{username}\Jan?"**.
-6. Click **OK** to delete the entire Jan data folder, or click **Cancel** to save your Jan Data folder so you can use this on the new installation folder.
-7. Navigate to `users/{username}/AppData/Roaming`.
-8. Delete the `Jan` folder that contains the app cache.
+Remove app data:
+
+1. Navigate to `C:\Users\[username]\AppData\Roaming`
+2. Delete Jan folder
+
+or via **Terminal**:
+```sh
+cd C:\Users\%USERNAME%\AppData\Roaming
+rmdir /S Jan
+```
+</Steps>
 
 <Callout type="warning">
-The deleted Data Folder cannot be restored.
+Deleted data folders cannot be recovered. Backup important data first.
 </Callout>
 
 {/* ## FAQs
 
 <FAQBox title="What are Nightly Releases, and how can I access them?">
-Nightly Releases allow you to test new features and previews of upcoming stable releases. You can download them from Jan's GitHub repository. However, remember that these builds might contain bugs and crash frequently.
+Nightly Releases allow you to test new features and previews of upcoming stable releases. You can download
+them from Jan's GitHub repository. However, remember that these builds might contain bugs and crash frequently.
 </FAQBox>
 <FAQBox title="Can I move the Jan data folder to a different location?">
 Yes, you can move the Jan data folder.
 </FAQBox>
 <FAQBox title="How do I enable GPU acceleration for better performance?">
-Depending on your GPU type (NVIDIA, AMD, or Intel), follow the respective instructions provided in the [GPU Acceleration](https://www.notion.so/docs/desktop/windows#gpu-acceleration) section above.
+Depending on your GPU type (NVIDIA, AMD, or Intel), follow the respective instructions provided in the
+[GPU Acceleration](https://www.notion.so/docs/desktop/windows#gpu-acceleration) section above.
 </FAQBox>
 <FAQBox title="Can I recover the deleted Jan data folder after uninstallation?">
 No, it cannot be restored once you delete the Jan data folder during uninstallation.
 </FAQBox>
 
 <Callout type="warning">
-If you have any trouble during installation, please see our [Troubleshooting](https://www.notion.so/docs/troubleshooting) guide to resolve your problem.
+If you have any trouble during installation, please see our [Troubleshooting](https://www.notion.so/docs/troubleshooting)
+guide to resolve your problem.
 </Callout> */}

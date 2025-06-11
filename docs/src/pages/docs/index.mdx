@@ -25,42 +25,49 @@ import FAQBox from '@/components/FaqBox'
 ![Jan's Cover Image](./_assets/jan-app.png)
 
 
-Jan is a ChatGPT-alternative that runs 100% offline on your [Desktop](/docs/desktop-installation). Our goal is to make it easy for a layperson[^1] to download and run LLMs and use AI with full control and [privacy](https://www.reuters.com/legal/legalindustry/privacy-paradox-with-ai-2023-10-31/).
+Jan is an AI chat application that runs 100% offline on your desktop & mobile (*coming soon*). Our goal is to
+make it easy for anyone, with or without coding skills, to download and use AI models with full control and
+[privacy](https://www.reuters.com/legal/legalindustry/privacy-paradox-with-ai-2023-10-31/).
 
-Jan is powered by [Cortex](https://cortex.so/), our embeddable local AI engine. 
+Jan is powered by [Cortex](https://cortex.so/), our embeddable local AI engine which provides an OpenAI-compatible
+API that can run in the background at `https://localhost:1337` (or a custom port). This enables you to power other
+applications running locally with AI capabilities. For example, you can connect tools like [Continue.dev](https://jan.ai/integrations/coding/vscode)
+and [Cline](https://cline.bot/), or any OpenAI-compatible app, to Jan and start coding on their supported editors using
+models hosted in Jan.
 
-<Callout>
-**OpenAI-equivalent API:** Jan runs a Cortex Server in the background, which provides an OpenAI-equivalent API at https://localhost:1337. 
-
-You'll be able to use it with [Continue.dev](https://jan.ai/integrations/coding/vscode), [Open Interpreter](https://jan.ai/integrations/function-calling/interpreter), or any OpenAI-compatible app.
-</Callout>
+Jan doesn't limit you to locally hosted models, meaning, you can create an API key from your favorite model provider
+and add it to Jan via the configuration's page and start talking to your favorite paid models.
 
 ### Features
 
-- [Model Library](https://jan.ai/docs/models/manage-models#add-models) with popular LLMs like Llama3, Gemma or Mistral
-- Connect to [Remote AI APIs](https://jan.ai/docs/remote-inference/openai) like Groq and OpenRouter
-- [Local API Server](https://jan.ai/api-reference) with OpenAI-equivalent API
-- [Extensions](https://jan.ai/docs/extensions) for customizing Jan
+- Download popular open-source LLMs (Llama3, Gemma3, Mistral,and more) from the HugggingFace [Model Hub](./docs/models/manage-models.mdx)
+or import any GGUF models available locally
+- Connect to [cloud model services](/docs/remote-models/openai) (OpenAI, Anthropic, Mistral, Groq,...)
+- [Chat](./docs/threads.mdx) with AI models & [customize their parameters](./docs/models/model-parameters.mdx) via our
+intuitive interface
+- Use our [local API server](https://jan.ai/api-reference) with an OpenAI-equivalent API
+- Customize Jan with [extensions](/docs/extensions)
 
 ### Philosophy
 
-Jan is built to be [User-owned](about#-user-owned):
-- Open source via the [AGPLv3 license](https://github.com/janhq/jan/blob/dev/LICENSE)
-- [Local-first](https://www.inkandswitch.com/local-first/), with all data stored locally
+Jan is built to be [user-owned](about#-user-owned), this means that Jan is:
+- Truly open source via the [AGPLv3 license](https://github.com/menloresearch/jan/blob/dev/LICENSE)
+- [Data is stored locally, following one of the many local-first principles](https://www.inkandswitch.com/local-first)
 - Runs 100% offline, with privacy by default
-- We do not [collect or sell user data](/privacy)
+- Free choice of AI models, both local and cloud-based
+- We do not collect or sell user data. See our [Privacy](/privacy).
 
 <Callout>
-  You can read more about our [philosophy](/about#philosophy) here. 
+  You can read more about our [philosophy](/about#philosophy) here.
 </Callout>
 
 ### Inspirations
 
-Jan is inspired by the concepts of [Calm Computing](https://en.wikipedia.org/wiki/Calm_technology), and the Disappearing Computer. 
+Jan is inspired by the concepts of [Calm Computing](https://en.wikipedia.org/wiki/Calm_technology), and the Disappearing Computer.
 
 ## Acknowledgements
 
-Jan is built on the shoulders of many upstream open-source projects: 
+Jan is built on the shoulders of many upstream open-source projects:
 
 - [Llama.cpp](https://github.com/ggerganov/llama.cpp/blob/master/LICENSE)
 - [LangChain.js](https://github.com/langchain-ai/langchainjs/blob/main/LICENSE)
@@ -70,85 +77,78 @@ Jan is built on the shoulders of many upstream open-source projects:
 
 ## FAQs
 
-<FAQBox title="What is Jan">
-  Jan runs and trains models (LLMs) on your laptop or desktop computers.
+<FAQBox title="What is Jan?">
+  Jan is a customizable AI assistant that runs offline on your computer - a privacy-focused alternative to tools like
+  ChatGPT, Anthropic's Claude, and Google Gemini, with optional cloud AI support.
 </FAQBox>
 
-<FAQBox title="How do I use Jan?">
-  Download Jan Desktop on your computer, download a compatible LLM, connect to a remote AI with the API key, and start chatting. You can switch between models as needed.
+<FAQBox title="How do I get started with Jan?">
+  Download Jan on your computer, download a model or add API key for a cloud-based one, and start chatting. For
+  detailed setup instructions, see our [Quick Start](/docs/quickstart) guide.
 </FAQBox>
 
-<FAQBox title="Is Jan compatible with my operating system?">
-  Jan is available for Mac, Windows, and Linux via Docker/Helm, ensuring wide compatibility.
+<FAQBox title="Is Jan compatible with my system?">
+  Jan supports all major operating systems, [Mac](/docs/desktop/mac#compatibility), [Windows](/docs/desktop/windows#compatibility),
+  and [Linux](docs/desktop/linux).
 
-  GPU-wise, Jan supports Nvidia, AMD (through Vulkan), and Intel.
+  Hardware compatibility includes:
+  - NVIDIA GPUs (CUDA)
+  - AMD GPUs (Vulkan)
+  - Intel Arc GPUs (Vulkan)
+  - Any GPU with Vulkan support
 </FAQBox>
 
-<FAQBox title="Do you use my data?">
-  No. Not even a little. Your usage data is entirely local and private and never leaves your computer.
+<FAQBox title="How does Jan protect my privacy?">
+  Jan prioritizes privacy by:
+  - Running 100% offline with locally-stored data
+  - Using open-source models that keep your conversations private
+  - Storing all files and chat history on your device in the [Jan Data Folder](/docs/data-folder)
+  - Never collecting or selling your data
 
-  We also don't track IP or other identifying information. 
+  <Callout type="warning">
+    When using third-party cloud AI services through Jan, their data policies apply. Check their privacy terms.
+  </Callout>
 
-<Callout type="warning">
-If you use Jan in remote/API mode, i.e., chatting with ChatGPT, they may still collect your info.
-</Callout>
+  You can optionally share anonymous usage statistics to help improve Jan, but your conversations are never
+  shared. See our complete [Privacy Policy](./docs/privacy.mdx).
 </FAQBox>
 
-<FAQBox title="Do you sell my data?">
-  No, and we never will.
+<FAQBox title="What models can I use with Jan?">
+  - Download optimized models from [Jan Hub](/docs/models/manage-models#1-download-from-jan-hub-recommended)
+  - Import GGUF models from Hugging Face or your local files
+  - Connect to cloud providers like OpenAI, Anthropic, Mistral and Groq (requires your own API keys)
 </FAQBox>
 
-<FAQBox title="How does Jan ensure my data remains private?">
-  Jan prioritizes your privacy by running open-source AI models 100% offline on your computer. Conversations, documents, and files stay private. You can find your own user data at `~/jan` on your local filesystem.
+<FAQBox title="Is Jan really free? What's the catch?">
+  Jan is completely free and open-source with no subscription fees for local models and features. When using cloud-based
+  models (like GPT-4o or Claude Sonnet 3.7), you'll only pay the standard rates to those providers—we add no markup.
+</FAQBox>
+
+<FAQBox title="Can I use Jan offline?">
+  Yes! Once you've downloaded a local model, Jan works completely offline with no internet connection needed.
+</FAQBox>
+
+<FAQBox title="How can I customize or extend Jan?">
+  Jan has an extensible architecture similar to VSCode and Obsidian. You can build custom features using our
+  [extensions API](/docs/extensions), which powers many of Jan's core features.
+</FAQBox>
+
+<FAQBox title="How can I contribute or get community help?">
+  - Join our [Discord community](https://discord.gg/qSwXFx6Krr) to connect with other users
+  - Contribute through [GitHub](https://github.com/menloresearch/jan) (no permission needed!)
+  - Get troubleshooting help in our [Discord](https://discord.com/invite/FTk2MvZwJH) #🆘|get-help channel
+  - Check our [Troubleshooting](./docs/troubleshooting.mdx) guide for common issues
+</FAQBox>
+
+<FAQBox title="Can I self-host Jan?">
+  Yes! We fully support the self-hosted movement. Either [download Jan](./download.mdx) directly or fork and build
+  from our [GitHub repository](https://github.com/menloresearch/jan).
 </FAQBox>
 
 <FAQBox title="What does Jan stand for?">
-  Jan stands for “Just a Name". We are, admittedly, bad at marketing 😂.
-</FAQBox>
-
-<FAQBox title="Can I use Jan without an internet connection?">
-  Yes, Jan defaults to running locally without an internet connection.
-</FAQBox>
-
-<FAQBox title="Are there any costs associated with using Jan?">
-  Jan is free to use. However, if you want to connect to remote APIs, like
-  GPT-4, you will need to put in your own API key.
-</FAQBox>
-
-<FAQBox title="What types of AI models can I download or import with Jan?">
-  You can download popular AI models through Jan's Hub or import any model you choose directly from HuggingFace.
-</FAQBox>
-
-<FAQBox title="How do I customize Jan using the programmable API?">
- Jan is built like VSCode and Obsidian. It supports 3rd party extensions. In fact, most of the UI-level features were built with extensions in a few lines of code.
-</FAQBox>
-
-<FAQBox title="How can I contribute to Jan's development or suggest features?">
-  Contributions can be made through [GitHub](https://github.com/janhq/jan) and [Discord](https://discord.gg/Exe46xPMbK), where you can also suggest features and make pull requests. No need to ask for permission. We're fully open-source!
-</FAQBox>
-
-<FAQBox title="How can I get involved with the Jan community?">
-  Joining [Jan's Discord server](https://discord.gg/qSwXFx6Krr) is a great way
-  to get involved with the community.
-</FAQBox>
-
-<FAQBox title="How do I troubleshoot issues with installing or using Jan?">
-  For troubleshooting, you should reach out on Discord and check GitHub for
-  assistance and support from the community and the development team.
-</FAQBox>
-
-<FAQBox title="Can I self-host?">
-  Yes! We love the self-hosted movement. Jan is available as a Helm chart/
-  Docker composes which can be run across home servers or even production-level
-  environments.
+  Jan stands for "Just a Name". We are, admittedly, bad at marketing 😂.
 </FAQBox>
 
 <FAQBox title="Are you hiring?">
-  We often hire directly from our community. If you want to apply,
-  please see our careers page [here](https://homebrew.bamboohr.com/careers).
+  Yes! We love hiring from our community. Check out our open positions at [Careers](https://menlo.bamboohr.com/careers).
 </FAQBox>
-
-
-## Footnotes 
-
-[^1]: Our definition of "Non-technical" == don't need to know how to use Command Line

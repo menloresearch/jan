@@ -65,7 +65,7 @@ const DropdownDownload = ({ lastRelease }: Props) => {
     const userAgent = navigator.userAgent
     if (userAgent.includes('Windows')) {
       // windows user
-      setDefaultSystem(systems[2])
+      setDefaultSystem(systems[1])
     } else if (userAgent.includes('Linux')) {
       // linux user
       setDefaultSystem(systems[3])
@@ -149,7 +149,7 @@ const DropdownDownload = ({ lastRelease }: Props) => {
             .replace('{tag}', tag)
           return {
             ...system,
-            href: `https://github.com/janhq/jan/releases/download/${lastRelease.tag_name}/${downloadUrl}`,
+            href: `https://github.com/menloresearch/jan/releases/download/${lastRelease.tag_name}/${downloadUrl}`,
           }
         })
         setSystems(updatedSystems)

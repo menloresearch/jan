@@ -13,19 +13,5 @@ export default defineConfig([
       NODE: JSON.stringify(`${pkgJson.name}/${pkgJson.node}`),
       VERSION: JSON.stringify(pkgJson.version),
     },
-  },
-  {
-    input: 'src/node/index.ts',
-    external: ['@janhq/core/node', 'path', 'hnswlib-node'],
-    output: {
-      format: 'cjs',
-      file: 'dist/node/index.js',
-      sourcemap: false,
-      inlineDynamicImports: true,
-    },
-    resolve: {
-      extensions: ['.js', '.ts'],
-    },
-    platform: 'node',
-  },
+  }
 ])

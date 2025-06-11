@@ -1,8 +1,10 @@
+/**
+ * @jest-environment jsdom
+ */
 import { openExternalUrl } from './core'
 import { joinPath } from './core'
 import { openFileExplorer } from './core'
 import { getJanDataFolderPath } from './core'
-import { abortDownload } from './core'
 import { executeOnMain } from './core'
 
 describe('test core apis', () => {
@@ -26,7 +28,7 @@ describe('test core apis', () => {
       },
     }
     const result = await joinPath(paths)
-    expect(globalThis.core.api.joinPath).toHaveBeenCalledWith(paths)
+    expect(globalThis.core.api.joinPath).toHaveBeenCalledWith({ args: paths })
     expect(result).toBe('/path/one/path/two')
   })
 
@@ -38,7 +40,7 @@ describe('test core apis', () => {
       },
     }
     const result = await openFileExplorer(path)
-    expect(globalThis.core.api.openFileExplorer).toHaveBeenCalledWith(path)
+    expect(globalThis.core.api.openFileExplorer).toHaveBeenCalledWith({ path })
     expect(result).toBe('opened')
   })
 
@@ -51,32 +53,6 @@ describe('test core apis', () => {
     const result = await getJanDataFolderPath()
     expect(globalThis.core.api.getJanDataFolderPath).toHaveBeenCalled()
     expect(result).toBe('/path/to/jan/data')
-  })
-
-  it('should abort download', async () => {
-    const fileName = 'testFile'
-    globalThis.core = {
-      api: {
-        abortDownload: jest.fn().mockResolvedValue('aborted'),
-      },
-    }
-    const result = await abortDownload(fileName)
-    expect(globalThis.core.api.abortDownload).toHaveBeenCalledWith(fileName)
-    expect(result).toBe('aborted')
-  })
-
-  it('should execute function on main process', async () => {
-    const extension = 'testExtension'
-    const method = 'testMethod'
-    const args = ['arg1', 'arg2']
-    globalThis.core = {
-      api: {
-        invokeExtensionFunc: jest.fn().mockResolvedValue('result'),
-      },
-    }
-    const result = await executeOnMain(extension, method, ...args)
-    expect(globalThis.core.api.invokeExtensionFunc).toHaveBeenCalledWith(extension, method, ...args)
-    expect(result).toBe('result')
   })
 })
 

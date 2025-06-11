@@ -1,15 +1,13 @@
 ---
-title: Jan Privacy
+title: Jan's Privacy Approach
 description: Jan is an app that allows you to own your AI. We prioritize your control over your data and explain what data we collect and why.
 keywords:
   [
     Jan AI,
     Jan,
-    ChatGPT alternative,
     local AI,
     private AI,
     conversational AI,
-    OpenAI platform alternative,
     no-subscription fee,
     large language model,
     about Jan,
@@ -19,45 +17,59 @@ keywords:
   ]
 ---
 
+---
+
+import { Callout } from 'nextra/components'
+
 # Privacy
 
-Jan is an app that allows you to own your AI. We prioritize your control over your data and explain what data we collect and why. 
+Jan is your AI. Period. Here's what we do with data.
 
-- Jan can't see your chats with AI
-- You're free to opt out
+<Callout>
+Full privacy policy lives [here](/docs/privacy-policy), if you're into that sort of thing.
+</Callout>
 
-## Why and what we track
+<Callout type="info">
+Zero data collection until you say so. Scout's honor.
+</Callout>
 
-To build a reliable, user-friendly AI that you own, we need to understand how Jan is used. We collect two types of data: performance data and usage data.
+You'll choose tracking preferences at first launch. Change them anytime in Settings.
 
-### Performance data
-We track app crashes and collect technical details about what went wrong, along with basic information about the hardware you’re using.
+Jan will **never** peek at your chats, settings, or model choices. Not even if you ask nicely.
 
-When Jan crashes, we collect technical details about what went wrong.
+## Data We Track (With Permission)
 
-- Specific AI model in use during the crash
-- Hardware: `CPU`, `GPU`, `RAM`
-- Logs: `Date/Time`, `OS & version`, `app version`, `error codes & messages`.
+We track basic app usage to improve Jan. That's it.
 
-### Usage data
+### Product Analytics
 
-We track data like how often the app is opened to check:
+When allowed, we count:
 
-- **Active Users**: How many people use Jan daily to measure engagement
-- **Retention Rates**: To understand if users are finding value in Jan over time
+- **Active Users**: Daily Jan-thusiasts
+- **Retention**: Who sticks around
 
-Usage data is tied to a randomly generated telemetry ID. None of our usage data can be linked to your personal identity.
+Everything's tied to a random ID - not you. Your chats stay yours.
 
-## What we **don’t** track:
-- Your conversations with Jan. Those stay on your device.
-- Your files. We don’t scan, upload, or even look at them.
-- Anything tied to your identity.
+## What We Don't Track
 
-## Using Cloud Models
+<Callout type="info">
+Jan respects boundaries. We're committed to protecting your privacy.
+</Callout>
 
-Jan allows you to connect cloud model APIs. If you choose to use cloud-based models (e.g. GPT, Claude models), the API provider handling the model will have access to your messages as part of processing the request. Again, Jan doesn't see or store these messages - they go directly to the provider. Remember: With local models, everything stays on your device, so no one - not even us- can see your messages.
+- No chat snooping
+- No file scanning
+- No identity tracking
+- No prompt logging
+- No conversation monitoring
+- No model tracking
 
-## Where we store & process data
-We use [PostHog](https://posthog.com/eu) EU for analytics, ensuring all data is processed within the European Union. This setup complies with GDPR and other strict privacy regulations. PostHog lets us self-host and securely manage the data we collect. Read more [on PostHog's GDPR doc](https://posthog.com/docs/privacy/gdpr-compliance).
+Your private stuff stays private.
 
-For a detailed breakdown of the analytics data we collect, you can check out our analytics repo. If you have any questions or concerns, feel free to reach out to us at hi@jan.ai.
+## Cloud Model Use
+
+Cloud models (like GPT, Claude) need to see your messages to work. That's between you and them - Jan just makes
+the introduction. Local models keep everything at home where the neighbors can't gossip.
+
+## Data Storage
+[PostHog EU](https://posthog.com/eu) handles our analytics. All EU-based, GDPR-compliant, properly buttoned
+up. Details in their [GDPR docs](https://posthog.com/docs/privacy/gdpr-compliance).
