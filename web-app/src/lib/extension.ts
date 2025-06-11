@@ -1,33 +1,27 @@
-import { AIEngine, BaseExtension, ExtensionTypeEnum } from '@janhq/core'
-
-<<<<<<< HEAD:web/extension/ExtensionManager.ts
-import WebExtensions from './../extensions.json'
-
-import Extension from './Extension'
-=======
-import { convertFileSrc, invoke } from '@tauri-apps/api/core'
+import { AIEngine, BaseExtension, ExtensionTypeEnum } from "@janhq/core";
+import { convertFileSrc, invoke } from "@tauri-apps/api/core";
 
 /**
  * Extension manifest object.
  */
 export class Extension {
   /** @type {string} Name of the extension. */
-  name: string
+  name: string;
 
   /** @type {string} Product name of the extension. */
-  productName?: string
+  productName?: string;
 
   /** @type {string} The URL of the extension to load. */
-  url: string
+  url: string;
 
   /** @type {boolean} Whether the extension is activated or not. */
-  active?: boolean
+  active?: boolean;
 
   /** @type {string} Extension's description. */
-  description?: string
+  description?: string;
 
   /** @type {string} Extension's version. */
-  version?: string
+  version?: string;
 
   constructor(
     url: string,
@@ -35,37 +29,36 @@ export class Extension {
     productName?: string,
     active?: boolean,
     description?: string,
-    version?: string
+    version?: string,
   ) {
-    this.name = name
-    this.productName = productName
-    this.url = url
-    this.active = active
-    this.description = description
-    this.version = version
+    this.name = name;
+    this.productName = productName;
+    this.url = url;
+    this.active = active;
+    this.description = description;
+    this.version = version;
   }
 }
 
 export type ExtensionManifest = {
-  url: string
-  name: string
-  productName?: string
-  active?: boolean
-  description?: string
-  version?: string
-}
->>>>>>> release/v0.5.18:web-app/src/lib/extension.ts
+  url: string;
+  name: string;
+  productName?: string;
+  active?: boolean;
+  description?: string;
+  version?: string;
+};
 
 /**
  * Manages the registration and retrieval of extensions.
  */
 export class ExtensionManager {
-  date = new Date().toISOString()
+  date = new Date().toISOString();
   // Registered extensions
-  private extensions = new Map<string, BaseExtension>()
+  private extensions = new Map<string, BaseExtension>();
 
   // Registered inference engines
-  private engines = new Map<string, AIEngine>()
+  private engines = new Map<string, AIEngine>();
 
   /**
    * Registers an extension.
@@ -73,14 +66,14 @@ export class ExtensionManager {
    */
   register<T extends BaseExtension>(name: string, extension: T) {
     // Register for naming use
-    this.extensions.set(name, extension)
+    this.extensions.set(name, extension);
 
     // Register AI Engines
-    if ('provider' in extension && typeof extension.provider === 'string') {
+    if ("provider" in extension && typeof extension.provider === "string") {
       this.engines.set(
         extension.provider as unknown as string,
-        extension as unknown as AIEngine
-      )
+        extension as unknown as AIEngine,
+      );
     }
   }
 
@@ -90,7 +83,7 @@ export class ExtensionManager {
    * @returns The extension, if found.
    */
   get<T extends BaseExtension>(type: ExtensionTypeEnum): T | undefined {
-    return this.getAll().find((e) => e.type() === type) as T | undefined
+    return this.getAll().find((e) => e.type() === type) as T | undefined;
   }
 
   /**
@@ -99,7 +92,7 @@ export class ExtensionManager {
    * @returns The extension, if found.
    */
   getByName(name: string): BaseExtension | undefined {
-    return this.extensions.get(name) as BaseExtension | undefined
+    return this.extensions.get(name) as BaseExtension | undefined;
   }
 
   /**
@@ -108,7 +101,7 @@ export class ExtensionManager {
    * @returns The extension, if found.
    */
   getAll(): BaseExtension[] {
-    return Array.from(this.extensions.values())
+    return Array.from(this.extensions.values());
   }
 
   /**
@@ -117,7 +110,7 @@ export class ExtensionManager {
    * @returns The extension, if found.
    */
   getEngine<T extends AIEngine>(engine: string): T | undefined {
-    return this.engines.get(engine) as T | undefined
+    return this.engines.get(engine) as T | undefined;
   }
 
   /**
@@ -125,8 +118,8 @@ export class ExtensionManager {
    */
   load() {
     this.listExtensions().forEach((ext) => {
-      ext.onLoad()
-    })
+      ext.onLoad();
+    });
   }
 
   /**
@@ -134,8 +127,8 @@ export class ExtensionManager {
    */
   unload() {
     this.listExtensions().forEach((ext) => {
-      ext.onUnload()
-    })
+      ext.onUnload();
+    });
   }
 
   /**
@@ -143,7 +136,7 @@ export class ExtensionManager {
    * @returns An array of extensions.
    */
   listExtensions() {
-    return [...this.extensions.values()]
+    return [...this.extensions.values()];
   }
 
   /**
@@ -151,30 +144,8 @@ export class ExtensionManager {
    * @returns An array of extensions.
    */
   async getActive(): Promise<Extension[]> {
-<<<<<<< HEAD:web/extension/ExtensionManager.ts
-    if (window.electronAPI) {
-      const res = await window.core?.api?.getActiveExtensions()
-
-      if (!res || !Array.isArray(res)) return []
-
-      const extensions: Extension[] = res.map(
-        (ext: any) =>
-          new Extension(
-            ext.url,
-            ext.name,
-            ext.productName,
-            ext.active,
-            ext.description,
-            ext.version
-          )
-      )
-      return extensions
-    } else {
-      return WebExtensions
-    }
-=======
-    const res = await invoke('get_active_extensions')
-    if (!res || !Array.isArray(res)) return []
+    const res = await invoke("get_active_extensions");
+    if (!res || !Array.isArray(res)) return [];
 
     const extensions: Extension[] = res.map((ext: ExtensionManifest) => {
       return new Extension(
@@ -183,11 +154,10 @@ export class ExtensionManager {
         ext.productName,
         ext.active,
         ext.description,
-        ext.version
-      )
-    })
-    return extensions
->>>>>>> release/v0.5.18:web-app/src/lib/extension.ts
+        ext.version,
+      );
+    });
+    return extensions;
   }
 
   /**
@@ -197,37 +167,28 @@ export class ExtensionManager {
    */
   async activateExtension(extension: Extension) {
     // Import class
-    const extensionUrl = extension.url
-<<<<<<< HEAD:web/extension/ExtensionManager.ts
-    await import(/* webpackIgnore: true */ extensionUrl).then(
+    const extensionUrl = extension.url;
+    await import(/* @vite-ignore */ convertFileSrc(extensionUrl)).then(
       (extensionClass) => {
         // Register class if it has a default export
         if (
-          typeof extensionClass.default === 'function' &&
+          typeof extensionClass.default === "function" &&
           extensionClass.default.prototype
         ) {
           this.register(
-=======
-    await import(/* @vite-ignore */convertFileSrc(extensionUrl)).then((extensionClass) => {
-      // Register class if it has a default export
-      if (
-        typeof extensionClass.default === 'function' &&
-        extensionClass.default.prototype
-      ) {
-        this.register(
-          extension.name,
-          new extensionClass.default(
-            extension.url,
->>>>>>> release/v0.5.18:web-app/src/lib/extension.ts
             extension.name,
-            extension.productName,
-            extension.active,
-            extension.description,
-            extension.version
-          )
-        )
-      }
-    })
+            new extensionClass.default(
+              extension.url,
+              extension.name,
+              extension.productName,
+              extension.active,
+              extension.description,
+              extension.version,
+            ),
+          );
+        }
+      },
+    );
   }
 
   /**
@@ -236,11 +197,11 @@ export class ExtensionManager {
    */
   async registerActive() {
     // Get active extensions
-    const activeExtensions = (await this.getActive()) ?? []
+    const activeExtensions = (await this.getActive()) ?? [];
     // Activate all
     await Promise.all(
-      activeExtensions.map((ext: Extension) => this.activateExtension(ext))
-    )
+      activeExtensions.map((ext: Extension) => this.activateExtension(ext)),
+    );
   }
 
   /**
@@ -249,17 +210,17 @@ export class ExtensionManager {
    * @returns {Promise.<Array.<Extension> | false>} extension as defined by the main process. Has property cancelled set to true if installation was cancelled in the main process.
    */
   async install(extensions: ExtensionManifest[]) {
-    if (typeof window === 'undefined') {
-      return
+    if (typeof window === "undefined") {
+      return;
     }
-    const res = (await invoke('install_extension', {
+    const res = (await invoke("install_extension", {
       extensions,
-    })) as ExtensionManifest[]
+    })) as ExtensionManifest[];
     return res.map(async (ext: ExtensionManifest) => {
-      const extension = new Extension(ext.name, ext.url)
-      await this.activateExtension(extension)
-      return extension
-    })
+      const extension = new Extension(ext.name, ext.url);
+      await this.activateExtension(extension);
+      return extension;
+    });
   }
 
   /**
@@ -269,10 +230,10 @@ export class ExtensionManager {
    * @returns {Promise.<boolean>} Whether uninstalling the extensions was successful.
    */
   uninstall(extensions: string[], reload = true) {
-    if (typeof window === 'undefined') {
-      return
+    if (typeof window === "undefined") {
+      return;
     }
-    return invoke('uninstall_extension', { extensions, reload })
+    return invoke("uninstall_extension", { extensions, reload });
   }
 
   /**
@@ -280,7 +241,7 @@ export class ExtensionManager {
    */
   static getInstance() {
     if (!window.core.extensionManager)
-      window.core.extensionManager = new ExtensionManager()
-    return window.core.extensionManager as ExtensionManager
+      window.core.extensionManager = new ExtensionManager();
+    return window.core.extensionManager as ExtensionManager;
   }
 }
