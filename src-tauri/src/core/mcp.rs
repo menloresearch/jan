@@ -4,7 +4,11 @@ use serde_json::{Map, Value};
 use std::fs;
 use std::{collections::HashMap, env, sync::Arc, time::Duration};
 use tauri::{AppHandle, Emitter, Runtime, State};
-use tokio::{process::Command, sync::Mutex, time::{timeout, sleep}};
+use tokio::{
+    process::Command,
+    sync::Mutex,
+    time::{sleep, timeout},
+};
 
 use super::{cmd::get_jan_data_folder_path, state::AppState};
 
@@ -51,9 +55,6 @@ const DEFAULT_MCP_CONFIG: &str = r#"{
 // Timeout for MCP tool calls (30 seconds)
 const MCP_TOOL_CALL_TIMEOUT: Duration = Duration::from_secs(30);
 
-// Maximum retry attempts for MCP server loading
-const MAX_MCP_RETRY_ATTEMPTS: u32 = 3;
-
 // Base backoff duration in milliseconds (exponential backoff will multiply this)
 const BASE_BACKOFF_MS: u64 = 1000;
 
@@ -90,15 +91,19 @@ pub async fn run_mcp_commands<R: Runtime>(
                 log::trace!("Server {name} is not active, skipping.");
                 continue;
             }
-            
+
             // Try to start the server with retry mechanism
-            start_mcp_server(
+            if let Err(e) = start_mcp_server(
                 app.clone(),
                 servers_state.clone(),
                 name.clone(),
                 config.clone(),
+                None, // Use default max retry attempts (0)
             )
-            .await;
+            .await
+            {
+                log::error!("Failed to start MCP server {name}: {e}");
+            }
         }
     }
 
@@ -111,79 +116,94 @@ async fn start_mcp_server<R: Runtime>(
     servers_state: Arc<Mutex<HashMap<String, RunningService<RoleClient, ()>>>>,
     name: String,
     config: Value,
-) {
+    max_retry_attempts: Option<u32>,
+) -> Result<(), String> {
+    // Use default value of 0 if None is provided
+    let max_retry_attempts = max_retry_attempts.unwrap_or(0);
+
     // Initialize retry state locally for this server start attempt
     let mut retry_count = 0;
     let mut backoff_ms = BASE_BACKOFF_MS;
-    
+
     loop {
         retry_count += 1;
-        
+
         if retry_count > 1 {
             log::info!(
                 "Starting MCP server {name} - retry attempt {} of {} (waiting {:.1}s)",
                 retry_count,
-                MAX_MCP_RETRY_ATTEMPTS,
+                max_retry_attempts,
                 backoff_ms as f64 / 1000.0
             );
-            
+
             let _ = app.emit(
                 "mcp-retry-attempt",
                 serde_json::json!({
                     "server": name,
                     "attempt": retry_count,
-                    "max_attempts": MAX_MCP_RETRY_ATTEMPTS
-                })
+                    "max_attempts": max_retry_attempts
+                }),
             );
-            
+
             sleep(Duration::from_millis(backoff_ms)).await;
         } else {
             log::info!("Starting MCP server {name} - initial attempt");
         }
-        
+
         // Attempt to start the server
-        match schedule_mcp_start_task(app.clone(), servers_state.clone(), name.clone(), config.clone()).await {
+        match schedule_mcp_start_task(
+            app.clone(),
+            servers_state.clone(),
+            name.clone(),
+            config.clone(),
+        )
+        .await
+        {
             Ok(_) => {
                 log::info!("Server {name} activated successfully.");
-                
+
                 let _ = app.emit(
                     "mcp-server-started",
                     serde_json::json!({
                         "server": name,
                         "status": "success",
                         "attempts": retry_count
-                    })
+                    }),
                 );
-                return;
+                return Ok(());
             }
             Err(e) => {
                 log::error!("Failed to activate server {name} (attempt {retry_count}): {e}");
-                
-                if retry_count >= MAX_MCP_RETRY_ATTEMPTS {
+
+                // Check if we've exceeded the maximum retry attempts
+                // retry_count starts at 1 for the first attempt, so retry_count - 1 is the number of retries done
+                if retry_count > max_retry_attempts {
                     log::error!(
-                        "Server {name} has exceeded maximum retry attempts ({}). Giving up.",
-                        MAX_MCP_RETRY_ATTEMPTS
+                        "Server {name} has exceeded maximum retry attempts ({max_retry_attempts}). Giving up."
                     );
                     let _ = app.emit(
                         "mcp-max-retries-exceeded",
-                        format!("MCP server {name} failed after {MAX_MCP_RETRY_ATTEMPTS} attempts: {e}"),
+                        format!(
+                            "MCP server {name} failed after {retry_count} attempts ({max_retry_attempts} retries): {e}"
+                        ),
                     );
-                    return;
-                } else {
-                    let _ = app.emit(
-                        "mcp-retry-scheduled",
-                        serde_json::json!({
-                            "server": name,
-                            "attempt": retry_count,
-                            "max_attempts": MAX_MCP_RETRY_ATTEMPTS,
-                            "error": e,
-                            "next_retry_in_ms": backoff_ms
-                        })
-                    );
-                    
-                    // Update backoff duration for next attempt (exponential backoff)
-                    backoff_ms = (backoff_ms * 2).min(30000); // Cap at 30 seconds
+                    return Err(format!(
+                        "MCP server {name} failed after {retry_count} attempts ({max_retry_attempts} retries): {e}"
+                    ));
                 }
+                let _ = app.emit(
+                    "mcp-retry-scheduled",
+                    serde_json::json!({
+                        "server": name,
+                        "attempt": retry_count,
+                        "max_attempts": max_retry_attempts,
+                        "error": e,
+                        "next_retry_in_ms": backoff_ms
+                    }),
+                );
+
+                // Update backoff duration for next attempt (exponential backoff)
+                backoff_ms = (backoff_ms * 2).min(30000); // Cap at 30 seconds
             }
         }
     }
@@ -198,8 +218,7 @@ pub async fn activate_mcp_server<R: Runtime>(
 ) -> Result<(), String> {
     let servers: Arc<Mutex<HashMap<String, RunningService<RoleClient, ()>>>> =
         state.mcp_servers.clone();
-    start_mcp_server(app, servers, name, config).await;
-    Ok(())
+    start_mcp_server(app, servers, name, config, Some(3)).await
 }
 
 async fn schedule_mcp_start_task<R: Runtime>(
