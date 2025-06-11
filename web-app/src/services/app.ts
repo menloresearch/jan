@@ -5,6 +5,44 @@ import { stopAllModels } from "./models";
 import { SystemEvent } from "@/types/events";
 
 /**
+ * @description This function is used to reset the app to its factory settings.
+ * It will remove all the data from the app, including the data folder and local storage.Add commentMore actions
+ * @returns {Promise<void>}
+ */
+
+export const factoryReset = async () => {
+  // Kill background processes and remove data folder
+  // await stopAllModels();
+  //
+  // emit(SystemEvent.KILL_SIDECAR);
+  //
+  // setTimeout(async () => {
+  //   const janDataFolderPath = await getJanDataFolder();
+  //
+  //   if (janDataFolderPath) await fs.rm(janDataFolderPath);
+  //
+  //   window.localStorage.clear();
+  //
+  //   await window.core?.api?.installExtensions();
+  //
+  //   await window.core?.api?.relaunch();
+  // }, 1000);
+};
+
+/**
+ * @description This function is used to read the logs from the app.
+ * It will return the logs as a string.
+ * @returns
+
+ */
+
+export const readLogs = async () => {
+  // const logData: string = (await invoke("read_logs")) ?? "";
+  //
+  // return logData.split("\n").map(parseLogLine);
+  return "";
+};
+/**
  * @description This function is used to parse a log line.
  * It will return the log line as an object.
  * @param line

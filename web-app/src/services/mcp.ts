@@ -41,9 +41,10 @@ export const getTools = (): Promise<MCPTool[]> => {
  * @returns {Promise<string[]>} The MCP names
  * @returns
  */
-// export const getConnectedServers = (): Promise<string[]> => {
-//   return window.core?.api?.getConnectedServers()
-// }
+export const getConnectedServers = (): Promise<string[]> => {
+  // return window.core?.api?.getConnectedServers()
+  return;
+};
 
 /**
  * @description This function invoke an MCP tool
