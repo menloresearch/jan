@@ -3,12 +3,12 @@
 <plist version="1.0">
 <dict>
   <key>CFBundleIdentifier</key>
-  <string>jan.ai.app</string>
+  <string>jan-nightly.ai.app</string>
   <key>CFBundleURLTypes</key>
   <array>
     <dict>
       <key>CFBundleURLName</key>
-      <string>jan.ai.app</string>
+      <string>jan-nightly.ai.app</string>
       <key>CFBundleURLSchemes</key>
       <array>
         <string>jan</string>
