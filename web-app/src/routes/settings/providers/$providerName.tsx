@@ -86,11 +86,11 @@ function ProviderDetail() {
 
   useEffect(() => {
     // Initial data fetch
-    getActiveModels().then(setActiveModels)
+    // getActiveModels().then(setActiveModels)
 
     // Set up interval for real-time updates
     const intervalId = setInterval(() => {
-      getActiveModels().then(setActiveModels)
+      // getActiveModels().then(setActiveModels)
     }, 5000)
 
     return () => clearInterval(intervalId)

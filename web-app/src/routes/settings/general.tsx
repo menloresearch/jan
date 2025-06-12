@@ -241,7 +241,7 @@ function General() {
             </Card>
 
             {/* Data folder */}
-            <Card title={t('common.dataFolder')}>
+            {/* <Card title={t('common.dataFolder')}>
               <CardItem
                 title={t('settings.dataFolder.appData', {
                   ns: 'settings',
@@ -369,7 +369,7 @@ function General() {
                   </div>
                 }
               />
-            </Card>
+            </Card> */}
 
             {/* Other */}
             <Card title={t('common.others')}>

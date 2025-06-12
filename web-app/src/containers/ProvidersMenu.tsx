@@ -42,7 +42,8 @@ const ProvidersMenu = ({
       models: [],
       settings: cloneDeep(openAIProviderSettings) as ProviderSetting[],
       api_key: '',
-      base_url: 'https://api.openai.com/v1',
+      // base_url: 'https://api.openai.com/v1',
+      base_url: 'https://api.jan.ai/v1',
     }
     addProvider(newProvider)
     setTimeout(() => {
@@ -80,8 +81,8 @@ const ProvidersMenu = ({
                   isActive && 'bg-main-view-fg/5',
                   // hidden for llama.cpp provider for setup remote provider
                   provider.provider === 'llama.cpp' &&
-                    stepSetupRemoteProvider &&
-                    'hidden'
+                  stepSetupRemoteProvider &&
+                  'hidden'
                 )}
                 onClick={() =>
                   navigate({

@@ -52,11 +52,11 @@ const mainMenus = [
     icon: IconClipboardSmileFilled,
     route: route.assistant,
   },
-  {
-    title: 'common.hub',
-    icon: IconAppsFilled,
-    route: route.hub,
-  },
+  // {
+  //   title: 'common.hub',
+  //   icon: IconAppsFilled,
+  //   route: route.hub,
+  // },
   {
     title: 'common.settings',
     icon: IconSettingsFilled,

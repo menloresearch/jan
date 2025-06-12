@@ -53,31 +53,31 @@ const SettingsMenu = () => {
             </Link>
           )
 
-          if (index === 2) {
-            return (
-              <div key={menu.title}>
-                <span className="mb-1 block">{menuItem}</span>
-
-                {/* Model Providers Link with default parameter */}
-                {isActive ? (
-                  <div className="block px-2 mt-1 gap-1.5 py-1 w-full rounded bg-main-view-fg/5 cursor-pointer">
-                    <span>{t('common.modelProviders')}</span>
-                  </div>
-                ) : (
-                  <Link
-                    key="common.modelProviders"
-                    to={route.settings.providers}
-                    params={{ providerName: firstItemProvider }}
-                    className="block px-2 gap-1.5 cursor-pointer hover:bg-main-view-fg/5 py-1 w-full rounded"
-                  >
-                    <span className="text-main-view-fg/80">
-                      {t('common.modelProviders')}
-                    </span>
-                  </Link>
-                )}
-              </div>
-            )
-          }
+          // if (index === 2) {
+          //   return (
+          //     <div key={menu.title}>
+          //       <span className="mb-1 block">{menuItem}</span>
+          //
+          //       {/* Model Providers Link with default parameter */}
+          //       {isActive ? (
+          //         <div className="block px-2 mt-1 gap-1.5 py-1 w-full rounded bg-main-view-fg/5 cursor-pointer">
+          //           <span>{t('common.modelProviders')}</span>
+          //         </div>
+          //       ) : (
+          //         <Link
+          //           key="common.modelProviders"
+          //           to={route.settings.providers}
+          //           params={{ providerName: firstItemProvider }}
+          //           className="block px-2 gap-1.5 cursor-pointer hover:bg-main-view-fg/5 py-1 w-full rounded"
+          //         >
+          //           <span className="text-main-view-fg/80">
+          //             {t('common.modelProviders')}
+          //           </span>
+          //         </Link>
+          //       )}
+          //     </div>
+          //   )
+          // }
 
           // For other menu items, just render them normally
           return menuItem
