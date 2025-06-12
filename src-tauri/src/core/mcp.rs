@@ -468,14 +468,42 @@ async fn schedule_mcp_start_task<R: Runtime>(
 
 #[tauri::command]
 pub async fn deactivate_mcp_server(state: State<'_, AppState>, name: String) -> Result<(), String> {
+    log::info!("Deactivating MCP server: {}", name);
+    
+    // First, mark server as manually deactivated to prevent restart
+    // Remove from active servers list to prevent restart
+    {
+        let mut active_servers = state.mcp_active_servers.lock().await;
+        active_servers.remove(&name);
+        log::info!("Removed MCP server {} from active servers list", name);
+    }
+    
+    // Mark as not successfully connected to prevent restart logic
+    {
+        let mut connected = state.mcp_successfully_connected.lock().await;
+        connected.insert(name.clone(), false);
+        log::info!("Marked MCP server {} as not successfully connected", name);
+    }
+    
+    // Reset restart count
+    {
+        let mut counts = state.mcp_restart_counts.lock().await;
+        counts.remove(&name);
+        log::info!("Reset restart count for MCP server {}", name);
+    }
+
+    // Now remove and stop the server
     let servers = state.mcp_servers.clone();
     let mut servers_map = servers.lock().await;
 
     let service = servers_map.remove(&name)
         .ok_or_else(|| format!("Server {} not found", name))?;
 
+    // Release the lock before calling cancel
+    drop(servers_map);
+
     service.cancel().await.map_err(|e| e.to_string())?;
-    log::info!("Server {name} stopped successfully.");
+    log::info!("Server {name} stopped successfully and marked as deactivated.");
     Ok(())
 }
 
@@ -738,6 +766,7 @@ async fn store_active_server_config(
     let mut active_servers = active_servers_state.lock().await;
     active_servers.insert(name.to_string(), config.clone());
 }
+
 
 /// Reset restart count for a server
 async fn reset_restart_count(
