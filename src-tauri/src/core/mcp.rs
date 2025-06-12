@@ -3,7 +3,7 @@ use rmcp::{service::RunningService, transport::TokioChildProcess, RoleClient, Se
 use serde_json::{Map, Value};
 use std::fs;
 use std::{collections::HashMap, env, sync::Arc, time::Duration};
-use tauri::{AppHandle, Emitter, Runtime, State};
+use tauri::{AppHandle, Emitter, Manager, Runtime, State};
 use tokio::{
     process::Command,
     sync::Mutex,
@@ -58,6 +58,9 @@ const MCP_TOOL_CALL_TIMEOUT: Duration = Duration::from_secs(30);
 // Base backoff duration in milliseconds (exponential backoff will multiply this)
 const BASE_BACKOFF_MS: u64 = 1000;
 
+// MCP server restart configuration (similar to cortex)
+const MCP_RESTART_DELAY_MS: u64 = 5000;
+
 /// Runs MCP commands by reading configuration from a JSON file and initializing servers
 ///
 /// # Arguments
@@ -77,137 +80,254 @@ pub async fn run_mcp_commands<R: Runtime>(
         "Load MCP configs from {}",
         app_path_str.clone() + "/mcp_config.json"
     );
-    let config_content = std::fs::read_to_string(app_path_str.clone() + "/mcp_config.json")
-        .map_err(|e| format!("Failed to read config file: {}", e))?;
+    let config_content = std::fs::read_to_string(app_path_str + "/mcp_config.json")
+        .map_err(|e| format!("Failed to read config file: {e}"))?;
 
     let mcp_servers: serde_json::Value = serde_json::from_str(&config_content)
-        .map_err(|e| format!("Failed to parse config: {}", e))?;
+        .map_err(|e| format!("Failed to parse config: {e}"))?;
 
-    if let Some(server_map) = mcp_servers.get("mcpServers").and_then(Value::as_object) {
-        log::trace!("MCP Servers: {server_map:#?}");
+    let server_map = mcp_servers
+        .get("mcpServers")
+        .and_then(Value::as_object)
+        .ok_or("No mcpServers found in config")?;
 
-        for (name, config) in server_map {
-            if let Some(false) = extract_active_status(config) {
-                log::trace!("Server {name} is not active, skipping.");
-                continue;
-            }
+    log::trace!("MCP Servers: {server_map:#?}");
 
-            // Try to start the server with retry mechanism
-            if let Err(e) = start_mcp_server(
-                app.clone(),
-                servers_state.clone(),
-                name.clone(),
-                config.clone(),
-                None, // Use default max retry attempts (0)
-            )
-            .await
-            {
-                log::error!("Failed to start MCP server {name}: {e}");
-            }
+    for (name, config) in server_map {
+        if extract_active_status(config) == Some(false) {
+            log::trace!("Server {name} is not active, skipping.");
+            continue;
         }
+
+        // Start server with restart monitoring - spawn async task
+        let app_clone = app.clone();
+        let servers_clone = servers_state.clone();
+        let name_clone = name.clone();
+        let config_clone = config.clone();
+        
+        tauri::async_runtime::spawn(async move {
+            start_mcp_server_with_restart(
+                app_clone,
+                servers_clone,
+                name_clone,
+                config_clone,
+                Some(5), // Default max restarts for startup
+            ).await;
+        });
     }
 
     Ok(())
 }
 
-/// Starts an MCP server with retry mechanism using exponential backoff
-async fn start_mcp_server<R: Runtime>(
+/// Monitor MCP server using RunningService's JoinHandle<QuitReason> - much better approach!
+async fn monitor_mcp_server_handle(
+    servers_state: Arc<Mutex<HashMap<String, RunningService<RoleClient, ()>>>>,
+    name: String,
+) -> Option<rmcp::service::QuitReason> {
+    // Extract the service from the HashMap and wait on its handle
+    let service = {
+        let mut servers = servers_state.lock().await;
+        servers.remove(&name)
+    };
+    
+    let service = if let Some(service) = service { service } else {
+        log::warn!("MCP server {name} not found in running services");
+        return None;
+    };
+
+    log::info!("Monitoring MCP server {} using JoinHandle<QuitReason>", name);
+    
+    // Wait for the service to quit and get the reason
+    // This is much better than periodic health checks!
+    match service.waiting().await {
+        Ok(quit_reason) => {
+            log::info!("MCP server {name} finished with quit reason: {quit_reason:?}");
+            Some(quit_reason)
+        }
+        Err(e) => {
+            log::error!("MCP server {name} monitoring error: {e}");
+            // Consider this as an unexpected termination
+            None
+        }
+    }
+}
+
+/// Starts an MCP server with restart monitoring (similar to cortex restart)
+async fn start_mcp_server_with_restart<R: Runtime>(
     app: AppHandle<R>,
     servers_state: Arc<Mutex<HashMap<String, RunningService<RoleClient, ()>>>>,
     name: String,
     config: Value,
-    max_retry_attempts: Option<u32>,
-) -> Result<(), String> {
-    // Use default value of 0 if None is provided
-    let max_retry_attempts = max_retry_attempts.unwrap_or(0);
-
-    // Initialize retry state locally for this server start attempt
-    let mut retry_count = 0;
-    let mut backoff_ms = BASE_BACKOFF_MS;
-
-    loop {
-        retry_count += 1;
-
-        if retry_count > 1 {
-            log::info!(
-                "Starting MCP server {name} - retry attempt {} of {} (waiting {:.1}s)",
-                retry_count,
-                max_retry_attempts,
-                backoff_ms as f64 / 1000.0
-            );
-
-            let _ = app.emit(
-                "mcp-retry-attempt",
-                serde_json::json!({
-                    "server": name,
-                    "attempt": retry_count,
-                    "max_attempts": max_retry_attempts
-                }),
-            );
-
-            sleep(Duration::from_millis(backoff_ms)).await;
-        } else {
-            log::info!("Starting MCP server {name} - initial attempt");
-        }
-
-        // Attempt to start the server
-        match schedule_mcp_start_task(
-            app.clone(),
-            servers_state.clone(),
-            name.clone(),
-            config.clone(),
-        )
-        .await
-        {
-            Ok(_) => {
-                log::info!("Server {name} activated successfully.");
-
-                let _ = app.emit(
-                    "mcp-server-started",
-                    serde_json::json!({
-                        "server": name,
-                        "status": "success",
-                        "attempts": retry_count
-                    }),
-                );
-                return Ok(());
-            }
-            Err(e) => {
-                log::error!("Failed to activate server {name} (attempt {retry_count}): {e}");
-
-                // Check if we've exceeded the maximum retry attempts
-                // retry_count starts at 1 for the first attempt, so retry_count - 1 is the number of retries done
-                if retry_count > max_retry_attempts {
-                    log::error!(
-                        "Server {name} has exceeded maximum retry attempts ({max_retry_attempts}). Giving up."
-                    );
-                    let _ = app.emit(
-                        "mcp-max-retries-exceeded",
-                        format!(
-                            "MCP server {name} failed after {retry_count} attempts ({max_retry_attempts} retries): {e}"
-                        ),
-                    );
-                    return Err(format!(
-                        "MCP server {name} failed after {retry_count} attempts ({max_retry_attempts} retries): {e}"
-                    ));
-                }
-                let _ = app.emit(
-                    "mcp-retry-scheduled",
-                    serde_json::json!({
-                        "server": name,
-                        "attempt": retry_count,
-                        "max_attempts": max_retry_attempts,
-                        "error": e,
-                        "next_retry_in_ms": backoff_ms
-                    }),
-                );
-
-                // Update backoff duration for next attempt (exponential backoff)
-                backoff_ms = (backoff_ms * 2).min(30000); // Cap at 30 seconds
-            }
-        }
+    max_restarts: Option<u32>,
+) {
+    let app_state = app.state::<AppState>();
+    let restart_counts = app_state.mcp_restart_counts.clone();
+    let active_servers_state = app_state.mcp_active_servers.clone();
+    let successfully_connected = app_state.mcp_successfully_connected.clone();
+    
+    // Store active server config for restart purposes
+    {
+        let mut active_servers = active_servers_state.lock().await;
+        active_servers.insert(name.clone(), config.clone());
     }
+    
+    let app_clone = app.clone();
+    let servers_clone = servers_state.clone();
+    let name_clone = name.clone();
+    let config_clone = config.clone();
+    let max_restarts = max_restarts.unwrap_or(5); // Default to 5 if not specified
+    
+    // Spawn task for restart monitoring (similar to cortex spawn in setup.rs)
+    tauri::async_runtime::spawn(async move {
+        loop {
+            let current_restart_count = {
+                let mut counts = restart_counts.lock().await;
+                *counts.entry(name_clone.clone()).or_insert(0)
+            };
+
+            if current_restart_count >= max_restarts {
+                log::error!(
+                    "MCP server {name_clone} reached maximum restart attempts ({current_restart_count}). Giving up."
+                );
+                if let Err(e) = app_clone.emit("mcp_max_restarts_reached",
+                    serde_json::json!({
+                        "server": name_clone,
+                        "max_restarts": max_restarts
+                    })
+                ) {
+                    log::error!("Failed to emit mcp_max_restarts_reached event: {e}");
+                }
+                break;
+            }
+
+            log::info!(
+                "Starting MCP server {name_clone} (Attempt {}/{})",
+                current_restart_count + 1,
+                max_restarts
+            );
+
+            // Attempt to start the server
+            let start_result = schedule_mcp_start_task(
+                app_clone.clone(),
+                servers_clone.clone(),
+                name_clone.clone(),
+                config_clone.clone(),
+            ).await;
+
+            match start_result {
+                Ok(_) => {
+                    log::info!("MCP server {} started successfully.", name_clone);
+                    
+                    // Reset restart count on successful start (like cortex)
+                    {
+                        let mut counts = restart_counts.lock().await;
+                        if let Some(count) = counts.get_mut(&name_clone) {
+                            if *count > 0 {
+                                log::info!(
+                                    "MCP server {} started successfully, resetting restart count from {} to 0.",
+                                    name_clone,
+                                    *count
+                                );
+                                *count = 0;
+                            }
+                        }
+                    }
+
+                    // Monitor the server using RunningService's JoinHandle<QuitReason>
+                    let quit_reason = monitor_mcp_server_handle(
+                        servers_clone.clone(),
+                        name_clone.clone(),
+                    ).await;
+
+                    log::info!("MCP server {} quit with reason: {:?}", name_clone, quit_reason);
+
+                    // Check if server was marked as successfully connected
+                    let was_connected = {
+                        let connected = successfully_connected.lock().await;
+                        connected.get(&name_clone).copied().unwrap_or(false)
+                    };
+
+                    // Restart policy: Only restart servers that were previously connected
+                    if !was_connected {
+                        log::error!(
+                            "MCP server {} failed before establishing successful connection - stopping permanently",
+                            name_clone
+                        );
+                        break;
+                    }
+
+                    // Determine if we should restart based on quit reason
+                    let should_restart = match quit_reason {
+                        Some(reason) => {
+                            // You can check the QuitReason here to decide whether to restart
+                            // For now, we restart on any quit reason except manual cancellation
+                            log::warn!("MCP server {} terminated unexpectedly: {:?}", name_clone, reason);
+                            true
+                        }
+                        None => {
+                            // Service was manually stopped (e.g., via deactivate command)
+                            log::info!("MCP server {} was manually stopped - not restarting", name_clone);
+                            false
+                        }
+                    };
+
+                    if !should_restart {
+                        break;
+                    }
+
+                    // If we reach here, server terminated unexpectedly - increment restart count
+                    {
+                        let mut counts = restart_counts.lock().await;
+                        if let Some(count) = counts.get_mut(&name_clone) {
+                            *count += 1;
+                            log::info!(
+                                "Waiting {}ms before attempting restart {}/{}...",
+                                MCP_RESTART_DELAY_MS,
+                                *count,
+                                max_restarts
+                            );
+                        }
+                    }
+
+                    sleep(Duration::from_millis(MCP_RESTART_DELAY_MS)).await;
+                }
+                Err(e) => {
+                    log::error!("Failed to start MCP server {}: {}", name_clone, e);
+                    
+                    // Check if server was marked as successfully connected before
+                    let was_connected = {
+                        let connected = successfully_connected.lock().await;
+                        connected.get(&name_clone).copied().unwrap_or(false)
+                    };
+
+                    // Restart policy: Only restart servers that were previously connected
+                    if !was_connected {
+                        log::error!(
+                            "MCP server {} failed initial startup - stopping permanently (no restarts for failed startups)",
+                            name_clone
+                        );
+                        break;
+                    }
+
+                    {
+                        let mut counts = restart_counts.lock().await;
+                        if let Some(count) = counts.get_mut(&name_clone) {
+                            *count += 1;
+                            log::info!(
+                                "Waiting {}ms before attempting restart {}/{} due to spawn failure...",
+                                MCP_RESTART_DELAY_MS,
+                                *count,
+                                max_restarts
+                            );
+                        }
+                    }
+                    sleep(Duration::from_millis(MCP_RESTART_DELAY_MS)).await;
+                }
+            }
+        }
+    });
 }
+
 
 #[tauri::command]
 pub async fn activate_mcp_server<R: Runtime>(
@@ -218,7 +338,10 @@ pub async fn activate_mcp_server<R: Runtime>(
 ) -> Result<(), String> {
     let servers: Arc<Mutex<HashMap<String, RunningService<RoleClient, ()>>>> =
         state.mcp_servers.clone();
-    start_mcp_server(app, servers, name, config, Some(3)).await
+    
+    // Use the same restart logic as startup - no restarts for failed initial activation
+    start_mcp_server_with_restart(app, servers, name, config, Some(3)).await;
+    Ok(())
 }
 
 async fn schedule_mcp_start_task<R: Runtime>(
@@ -233,99 +356,103 @@ async fn schedule_mcp_start_task<R: Runtime>(
         .parent()
         .expect("Executable must have a parent directory");
     let bin_path = exe_parent_path.to_path_buf();
-    if let Some((command, args, envs)) = extract_command_args(&config) {
-        let mut cmd = Command::new(command.clone());
-        if command.clone() == "npx" {
-            let mut cache_dir = app_path.clone();
-            cache_dir.push(".npx");
-            let bun_x_path = format!("{}/bun", bin_path.display());
-            cmd = Command::new(bun_x_path);
-            cmd.arg("x");
-            cmd.env("BUN_INSTALL", cache_dir.to_str().unwrap().to_string());
-        }
+    
+    let (command, args, envs) = extract_command_args(&config)
+        .ok_or_else(|| format!("Failed to extract command args from config for {name}"))?;
 
-        if command.clone() == "uvx" {
-            let mut cache_dir = app_path.clone();
-            cache_dir.push(".uvx");
-            let bun_x_path = format!("{}/uv", bin_path.display());
-            cmd = Command::new(bun_x_path);
-            cmd.arg("tool");
-            cmd.arg("run");
-            cmd.env("UV_CACHE_DIR", cache_dir.to_str().unwrap().to_string());
-        }
-        #[cfg(windows)]
-        {
-            cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW: prevents shell window on Windows
-        }
-        let app_path_str = app_path.to_str().unwrap().to_string();
-        let log_file_path = format!("{}/logs/app.log", app_path_str);
-        match std::fs::OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(log_file_path)
-        {
-            Ok(file) => {
-                cmd.stderr(std::process::Stdio::from(file));
-            }
-            Err(err) => {
-                log::error!("Failed to open log file: {}", err);
-            }
-        };
-
-        cmd.kill_on_drop(true);
-
-        log::trace!("Command: {cmd:#?}");
-
-        args.iter().filter_map(Value::as_str).for_each(|arg| {
-            cmd.arg(arg);
-        });
-        envs.iter().for_each(|(k, v)| {
-            if let Some(v_str) = v.as_str() {
-                cmd.env(k, v_str);
-            }
-        });
-
-        let process = TokioChildProcess::new(cmd);
-        match process {
-            Ok(p) => {
-                let service = ().serve(p).await;
-
-                match service {
-                    Ok(running_service) => {
-                        // Get peer info and clone the needed values before moving the service
-                        let (server_name, server_version) = {
-                            let server_info = running_service.peer_info();
-                            log::trace!("Connected to server: {server_info:#?}");
-                            (
-                                server_info.server_info.name.clone(),
-                                server_info.server_info.version.clone(),
-                            )
-                        };
-
-                        // Now move the service into the HashMap
-                        servers.lock().await.insert(name.clone(), running_service);
-                        log::info!("Server {name} started successfully.");
-
-                        // Emit event to the frontend
-                        let event = format!("mcp-connected");
-                        let payload = serde_json::json!({
-                            "name": server_name,
-                            "version": server_version,
-                        });
-                        app.emit(&event, payload)
-                            .map_err(|e| format!("Failed to emit event: {}", e))?;
-                    }
-                    Err(e) => {
-                        return Err(format!("Failed to start MCP server {name}: {e}"));
-                    }
-                }
-            }
-            Err(e) => {
-                log::error!("Failed to run command {name}: {e}");
-                return Err(format!("Failed to run command {name}: {e}"));
-            }
-        }
+    let mut cmd = Command::new(command.clone());
+    
+    if command == "npx" {
+        let mut cache_dir = app_path.clone();
+        cache_dir.push(".npx");
+        let bun_x_path = format!("{}/bun", bin_path.display());
+        cmd = Command::new(bun_x_path);
+        cmd.arg("x");
+        cmd.env("BUN_INSTALL", cache_dir.to_str().unwrap().to_string());
     }
+
+    if command == "uvx" {
+        let mut cache_dir = app_path.clone();
+        cache_dir.push(".uvx");
+        let bun_x_path = format!("{}/uv", bin_path.display());
+        cmd = Command::new(bun_x_path);
+        cmd.arg("tool");
+        cmd.arg("run");
+        cmd.env("UV_CACHE_DIR", cache_dir.to_str().unwrap().to_string());
+    }
+    
+    #[cfg(windows)]
+    {
+        cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW: prevents shell window on Windows
+    }
+    
+    let app_path_str = app_path.to_str().unwrap().to_string();
+    let log_file_path = format!("{}/logs/app.log", app_path_str);
+    match std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(log_file_path)
+    {
+        Ok(file) => {
+            cmd.stderr(std::process::Stdio::from(file));
+        }
+        Err(err) => {
+            log::error!("Failed to open log file: {}", err);
+        }
+    };
+
+    cmd.kill_on_drop(true);
+    log::trace!("Command: {cmd:#?}");
+
+    args.iter().filter_map(Value::as_str).for_each(|arg| {
+        cmd.arg(arg);
+    });
+    envs.iter().for_each(|(k, v)| {
+        if let Some(v_str) = v.as_str() {
+            cmd.env(k, v_str);
+        }
+    });
+
+    let process = TokioChildProcess::new(cmd)
+        .map_err(|e| {
+            log::error!("Failed to run command {name}: {e}");
+            format!("Failed to run command {name}: {e}")
+        })?;
+
+    let service = ().serve(process).await
+        .map_err(|e| format!("Failed to start MCP server {name}: {e}"))?;
+
+    // Get peer info and clone the needed values before moving the service
+    let (server_name, server_version) = {
+        let server_info = service.peer_info();
+        log::trace!("Connected to server: {server_info:#?}");
+        (
+            server_info.server_info.name.clone(),
+            server_info.server_info.version.clone(),
+        )
+    };
+
+    // Now move the service into the HashMap
+    servers.lock().await.insert(name.clone(), service);
+    log::info!("Server {name} started successfully.");
+
+    // Mark server as successfully connected (for restart policy)
+    {
+        let app_state = app.state::<AppState>();
+        let mut connected = app_state.mcp_successfully_connected.lock().await;
+        connected.insert(name.clone(), true);
+        log::info!("Marked MCP server {} as successfully connected", name);
+    }
+
+    // Emit event to the frontend
+    let event = format!("mcp-connected");
+    let payload = serde_json::json!({
+        "name": server_name,
+        "version": server_version,
+    });
+    app.emit(&event, payload)
+        .map_err(|e| format!("Failed to emit event: {}", e))?;
+
     Ok(())
 }
 
@@ -334,12 +461,11 @@ pub async fn deactivate_mcp_server(state: State<'_, AppState>, name: String) -> 
     let servers = state.mcp_servers.clone();
     let mut servers_map = servers.lock().await;
 
-    if let Some(service) = servers_map.remove(&name) {
-        service.cancel().await.map_err(|e| e.to_string())?;
-        log::info!("Server {name} stopped successfully.");
-    } else {
-        return Err(format!("Server {} not found", name));
-    }
+    let service = servers_map.remove(&name)
+        .ok_or_else(|| format!("Server {} not found", name))?;
+
+    service.cancel().await.map_err(|e| e.to_string())?;
+    log::info!("Server {name} stopped successfully.");
     Ok(())
 }
 
@@ -369,11 +495,81 @@ pub async fn restart_mcp_servers(app: AppHandle, state: State<'_, AppState>) -> 
     // Stop the servers
     stop_mcp_servers(state.mcp_servers.clone()).await?;
 
-    // Restart the servers
-    run_mcp_commands(&app, servers).await?;
+    // Restart only previously active servers (like cortex)
+    restart_active_mcp_servers(&app, servers).await?;
 
     app.emit("mcp-update", "MCP servers updated")
         .map_err(|e| format!("Failed to emit event: {}", e))
+}
+
+/// Restart only servers that were previously active (like cortex restart behavior)
+pub async fn restart_active_mcp_servers<R: Runtime>(
+    app: &AppHandle<R>,
+    servers_state: Arc<Mutex<HashMap<String, RunningService<RoleClient, ()>>>>,
+) -> Result<(), String> {
+    let app_state = app.state::<AppState>();
+    let active_servers = app_state.mcp_active_servers.lock().await;
+    
+    log::info!("Restarting {} previously active MCP servers", active_servers.len());
+    
+    for (name, config) in active_servers.iter() {
+        log::info!("Restarting MCP server: {}", name);
+        
+        // Start server with restart monitoring - spawn async task
+        let app_clone = app.clone();
+        let servers_clone = servers_state.clone();
+        let name_clone = name.clone();
+        let config_clone = config.clone();
+        
+        tauri::async_runtime::spawn(async move {
+            start_mcp_server_with_restart(
+                app_clone,
+                servers_clone,
+                name_clone,
+                config_clone,
+                Some(5), // Default max restarts for startup
+            ).await;
+        });
+    }
+    
+    Ok(())
+}
+
+/// Handle app quit - stop all MCP servers cleanly (like cortex cleanup)
+pub async fn handle_app_quit(state: &AppState) -> Result<(), String> {
+    log::info!("App quitting - stopping all MCP servers cleanly");
+    
+    // Stop all running MCP servers
+    stop_mcp_servers(state.mcp_servers.clone()).await?;
+    
+    // Clear active servers and restart counts
+    {
+        let mut active_servers = state.mcp_active_servers.lock().await;
+        active_servers.clear();
+    }
+    {
+        let mut restart_counts = state.mcp_restart_counts.lock().await;
+        restart_counts.clear();
+    }
+    
+    log::info!("All MCP servers stopped cleanly");
+    Ok(())
+}
+
+/// Reset MCP restart count for a specific server (like cortex reset)
+#[tauri::command]
+pub async fn reset_mcp_restart_count(state: State<'_, AppState>, server_name: String) -> Result<(), String> {
+    let mut counts = state.mcp_restart_counts.lock().await;
+    
+    let count = match counts.get_mut(&server_name) {
+        Some(count) => count,
+        None => return Ok(()), // Server not found, nothing to reset
+    };
+
+    let old_count = *count;
+    *count = 0;
+    log::info!("MCP server {} restart count reset from {} to 0.", server_name, old_count);
+    Ok(())
 }
 
 pub async fn stop_mcp_servers(
@@ -465,26 +661,31 @@ pub async fn call_tool(
 
     // Iterate through servers and find the first one that contains the tool
     for (_, service) in servers.iter() {
-        if let Ok(tools) = service.list_all_tools().await {
-            if tools.iter().any(|t| t.name == tool_name) {
-                println!("Found tool {} in server", tool_name);
+        let tools = match service.list_all_tools().await {
+            Ok(tools) => tools,
+            Err(_) => continue, // Skip this server if we can't list tools
+        };
 
-                // Call the tool with timeout
-                let tool_call = service.call_tool(CallToolRequestParam {
-                    name: tool_name.clone().into(),
-                    arguments,
-                });
-
-                return match timeout(MCP_TOOL_CALL_TIMEOUT, tool_call).await {
-                    Ok(result) => result.map_err(|e| e.to_string()),
-                    Err(_) => Err(format!(
-                        "Tool call '{}' timed out after {} seconds",
-                        tool_name,
-                        MCP_TOOL_CALL_TIMEOUT.as_secs()
-                    )),
-                };
-            }
+        if !tools.iter().any(|t| t.name == tool_name) {
+            continue; // Tool not found in this server, try next
         }
+
+        println!("Found tool {} in server", tool_name);
+
+        // Call the tool with timeout
+        let tool_call = service.call_tool(CallToolRequestParam {
+            name: tool_name.clone().into(),
+            arguments,
+        });
+
+        return match timeout(MCP_TOOL_CALL_TIMEOUT, tool_call).await {
+            Ok(result) => result.map_err(|e| e.to_string()),
+            Err(_) => Err(format!(
+                "Tool call '{}' timed out after {} seconds",
+                tool_name,
+                MCP_TOOL_CALL_TIMEOUT.as_secs()
+            )),
+        };
     }
 
     Err(format!("Tool {} not found", tool_name))
@@ -503,8 +704,7 @@ pub async fn get_mcp_configs(app: AppHandle) -> Result<String, String> {
             .map_err(|e| format!("Failed to create default MCP config: {}", e))?;
     }
 
-    let contents = fs::read_to_string(path).map_err(|e| e.to_string())?;
-    return Ok(contents);
+    fs::read_to_string(path).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
