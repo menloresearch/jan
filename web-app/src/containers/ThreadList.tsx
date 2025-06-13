@@ -275,8 +275,8 @@ function ThreadList({ threads }: ThreadListProps) {
       // If only one has order, prioritize the one with order (order comes first)
       if (a.order != null) return -1
       if (b.order != null) return 1
-      // If neither has order, sort by updated time (newer threads first)
-      return (b.updated || 0) - (a.updated || 0)
+      // If neither has order, sort by created time (newer threads first)
+      return (b.created || 0) - (a.created || 0)
     })
   }, [threads])
 

@@ -250,52 +250,24 @@ export const useThreads = create<ThreadState>()((set, get) => ({
       const thread = state.threads[threadId]
       if (!thread) return state
 
-      // If the thread is already at order 1, just update the timestamp
-      if (thread.order === 1) {
-        const updatedThread = {
-          ...thread,
-          updated: Date.now() / 1000,
-        }
-        updateThread(updatedThread)
-
-        return {
-          threads: {
-            ...state.threads,
-            [threadId]: updatedThread,
-          },
-        }
-      }
-
-      // Update the thread with new timestamp and set it to order 1 (top)
+      // Update the thread with new timestamp but preserve chronological order
+      // Only update the timestamp, don't change the order
       const updatedThread = {
         ...thread,
         updated: Date.now() / 1000,
-        order: 1,
       }
 
-      // Update all other threads to increment their order by 1
-      const updatedThreads = { ...state.threads }
-      Object.keys(updatedThreads).forEach((id) => {
-        if (id !== threadId) {
-          const otherThread = updatedThreads[id]
-          updatedThreads[id] = {
-            ...otherThread,
-            order: (otherThread.order || 1) + 1,
-          }
-          // Update the backend for other threads
-          updateThread(updatedThreads[id])
-        }
-      })
-
-      // Set the updated thread
-      updatedThreads[threadId] = updatedThread
-
-      // Update the backend for the main thread
       updateThread(updatedThread)
 
       return {
-        threads: updatedThreads,
-        searchIndex: new Fzf<Thread[]>(Object.values(updatedThreads), {
+        threads: {
+          ...state.threads,
+          [threadId]: updatedThread,
+        },
+        searchIndex: new Fzf<Thread[]>(Object.values({
+          ...state.threads,
+          [threadId]: updatedThread,
+        }), {
           selector: (item: Thread) => item.title,
         }),
       }
