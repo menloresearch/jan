@@ -8,7 +8,6 @@
 
 import {
   Model,
-  executeOnMain,
   EngineEvent,
   LocalOAIEngine,
   extractModelLoadParams,
@@ -55,14 +54,14 @@ export default class JanInferenceCortexExtension extends LocalOAIEngine {
   shouldReconnect = true;
 
   /** Default Engine model load settings */
-  n_parallel?: number;
-  cont_batching: boolean = true;
-  caching_enabled: boolean = true;
-  flash_attn: boolean = true;
-  use_mmap: boolean = true;
-  cache_type: string = "f16";
-  cpu_threads?: number;
-  auto_unload_models: boolean = true;
+  n_parallel?: number
+  cont_batching: boolean = false
+  caching_enabled: boolean = true
+  flash_attn: boolean = true
+  use_mmap: boolean = true
+  cache_type: string = 'q8'
+  cpu_threads?: number
+  auto_unload_models: boolean = true
   /**
    * The URL for making inference requests.
    */
@@ -118,6 +117,7 @@ export default class JanInferenceCortexExtension extends LocalOAIEngine {
     if (numParallel.length > 0 && parseInt(numParallel) > 0) {
       this.n_parallel = parseInt(numParallel);
     }
+<<<<<<< HEAD
     this.cont_batching = await this.getSetting<boolean>(
       Settings.cont_batching,
       true,
@@ -129,14 +129,36 @@ export default class JanInferenceCortexExtension extends LocalOAIEngine {
     this.flash_attn = await this.getSetting<boolean>(Settings.flash_attn, true);
     this.use_mmap = await this.getSetting<boolean>(Settings.use_mmap, true);
     this.cache_type = await this.getSetting<string>(Settings.cache_type, "f16");
+=======
+    if (this.n_parallel && this.n_parallel > 1)
+      this.cont_batching = await this.getSetting<boolean>(
+        Settings.cont_batching,
+        false
+      )
+    this.caching_enabled = await this.getSetting<boolean>(
+      Settings.caching_enabled,
+      true
+    )
+    this.flash_attn = await this.getSetting<boolean>(Settings.flash_attn, true)
+    this.use_mmap = await this.getSetting<boolean>(Settings.use_mmap, true)
+    if (this.caching_enabled)
+      this.cache_type = await this.getSetting<string>(Settings.cache_type, 'q8')
+>>>>>>> dev
     this.auto_unload_models = await this.getSetting<boolean>(
       Settings.auto_unload_models,
       true,
     );
     const threads_number = Number(
+<<<<<<< HEAD
       await this.getSetting<string>(Settings.cpu_threads, ""),
     );
     if (!Number.isNaN(threads_number)) this.cpu_threads = threads_number;
+=======
+      await this.getSetting<string>(Settings.cpu_threads, '')
+    )
+
+    if (!Number.isNaN(threads_number)) this.cpu_threads = threads_number
+>>>>>>> dev
 
     const huggingfaceToken = await this.getSetting<string>(
       Settings.huggingfaceToken,
@@ -254,13 +276,19 @@ export default class JanInferenceCortexExtension extends LocalOAIEngine {
               model.engine === "nitro" // Legacy model cache
                 ? "llama-cpp"
                 : model.engine,
-            cont_batching: this.cont_batching,
-            n_parallel: this.n_parallel,
-            caching_enabled: this.caching_enabled,
-            flash_attn: this.flash_attn,
-            cache_type: this.cache_type,
-            use_mmap: this.use_mmap,
-            ...(this.cpu_threads ? { cpu_threads: this.cpu_threads } : {}),
+            ...(this.n_parallel ? { n_parallel: this.n_parallel } : {}),
+            ...(this.use_mmap ? { use_mmap: true } : {}),
+            ...(this.caching_enabled ? { caching_enabled: true } : {}),
+            ...(this.flash_attn ? { flash_attn: true } : {}),
+            ...(this.caching_enabled && this.cache_type
+              ? { cache_type: this.cache_type }
+              : {}),
+            ...(this.cpu_threads && this.cpu_threads > 0
+              ? { cpu_threads: this.cpu_threads }
+              : {}),
+            ...(this.cont_batching && this.n_parallel && this.n_parallel > 1
+              ? { cont_batching: this.cont_batching }
+              : {}),
           },
           timeout: false,
           signal,

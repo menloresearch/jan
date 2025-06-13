@@ -91,8 +91,6 @@ const LeftPanel = () => {
     return filteredThreads.filter((t) => !t.isFavorite)
   }, [filteredThreads])
 
-  const [openDropdown, setOpenDropdown] = useState(false)
-
   return (
     <aside
       className={cn(
@@ -117,7 +115,7 @@ const LeftPanel = () => {
             <input
               type="text"
               placeholder={t('common.search')}
-              className="w-full pl-7 pr-8 py-1 bg-left-panel-fg/10 rounded text-left-panel-fg focus:outline-none focus:ring-1 focus:ring-left-panel-fg/10"
+              className="w-full pl-7 pr-8 py-1 bg-left-panel-fg/10 rounded-sm text-left-panel-fg focus:outline-none focus:ring-1 focus:ring-left-panel-fg/10"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -141,7 +139,7 @@ const LeftPanel = () => {
               <input
                 type="text"
                 placeholder={t('common.search')}
-                className="w-full pl-7 pr-8 py-1 bg-left-panel-fg/10 rounded text-left-panel-fg focus:outline-none focus:ring-1 focus:ring-left-panel-fg/10"
+                className="w-full pl-7 pr-8 py-1 bg-left-panel-fg/10 rounded-sm text-left-panel-fg focus:outline-none focus:ring-1 focus:ring-left-panel-fg/10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -211,15 +209,8 @@ const LeftPanel = () => {
                     {t('common.recents')}
                   </span>
                   <div className="relative">
-                    <Dialog
-                      onOpenChange={(open) => {
-                        if (!open) setOpenDropdown(false)
-                      }}
-                    >
-                      <DropdownMenu
-                        open={openDropdown}
-                        onOpenChange={(open) => setOpenDropdown(open)}
-                      >
+                    <Dialog>
+                      <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <button
                             className="size-6 flex cursor-pointer items-center justify-center rounded hover:bg-left-panel-fg/10 transition-all duration-200 ease-in-out data-[state=open]:bg-left-panel-fg/10"

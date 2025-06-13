@@ -55,31 +55,37 @@ export function CortexFailureDialog() {
     <Dialog open={showDialog} onOpenChange={setShowDialog}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{t('cortexFailureDialog.title', 'Local AI Engine Issue')}</DialogTitle>
+          <DialogTitle>
+            {t('cortexFailureDialog.title', 'Local AI Engine Issue')}
+          </DialogTitle>
         </DialogHeader>
         <DialogDescription>
-          {t('cortexFailureDialog.description', 'The local AI engine (Cortex) failed to start after multiple attempts. This might prevent some features from working correctly.')}
+          {t(
+            'cortexFailureDialog.description',
+            'The local AI engine (Cortex) failed to start after multiple attempts. This might prevent some features from working correctly.'
+          )}
         </DialogDescription>
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter className="flex gap-2">
           <Button
+            asChild
             variant="default"
-            className="bg-transparent border border-main-view-fg/20 hover:bg-main-view-fg/10"
+            className="bg-transparent border border-main-view-fg/20 hover:bg-main-view-fg/4"
             onClick={() => {
-              window.open('https://jan.ai/support', '_blank')
               setShowDialog(false)
             }}
           >
-            {t('cortexFailureDialog.contactSupport', 'Contact Support')}
+            <a
+              href="https://jan.ai/support"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span className="text-main-view-fg/70">
+                {t('cortexFailureDialog.contactSupport', 'Contact Support')}
+              </span>
+            </a>
           </Button>
-          <Button
-            variant="default"
-            className="bg-transparent border border-main-view-fg/20 hover:bg-main-view-fg/10"
-            onClick={handleRestartJan}
-          >
+          <Button onClick={handleRestartJan}>
             {t('cortexFailureDialog.restartJan', 'Restart Jan')}
-          </Button>
-          <Button onClick={() => setShowDialog(false)}>
-            {t('common.okay', 'Okay')}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -184,7 +184,7 @@ export const ThreadContent = memo(
       | undefined
 
     return (
-      <Fragment>
+      <Fragment key={item.id}>
         {item.content?.[0]?.text && item.role === 'user' && (
           <div className="w-full">
             <div className="flex justify-end w-full h-full text-start break-words whitespace-normal">
@@ -311,7 +311,10 @@ export const ThreadContent = memo(
               />
             )}
 
-            <RenderMarkdown content={textSegment} components={linkComponents} />
+            <RenderMarkdown
+              content={textSegment.replace('</think>', '')}
+              components={linkComponents}
+            />
 
             {isToolCalls && item.metadata?.tool_calls ? (
               <>

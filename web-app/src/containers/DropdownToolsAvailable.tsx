@@ -18,14 +18,21 @@ import { useAppState } from '@/hooks/useAppState'
 interface DropdownToolsAvailableProps {
   children: (isOpen: boolean, toolsCount: number) => React.ReactNode
   initialMessage?: boolean
+  onOpenChange?: (isOpen: boolean) => void
 }
 
 export default function DropdownToolsAvailable({
   children,
   initialMessage = false,
+  onOpenChange,
 }: DropdownToolsAvailableProps) {
   const { tools } = useAppState()
   const [isOpen, setIsOpen] = useState(false)
+
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open)
+    onOpenChange?.(open)
+  }
   const { getCurrentThread } = useThreads()
   const {
     isToolDisabled,
@@ -86,7 +93,7 @@ export default function DropdownToolsAvailable({
 
   if (tools.length === 0) {
     return (
-      <DropdownMenu onOpenChange={setIsOpen}>
+      <DropdownMenu onOpenChange={handleOpenChange}>
         <DropdownMenuTrigger asChild>{renderTrigger()}</DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="max-w-64">
           <DropdownMenuItem disabled>No tools available</DropdownMenuItem>
@@ -96,11 +103,15 @@ export default function DropdownToolsAvailable({
   }
 
   return (
-    <DropdownMenu onOpenChange={setIsOpen}>
+    <DropdownMenu onOpenChange={handleOpenChange}>
       <DropdownMenuTrigger asChild>{renderTrigger()}</DropdownMenuTrigger>
 
-      <DropdownMenuContent side="top" align="start" className="max-w-64">
-        <DropdownMenuLabel className="flex items-center gap-2 sticky -top-1 z-10 bg-main-view px-4 pl-2 py-2">
+      <DropdownMenuContent
+        side="top"
+        align="start"
+        className="max-w-64 backdrop-blur-xl bg-main-view"
+      >
+        <DropdownMenuLabel className="flex items-center gap-2 sticky -top-1 z-10 px-4 pl-2 py-2 ">
           Available Tools
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
@@ -110,7 +121,7 @@ export default function DropdownToolsAvailable({
             return (
               <div
                 key={tool.name}
-                className="py-2 hover:bg-main-view-fg/5 rounded-sm px-2 mx-auto w-full"
+                className="py-2 hover:bg-main-view-fg/5 hover:backdrop-blur-2xl rounded-sm px-2 mx-auto w-full"
               >
                 <div className="flex items-start justify-center gap-3">
                   <div className="flex items-start justify-between gap-4 w-full">
