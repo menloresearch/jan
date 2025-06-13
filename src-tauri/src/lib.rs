@@ -58,6 +58,7 @@ pub fn run() {
             core::cmd::read_logs,
             core::cmd::change_app_data_folder,
             core::cmd::reset_cortex_restart_count,
+            core::cmd::save_file,
             // MCP commands
             core::mcp::get_tools,
             core::mcp::call_tool,
@@ -67,6 +68,8 @@ pub fn run() {
             core::mcp::get_mcp_configs,
             core::mcp::activate_mcp_server,
             core::mcp::deactivate_mcp_server,
+            core::mcp::get_mcp_server_status,
+            core::mcp::health_check_mcp_servers,
             // Threads
             core::threads::list_threads,
             core::threads::create_thread,
@@ -107,6 +110,7 @@ pub fn run() {
                     ])
                     .build(),
             )?;
+            app.handle().plugin(jan_plugin_rag::init_with_mcp())?;
             app.handle()
                 .plugin(tauri_plugin_updater::Builder::new().build())?;
             // Install extensions
