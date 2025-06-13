@@ -8,8 +8,9 @@ import { Card, CardItem } from '@/containers/Card'
 import LanguageSwitcher from '@/containers/LanguageSwitcher'
 import { useTranslation } from 'react-i18next'
 import { useGeneralSetting } from '@/hooks/useGeneralSetting'
-import { useAppUpdater } from '@/hooks/useAppUpdater'
-import { useEffect, useState, useCallback } from 'react'
+// import { useAppUpdater } from '@/hooks/useAppUpdater'
+import { useAppearance } from '@/hooks/useAppearance'
+import { useEffect } from 'react'
 // import { open } from '@tauri-apps/plugin-dialog'
 // import { revealItemInDir } from '@tauri-apps/plugin-opener'
 // import { fileSystemUtils, windowUtils } from '@/lib/storage'
@@ -42,7 +43,7 @@ import {
 // import { WebviewWindow } from '@tauri-apps/api/webviewWindow'
 // import { windowKey } from '@/constants/windows'
 import { toast } from 'sonner'
-import { isDev } from '@/lib/utils'
+// import { isDev } from '@/lib/utils'
 // import { emit } from '@tauri-apps/api/event'
 // import { webEventSystem } from '@/lib/storage'
 // import { stopAllModels } from '@/services/models'
@@ -66,12 +67,13 @@ export const Route = createFileRoute(route.settings.general as any)({
 function General() {
   const { t } = useTranslation()
   const { spellCheckChatInput, setSpellCheckChatInput } = useGeneralSetting()
-  const { checkForUpdate } = useAppUpdater()
+  const { resetAppearance } = useAppearance()
+  // const { checkForUpdate } = useAppUpdater()
   // const [janDataFolder, setJanDataFolder] = useState<string | undefined>()
   // const [isCopied, setIsCopied] = useState(false)
   // const [selectedNewPath, setSelectedNewPath] = useState<string | null>(null)
   // const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false)
+  // const [isCheckingUpdate, setIsCheckingUpdate] = useState(false)
 
   useEffect(() => {
     const fetchDataFolder = async () => {
@@ -83,8 +85,28 @@ function General() {
   }, [])
 
   const resetApp = async () => {
-    // TODO: Loading indicator
-    // await factoryReset()
+    try {
+      // Clear all IndexedDB databases
+      await indexedDB.deleteDatabase('jan-conversations')
+      await indexedDB.deleteDatabase('jan-large-data')
+      
+      // Clear localStorage
+      localStorage.clear()
+      
+      // Reset appearance to defaults
+      resetAppearance()
+      
+      // Show success message
+      toast.success('App has been reset to factory settings. Reloading...')
+      
+      // Reload the page after a short delay
+      setTimeout(() => {
+        window.location.reload()
+      }, 1500)
+    } catch (error) {
+      console.error('Failed to reset app:', error)
+      toast.error('Failed to reset app. Please try again.')
+    }
   }
 
   // const handleOpenLogs = async () => {
@@ -200,23 +222,23 @@ function General() {
   //   }
   // }
 
-  const handleCheckForUpdate = useCallback(async () => {
-    setIsCheckingUpdate(true)
-    try {
-      if (isDev())
-        return toast.info('You are running a development version of Jan!')
-      const update = await checkForUpdate(true)
-      if (!update) {
-        toast.info('You are using the latest version of Jan!')
-      }
-      // If update is available, the AppUpdater dialog will automatically show
-    } catch (error) {
-      console.error('Failed to check for updates:', error)
-      toast.error('Failed to check for updates. Please try again later.')
-    } finally {
-      setIsCheckingUpdate(false)
-    }
-  }, [setIsCheckingUpdate, checkForUpdate])
+  // const handleCheckForUpdate = useCallback(async () => {
+  //   setIsCheckingUpdate(true)
+  //   try {
+  //     if (isDev())
+  //       return toast.info('You are running a development version of Jan!')
+  //     const update = await checkForUpdate(true)
+  //     if (!update) {
+  //       toast.info('You are using the latest version of Jan!')
+  //     }
+  //     // If update is available, the AppUpdater dialog will automatically show
+  //   } catch (error) {
+  //     console.error('Failed to check for updates:', error)
+  //     toast.error('Failed to check for updates. Please try again later.')
+  //   } finally {
+  //     setIsCheckingUpdate(false)
+  //   }
+  // }, [setIsCheckingUpdate, checkForUpdate])
 
   return (
     <div className="flex flex-col h-full">
@@ -237,7 +259,7 @@ function General() {
                   </span>
                 }
               />
-              <CardItem
+              {/* <CardItem
                 title="Check for Updates"
                 description="Check if a newer version of Jan is available"
                 actions={
@@ -253,7 +275,7 @@ function General() {
                     </div>
                   </Button>
                 }
-              />
+              /> */}
               <CardItem
                 title={t('common.language')}
                 actions={<LanguageSwitcher />}
