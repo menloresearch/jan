@@ -188,7 +188,13 @@ export const useThreads = create<ThreadState>()((set, get) => ({
       if (currentThread)
         updateThread({
           ...currentThread,
-          assistants: [{ ...assistant, model: currentThread.model }],
+          assistants: [{ 
+            ...assistant, 
+            model: currentThread.model ? {
+              id: currentThread.model.id,
+              engine: currentThread.model.provider
+            } : undefined
+          }],
         })
       return {
         threads: {

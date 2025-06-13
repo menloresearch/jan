@@ -187,7 +187,7 @@ export const useAppUpdater = () => {
       await updateState.updateInfo.downloadAndInstall((event) => {
         switch (event.event) {
           case 'Started':
-            contentLength = event.data.contentLength || 0
+            contentLength = event.data?.contentLength || 0
             setUpdateState((prev) => ({
               ...prev,
               totalBytes: contentLength,
@@ -202,7 +202,7 @@ export const useAppUpdater = () => {
             })
             break
           case 'Progress': {
-            downloaded += event.data.chunkLength
+            downloaded += event.data?.chunkLength || 0
             const progress = contentLength > 0 ? downloaded / contentLength : 0
             setUpdateState((prev) => ({
               ...prev,

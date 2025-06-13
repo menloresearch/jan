@@ -76,7 +76,7 @@ const ChatInput = ({
       dataUrl: string
     }>
   >([])
-  const [connectedServers, setConnectedServers] = useState<string[]>([])
+  // const [connectedServers, setConnectedServers] = useState<string[]>([])
 
   // Check for connected MCP servers
   // useEffect(() => {
@@ -99,7 +99,8 @@ const ChatInput = ({
   // }, [])
 
   // Check if there are active MCP servers
-  const hasActiveMCPServers = connectedServers.length > 0 || tools.length > 0
+  // const hasActiveMCPServers = connectedServers.length > 0 || tools.length > 0
+  const hasActiveMCPServers = tools.length > 0
 
   const handleSendMesage = (prompt: string) => {
     if (!selectedModel) {

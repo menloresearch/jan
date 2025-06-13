@@ -43,7 +43,7 @@ export const getTools = (): Promise<MCPTool[]> => {
  */
 export const getConnectedServers = (): Promise<string[]> => {
   // return window.core?.api?.getConnectedServers()
-  return;
+  return Promise.resolve([]);
 };
 
 /**

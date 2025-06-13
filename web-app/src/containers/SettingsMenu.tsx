@@ -1,7 +1,8 @@
-import { Link, useMatches } from '@tanstack/react-router'
+import { Link } from '@tanstack/react-router'
+// import { useMatches } from '@tanstack/react-router'
 import { route } from '@/constants/routes'
 import { useTranslation } from 'react-i18next'
-import { useModelProvider } from '@/hooks/useModelProvider'
+// import { useModelProvider } from '@/hooks/useModelProvider'
 
 const menuSettings = [
   {
@@ -28,20 +29,19 @@ const menuSettings = [
 
 const SettingsMenu = () => {
   const { t } = useTranslation()
-  const { providers } = useModelProvider()
-  const firstItemProvider =
-    providers.length > 0 ? providers[0].provider : 'llama.cpp'
-  const matches = useMatches()
-  const isActive = matches.some(
-    (match) =>
-      match.routeId === '/settings/providers/$providerName' &&
-      'providerName' in match.params
-  )
+  // const { providers } = useModelProvider()
+  // const firstItemProvider =
+  //   providers.length > 0 ? providers[0].provider : 'llama.cpp'
+  // const isActive = matches.some(
+  //   (match) =>
+  //     match.routeId === '/settings/providers/$providerName' &&
+  //     'providerName' in match.params
+  // )
 
   return (
     <div className="flex h-full w-44 shrink-0 px-1.5 pt-3 border-r border-main-view-fg/5">
       <div className="flex flex-col gap-1 w-full text-main-view-fg/90 font-medium">
-        {menuSettings.map((menu, index) => {
+        {menuSettings.map((menu) => {
           // Render the menu item
           const menuItem = (
             <Link

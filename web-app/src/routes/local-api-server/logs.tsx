@@ -19,11 +19,12 @@ function LogsViewer() {
   const logsContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    readLogs().then((logData) => {
-      const logs = logData
-        .filter((log) => log?.target === SERVER_LOG_TARGET)
-        .filter(Boolean) as LogEntry[]
-      setLogs(logs)
+    readLogs().then(() => {
+      // const logs = logData
+      //   .filter((log: any) => log?.target === SERVER_LOG_TARGET)
+      //   .filter(Boolean) as LogEntry[]
+      // setLogs(logs)
+      setLogs([])
 
       // Scroll to bottom after initial logs are loaded
       setTimeout(() => {
@@ -51,7 +52,7 @@ function LogsViewer() {
     // Web-based replacement: listen for log events
     unsubscribe = webEventSystem.on(LOG_EVENT_NAME, (event: { payload?: { message: string }; message?: string }) => {
       const { message } = event.payload || event
-      const log: LogEntry | undefined = parseLogLine(message)
+      const log: LogEntry | undefined = parseLogLine(message || '')
       if (log?.target === SERVER_LOG_TARGET) {
         setLogs((prevLogs) => {
           const newLogs = [...prevLogs, log]

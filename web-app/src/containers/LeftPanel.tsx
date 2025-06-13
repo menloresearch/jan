@@ -9,7 +9,7 @@ import {
   IconTrash,
   IconStar,
   IconMessageFilled,
-  IconAppsFilled,
+  // IconAppsFilled,
   IconX,
   IconSearch,
   IconClipboardSmileFilled,

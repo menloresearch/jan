@@ -158,7 +158,7 @@ export class ExtensionManager {
     //   );
     // });
     // return extensions;
-    return;
+    return [];
   }
 
   /**
@@ -166,30 +166,30 @@ export class ExtensionManager {
    * @param {Extension} extension extension object as provided by the main process.
    * @returns {void}
    */
-  async activateExtension(extension: Extension) {
+  async activateExtension() {
     // Import class
-    const extensionUrl = extension.url;
-    await import(/* @vite-ignore */ convertFileSrc(extensionUrl)).then(
-      (extensionClass) => {
-        // Register class if it has a default export
-        if (
-          typeof extensionClass.default === "function" &&
-          extensionClass.default.prototype
-        ) {
-          this.register(
-            extension.name,
-            new extensionClass.default(
-              extension.url,
-              extension.name,
-              extension.productName,
-              extension.active,
-              extension.description,
-              extension.version,
-            ),
-          );
-        }
-      },
-    );
+    // const extensionUrl = extension.url;
+    // await import(/* @vite-ignore */ convertFileSrc(extensionUrl)).then(
+    //   (extensionClass) => {
+    //     // Register class if it has a default export
+    //     if (
+    //       typeof extensionClass.default === "function" &&
+    //       extensionClass.default.prototype
+    //     ) {
+    //       this.register(
+    //         extension.name,
+    //         new extensionClass.default(
+    //           extension.url,
+    //           extension.name,
+    //           extension.productName,
+    //           extension.active,
+    //           extension.description,
+    //           extension.version,
+    //         ),
+    //       );
+    //     }
+    //   },
+    // );
   }
 
   /**
@@ -198,11 +198,11 @@ export class ExtensionManager {
    */
   async registerActive() {
     // Get active extensions
-    const activeExtensions = (await this.getActive()) ?? [];
+    // const activeExtensions = (await this.getActive()) ?? [];
     // Activate all
-    await Promise.all(
-      activeExtensions.map((ext: Extension) => this.activateExtension(ext)),
-    );
+    // await Promise.all(
+    //   activeExtensions.map((ext: Extension) => this.activateExtension(ext)),
+    // );
   }
 
   /**

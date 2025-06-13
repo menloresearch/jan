@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { route } from '@/constants/routes'
+// import { route } from '@/constants/routes'
 import HeaderPage from '@/containers/HeaderPage'
 import SettingsMenu from '@/containers/SettingsMenu'
 import { t } from 'i18next'
@@ -23,7 +23,7 @@ import { useToolApproval } from '@/hooks/useToolApproval'
 // import { invoke } from '@tauri-apps/api/core'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const Route = createFileRoute(route.settings.mcp_servers as any)({
+export const Route = createFileRoute('/settings/mcp-servers' as any)({
   component: MCPServers,
 })
 

@@ -227,7 +227,7 @@ class IndexedDBStorage {
     })
   }
 
-  async deleteMessage(threadId: string, messageId: string): Promise<void> {
+  async deleteMessage(_threadId: string, messageId: string): Promise<void> {
     const db = await this.ensureDB()
     return new Promise((resolve, reject) => {
       const transaction = db.transaction([MESSAGES_STORE], 'readwrite')

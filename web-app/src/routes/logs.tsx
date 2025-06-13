@@ -16,18 +16,19 @@ function LogsViewer() {
   const logsContainerRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    let lastLogsLength = 0
+    // let lastLogsLength = 0
     function updateLogs() {
-      readLogs().then((logData) => {
-        let needScroll = false
-        const filteredLogs = logData.filter(Boolean) as LogEntry[]
-        if (filteredLogs.length > lastLogsLength) needScroll = true
+      readLogs().then(() => {
+        // let needScroll = false
+        // const filteredLogs = logData.filter(Boolean) as LogEntry[]
+        // if (filteredLogs.length > lastLogsLength) needScroll = true
 
-        lastLogsLength = filteredLogs.length
-        setLogs(filteredLogs)
+        // lastLogsLength = filteredLogs.length
+        // setLogs(filteredLogs)
+        setLogs([])
 
         // Scroll to bottom after initial logs are loaded
-        if (needScroll) setTimeout(() => scrollToBottom(), 100)
+        // if (needScroll) setTimeout(() => scrollToBottom(), 100)
       })
     }
     updateLogs()
@@ -41,12 +42,12 @@ function LogsViewer() {
   }, [])
 
   // Function to scroll to the bottom of the logs container
-  const scrollToBottom = () => {
-    if (logsContainerRef.current) {
-      const { scrollHeight, clientHeight } = logsContainerRef.current
-      logsContainerRef.current.scrollTop = scrollHeight - clientHeight
-    }
-  }
+  // const scrollToBottom = () => {
+  //   if (logsContainerRef.current) {
+  //     const { scrollHeight, clientHeight } = logsContainerRef.current
+  //     logsContainerRef.current.scrollTop = scrollHeight - clientHeight
+  //   }
+  // }
 
   // Function to get appropriate color for log level
   const getLogLevelColor = (level: string) => {
