@@ -19,7 +19,7 @@ import { Switch } from '@/components/ui/switch'
 import { twMerge } from 'tailwind-merge'
 import { getConnectedServers } from '@/services/mcp'
 import { useToolApproval } from '@/hooks/useToolApproval'
-import { toast } from 'sonner'
+// import { toast } from 'sonner'
 // import { invoke } from '@tauri-apps/api/core'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

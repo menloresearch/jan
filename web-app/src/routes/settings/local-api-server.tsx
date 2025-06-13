@@ -11,9 +11,10 @@ import { PortInput } from '@/containers/PortInput'
 import { ApiPrefixInput } from '@/containers/ApiPrefixInput'
 import { TrustedHostsInput } from '@/containers/TrustedHostsInput'
 import { useLocalApiServer } from '@/hooks/useLocalApiServer'
-import { WebviewWindow } from '@tauri-apps/api/webviewWindow'
+// import { WebviewWindow } from '@tauri-apps/api/webviewWindow'
+import { windowUtils } from '@/lib/storage'
 import { useAppState } from '@/hooks/useAppState'
-import { windowKey } from '@/constants/windows'
+// import { windowKey } from '@/constants/windows'
 import { IconLogs } from '@tabler/icons-react'
 import { cn } from '@/lib/utils'
 import { ApiKeyInput } from '@/containers/ApiKeyInput'
@@ -92,38 +93,51 @@ function LocalAPIServer() {
 
   const handleOpenLogs = async () => {
     try {
-      // Check if logs window already exists
-      const existingWindow = await WebviewWindow.getByLabel(
-        windowKey.logsWindowLocalApiServer
-      )
+      // // Check if logs window already exists
+      // const existingWindow = await WebviewWindow.getByLabel(
+      //   windowKey.logsWindowLocalApiServer
+      // )
 
-      if (existingWindow) {
-        // If window exists, focus it
-        await existingWindow.setFocus()
-        console.log('Focused existing logs window')
+      // if (existingWindow) {
+      //   // If window exists, focus it
+      //   await existingWindow.setFocus()
+      //   console.log('Focused existing logs window')
+      // } else {
+      //   // Create a new logs window using Tauri v2 WebviewWindow API
+      //   const logsWindow = new WebviewWindow(
+      //     windowKey.logsWindowLocalApiServer,
+      //     {
+      //       url: route.localApiServerlogs,
+      //       title: 'Local API server Logs - Jan',
+      //       width: 800,
+      //       height: 600,
+      //       resizable: true,
+      //       center: true,
+      //     }
+      //   )
+
+      //   // Listen for window creation
+      //   logsWindow.once('tauri://created', () => {
+      //     console.log('Logs window created')
+      //   })
+
+      //   // Listen for window errors
+      //   logsWindow.once('tauri://error', (e) => {
+      //     console.error('Error creating logs window:', e)
+      //   })
+      // }
+
+      // Web-based replacement: open logs in new tab/window
+      const logsWindow = windowUtils.createWindow(route.localApiServerlogs, {
+        title: 'Local API server Logs - Jan',
+        width: 800,
+        height: 600,
+      })
+
+      if (logsWindow) {
+        console.log('Logs window opened')
       } else {
-        // Create a new logs window using Tauri v2 WebviewWindow API
-        const logsWindow = new WebviewWindow(
-          windowKey.logsWindowLocalApiServer,
-          {
-            url: route.localApiServerlogs,
-            title: 'Local API server Logs - Jan',
-            width: 800,
-            height: 600,
-            resizable: true,
-            center: true,
-          }
-        )
-
-        // Listen for window creation
-        logsWindow.once('tauri://created', () => {
-          console.log('Logs window created')
-        })
-
-        // Listen for window errors
-        logsWindow.once('tauri://error', (e) => {
-          console.error('Error creating logs window:', e)
-        })
+        console.error('Failed to open logs window')
       }
     } catch (error) {
       console.error('Failed to open logs window:', error)

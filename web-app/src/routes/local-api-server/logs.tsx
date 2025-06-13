@@ -3,7 +3,8 @@ import { route } from '@/constants/routes'
 
 import { useEffect, useState, useRef } from 'react'
 import { parseLogLine, readLogs } from '@/services/app'
-import { listen } from '@tauri-apps/api/event'
+// import { listen } from '@tauri-apps/api/event'
+import { webEventSystem } from '@/lib/storage'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const Route = createFileRoute(route.localApiServerlogs as any)({
@@ -30,8 +31,26 @@ function LogsViewer() {
       }, 100)
     })
     let unsubscribe = () => {}
-    listen(LOG_EVENT_NAME, (event) => {
-      const { message } = event.payload as { message: string }
+    // listen(LOG_EVENT_NAME, (event) => {
+    //   const { message } = event.payload as { message: string }
+    //   const log: LogEntry | undefined = parseLogLine(message)
+    //   if (log?.target === SERVER_LOG_TARGET) {
+    //     setLogs((prevLogs) => {
+    //       const newLogs = [...prevLogs, log]
+    //       // Schedule scroll to bottom after state update
+    //       setTimeout(() => {
+    //         scrollToBottom()
+    //       }, 0)
+    //       return newLogs
+    //     })
+    //   }
+    // }).then((unsub) => {
+    //   unsubscribe = unsub
+    // })
+
+    // Web-based replacement: listen for log events
+    unsubscribe = webEventSystem.on(LOG_EVENT_NAME, (event: { payload?: { message: string }; message?: string }) => {
+      const { message } = event.payload || event
       const log: LogEntry | undefined = parseLogLine(message)
       if (log?.target === SERVER_LOG_TARGET) {
         setLogs((prevLogs) => {
@@ -43,8 +62,6 @@ function LogsViewer() {
           return newLogs
         })
       }
-    }).then((unsub) => {
-      unsubscribe = unsub
     })
     return () => {
       unsubscribe()

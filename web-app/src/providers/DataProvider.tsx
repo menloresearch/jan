@@ -13,11 +13,11 @@ import { getMCPConfig } from '@/services/mcp'
 import { useAssistant } from '@/hooks/useAssistant'
 import { getAssistants } from '@/services/assistants'
 import {
-  onOpenUrl,
-  getCurrent as getCurrentDeepLinkUrls,
+  // onOpenUrl,
+  // getCurrent as getCurrentDeepLinkUrls,
 } from '@tauri-apps/plugin-deep-link'
-import { useNavigate } from '@tanstack/react-router'
-import { route } from '@/constants/routes'
+// import { useNavigate } from '@tanstack/react-router'
+// import { route } from '@/constants/routes'
 import { useThreads } from '@/hooks/useThreads'
 import { indexedDBStorage } from '@/lib/indexeddb'
 
@@ -29,7 +29,7 @@ export function DataProvider() {
   const { setServers } = useMCPServers()
   const { setAssistants } = useAssistant()
   const { setThreads } = useThreads()
-  const navigate = useNavigate()
+  // const navigate = useNavigate()
 
   useEffect(() => {
     fetchModels().then((models) => {
@@ -47,8 +47,8 @@ export function DataProvider() {
       .catch((error) => {
         console.warn('Failed to load assistants, keeping default:', error)
       })
-    getCurrentDeepLinkUrls().then(handleDeepLink)
-    onOpenUrl(handleDeepLink)
+    // getCurrentDeepLinkUrls().then(handleDeepLink)
+    // onOpenUrl(handleDeepLink)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -74,27 +74,27 @@ export function DataProvider() {
     checkForUpdate()
   }, [checkForUpdate])
 
-  const handleDeepLink = (urls: string[] | null) => {
-    if (!urls) return
-    console.log('Received deeplink:', urls)
-    const deeplink = urls[0]
-    if (deeplink) {
-      const url = new URL(deeplink)
-      const params = url.pathname.split('/').filter((str) => str.length > 0)
+  // const handleDeepLink = (urls: string[] | null) => {
+  //   if (!urls) return
+  //   console.log('Received deeplink:', urls)
+  //   const deeplink = urls[0]
+  //   if (deeplink) {
+  //     const url = new URL(deeplink)
+  //     const params = url.pathname.split('/').filter((str) => str.length > 0)
 
-      if (params.length < 3) return undefined
-      // const action = params[0]
-      // const provider = params[1]
-      const resource = params.slice(1).join('/')
-      // return { action, provider, resource }
-      navigate({
-        to: route.hub,
-        search: {
-          repo: resource,
-        },
-      })
-    }
-  }
+  //     if (params.length < 3) return undefined
+  //     // const action = params[0]
+  //     // const provider = params[1]
+  //     const resource = params.slice(1).join('/')
+  //     // return { action, provider, resource }
+  //     navigate({
+  //       to: route.hub,
+  //       search: {
+  //         repo: resource,
+  //       },
+  //     })
+  //   }
+  // }
 
   return null
 }

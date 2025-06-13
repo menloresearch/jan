@@ -210,7 +210,7 @@ export class ExtensionManager {
    * @param {Array.<installOptions | string>} extensions A list of NPM specifiers, or installation configuration objects.
    * @returns {Promise.<Array.<Extension> | false>} extension as defined by the main process. Has property cancelled set to true if installation was cancelled in the main process.
    */
-  async install(extensions: ExtensionManifest[]) {
+  async install(/* extensions: ExtensionManifest[] */) {
     // if (typeof window === "undefined") {
     //   return;
     // }
@@ -230,7 +230,7 @@ export class ExtensionManager {
    * @param {boolean} reload Whether to reload all renderers after updating the extensions.
    * @returns {Promise.<boolean>} Whether uninstalling the extensions was successful.
    */
-  uninstall(extensions: string[], reload = true) {
+  uninstall(/* extensions: string[], reload = true */) {
     // if (typeof window === "undefined") {
     //   return;
     // }

@@ -72,7 +72,7 @@ export const systemInformation = async () => {
 };
 
 export const APIs = {
-  ...Object.values(Routes).reduce((acc, proxy) => {
+  ...Object.values(Routes).reduce((acc) => {
     return {
       ...acc,
       // [proxy.route]: (args?: InvokeArgs) => {

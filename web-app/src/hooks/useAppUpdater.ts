@@ -1,10 +1,16 @@
 import { isDev } from '@/lib/utils'
-import { check, Update } from '@tauri-apps/plugin-updater'
+// import { check, Update } from '@tauri-apps/plugin-updater'
+import { updateUtils, webEventSystem } from '@/lib/storage'
 import { useState, useCallback, useEffect } from 'react'
 import { events, AppEvent } from '@janhq/core'
-import { emit } from '@tauri-apps/api/event'
+// import { emit } from '@tauri-apps/api/event'
 import { SystemEvent } from '@/types/events'
 import { stopAllModels } from '@/services/models'
+
+interface Update {
+  version: string
+  downloadAndInstall: (callback: (event: { event: string; data?: { contentLength?: number; chunkLength?: number } }) => void) => Promise<void>
+}
 
 export interface UpdateState {
   isUpdateAvailable: boolean
@@ -68,10 +74,25 @@ export const useAppUpdater = () => {
         }
 
         if (!isDev()) {
-          // Production mode - use actual Tauri updater
-          const update = await check()
+          // Production mode - use web-based update check
+          // const update = await check()
+          const updateInfo = await updateUtils.checkForUpdate()
 
-          if (update) {
+          if (updateInfo?.available) {
+            // Create mock update object for compatibility
+            const update: Update = {
+              version: updateInfo.version,
+              downloadAndInstall: async (callback) => {
+                await updateUtils.downloadAndInstall((progress) => {
+                  callback({
+                    event: 'Progress',
+                    data: { chunkLength: progress * 1000 }
+                  })
+                })
+                callback({ event: 'Finished' })
+              }
+            }
+
             const newState = {
               isUpdateAvailable: true,
               remindMeLater: false,
@@ -159,7 +180,8 @@ export const useAppUpdater = () => {
       let downloaded = 0
       let contentLength = 0
       await stopAllModels()
-      emit(SystemEvent.KILL_SIDECAR)
+      // emit(SystemEvent.KILL_SIDECAR)
+      webEventSystem.emit(SystemEvent.KILL_SIDECAR)
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
       await updateState.updateInfo.downloadAndInstall((event) => {

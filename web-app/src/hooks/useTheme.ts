@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
-import { getCurrentWindow, Theme } from '@tauri-apps/api/window'
+// import { getCurrentWindow, Theme } from '@tauri-apps/api/window'
+import { windowUtils } from '@/lib/storage'
 import { localStorageKey } from '@/constants/localStorage'
 
 // Function to check if OS prefers dark mode
@@ -28,10 +29,12 @@ export const useTheme = create<ThemeState>()(
         setTheme: async (activeTheme: AppTheme) => {
           if (activeTheme === 'auto') {
             const isDarkMode = checkOSDarkMode()
-            await getCurrentWindow().setTheme(null)
+            // await getCurrentWindow().setTheme(null)
+            windowUtils.setTheme(null)
             set(() => ({ activeTheme, isDark: isDarkMode }))
           } else {
-            await getCurrentWindow().setTheme(activeTheme as Theme)
+            // await getCurrentWindow().setTheme(activeTheme as Theme)
+            windowUtils.setTheme(activeTheme as 'light' | 'dark')
             set(() => ({ activeTheme, isDark: activeTheme === 'dark' }))
           }
         },

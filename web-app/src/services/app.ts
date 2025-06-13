@@ -1,8 +1,8 @@
-import { AppConfiguration, fs } from "@janhq/core";
+import { AppConfiguration } from "@janhq/core";
 // import { invoke } from '@tauri-apps/api/core'
 // import { emit } from '@tauri-apps/api/event'
-import { stopAllModels } from "./models";
-import { SystemEvent } from "@/types/events";
+// import { stopAllModels } from "./models";
+// import { SystemEvent } from "@/types/events";
 
 /**
  * @description This function is used to reset the app to its factory settings.

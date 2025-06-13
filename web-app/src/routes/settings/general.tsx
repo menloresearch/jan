@@ -10,9 +10,10 @@ import { useTranslation } from 'react-i18next'
 import { useGeneralSetting } from '@/hooks/useGeneralSetting'
 import { useAppUpdater } from '@/hooks/useAppUpdater'
 import { useEffect, useState, useCallback } from 'react'
-import { open } from '@tauri-apps/plugin-dialog'
-import { revealItemInDir } from '@tauri-apps/plugin-opener'
-import ChangeDataFolderLocation from '@/containers/dialogs/ChangeDataFolderLocation'
+// import { open } from '@tauri-apps/plugin-dialog'
+// import { revealItemInDir } from '@tauri-apps/plugin-opener'
+// import { fileSystemUtils, windowUtils } from '@/lib/storage'
+// import ChangeDataFolderLocation from '@/containers/dialogs/ChangeDataFolderLocation'
 
 import {
   Dialog,
@@ -26,55 +27,56 @@ import {
 } from '@/components/ui/dialog'
 import {
   // factoryReset,
-  getJanDataFolder,
-  relocateJanDataFolder,
+  // getJanDataFolder,
+  // relocateJanDataFolder,
 } from '@/services/app'
 import {
   IconBrandDiscord,
   IconBrandGithub,
   IconExternalLink,
-  IconFolder,
-  IconLogs,
-  IconCopy,
-  IconCopyCheck,
+  // IconFolder,
+  // IconLogs,
+  // IconCopy,
+  // IconCopyCheck,
 } from '@tabler/icons-react'
-import { WebviewWindow } from '@tauri-apps/api/webviewWindow'
-import { windowKey } from '@/constants/windows'
+// import { WebviewWindow } from '@tauri-apps/api/webviewWindow'
+// import { windowKey } from '@/constants/windows'
 import { toast } from 'sonner'
 import { isDev } from '@/lib/utils'
-import { emit } from '@tauri-apps/api/event'
-import { stopAllModels } from '@/services/models'
-import { SystemEvent } from '@/types/events'
+// import { emit } from '@tauri-apps/api/event'
+// import { webEventSystem } from '@/lib/storage'
+// import { stopAllModels } from '@/services/models'
+// import { SystemEvent } from '@/types/events'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const Route = createFileRoute(route.settings.general as any)({
   component: General,
 })
 
-const openFileTitle = (): string => {
-  if (IS_MACOS) {
-    return 'Show in Finder'
-  } else if (IS_WINDOWS) {
-    return 'Show in File Explorer'
-  } else {
-    return 'Open Containing Folder'
-  }
-}
+// const openFileTitle = (): string => {
+//   if (IS_MACOS) {
+//     return 'Show in Finder'
+//   } else if (IS_WINDOWS) {
+//     return 'Show in File Explorer'
+//   } else {
+//     return 'Open Containing Folder'
+//   }
+// }
 
 function General() {
   const { t } = useTranslation()
   const { spellCheckChatInput, setSpellCheckChatInput } = useGeneralSetting()
   const { checkForUpdate } = useAppUpdater()
-  const [janDataFolder, setJanDataFolder] = useState<string | undefined>()
-  const [isCopied, setIsCopied] = useState(false)
-  const [selectedNewPath, setSelectedNewPath] = useState<string | null>(null)
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  // const [janDataFolder, setJanDataFolder] = useState<string | undefined>()
+  // const [isCopied, setIsCopied] = useState(false)
+  // const [selectedNewPath, setSelectedNewPath] = useState<string | null>(null)
+  // const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false)
 
   useEffect(() => {
     const fetchDataFolder = async () => {
-      const path = await getJanDataFolder()
-      setJanDataFolder(path)
+      // const path = await getJanDataFolder()
+      // setJanDataFolder(path)
     }
 
     fetchDataFolder()
@@ -85,100 +87,118 @@ function General() {
     // await factoryReset()
   }
 
-  const handleOpenLogs = async () => {
-    try {
-      // Check if logs window already exists
-      const existingWindow = await WebviewWindow.getByLabel(
-        windowKey.logsAppWindow
-      )
+  // const handleOpenLogs = async () => {
+  //   try {
+  //     // // Check if logs window already exists
+  //     // const existingWindow = await WebviewWindow.getByLabel(
+  //     //   windowKey.logsAppWindow
+  //     // )
 
-      if (existingWindow) {
-        // If window exists, focus it
-        await existingWindow.setFocus()
-        console.log('Focused existing logs window')
-      } else {
-        // Create a new logs window using Tauri v2 WebviewWindow API
-        const logsWindow = new WebviewWindow(windowKey.logsAppWindow, {
-          url: route.appLogs,
-          title: 'App Logs - Jan',
-          width: 800,
-          height: 600,
-          resizable: true,
-          center: true,
-        })
+  //     // if (existingWindow) {
+  //     //   // If window exists, focus it
+  //     //   await existingWindow.setFocus()
+  //     //   console.log('Focused existing logs window')
+  //     // } else {
+  //     //   // Create a new logs window using Tauri v2 WebviewWindow API
+  //     //   const logsWindow = new WebviewWindow(windowKey.logsAppWindow, {
+  //     //     url: route.appLogs,
+  //     //     title: 'App Logs - Jan',
+  //     //     width: 800,
+  //     //     height: 600,
+  //     //     resizable: true,
+  //     //     center: true,
+  //     //   })
 
-        // Listen for window creation
-        logsWindow.once('tauri://created', () => {
-          console.log('Logs window created')
-        })
+  //     //   // Listen for window creation
+  //     //   logsWindow.once('tauri://created', () => {
+  //     //     console.log('Logs window created')
+  //     //   })
 
-        // Listen for window errors
-        logsWindow.once('tauri://error', (e) => {
-          console.error('Error creating logs window:', e)
-        })
-      }
-    } catch (error) {
-      console.error('Failed to open logs window:', error)
-    }
-  }
+  //     //   // Listen for window errors
+  //     //   logsWindow.once('tauri://error', (e) => {
+  //     //     console.error('Error creating logs window:', e)
+  //     //   })
+  //     // }
 
-  const copyToClipboard = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      setIsCopied(true)
-      setTimeout(() => setIsCopied(false), 2000) // Reset after 2 seconds
-    } catch (error) {
-      console.error('Failed to copy to clipboard:', error)
-    }
-  }
+  //     // Web-based replacement: open logs in new tab/window
+  //     const logsWindow = windowUtils.createWindow(route.appLogs, {
+  //       title: 'App Logs - Jan',
+  //       width: 800,
+  //       height: 600,
+  //     })
 
-  const handleDataFolderChange = async () => {
-    const selectedPath = await open({
-      multiple: false,
-      directory: true,
-      defaultPath: janDataFolder,
-    })
+  //     if (logsWindow) {
+  //       console.log('Logs window opened')
+  //     } else {
+  //       console.error('Failed to open logs window')
+  //     }
+  //   } catch (error) {
+  //     console.error('Failed to open logs window:', error)
+  //   }
+  // }
 
-    if (selectedPath === janDataFolder) return
-    if (selectedPath !== null) {
-      setSelectedNewPath(selectedPath)
-      setIsDialogOpen(true)
-    }
-  }
+  // const copyToClipboard = async (text: string) => {
+  //   try {
+  //     await navigator.clipboard.writeText(text)
+  //     setIsCopied(true)
+  //     setTimeout(() => setIsCopied(false), 2000) // Reset after 2 seconds
+  //   } catch (error) {
+  //     console.error('Failed to copy to clipboard:', error)
+  //   }
+  // }
 
-  const confirmDataFolderChange = async () => {
-    if (selectedNewPath) {
-      try {
-        await stopAllModels()
-        emit(SystemEvent.KILL_SIDECAR)
-        setTimeout(async () => {
-          try {
-            await relocateJanDataFolder(selectedNewPath)
-            setJanDataFolder(selectedNewPath)
-            // Only relaunch if relocation was successful
-            window.core?.api?.relaunch()
-            setSelectedNewPath(null)
-            setIsDialogOpen(false)
-          } catch (error) {
-            toast.error(
-              error instanceof Error
-                ? error.message
-                : 'Failed to relocate Jan data folder'
-            )
-          }
-        }, 1000)
-      } catch (error) {
-        console.error('Failed to relocate data folder:', error)
-        // Revert the data folder path on error
-        const originalPath = await getJanDataFolder()
-        setJanDataFolder(originalPath)
+  // const handleDataFolderChange = async () => {
+  //   // const selectedPath = await open({
+  //   //   multiple: false,
+  //   //   directory: true,
+  //   //   defaultPath: janDataFolder,
+  //   // })
 
-        toast.error(
-          'Failed to relocate data folder. Please try again or choose a different location.'
-        )
-      }
-    }
-  }
+  //   // Web-based replacement: use directory picker
+  //   const directoryHandle = await fileSystemUtils.openDirectoryDialog()
+  //   const selectedPath = directoryHandle?.name || null
+
+  //   if (selectedPath === janDataFolder) return
+  //   if (selectedPath !== null) {
+  //     setSelectedNewPath(selectedPath)
+  //     setIsDialogOpen(true)
+  //   }
+  // }
+
+  // const confirmDataFolderChange = async () => {
+  //   if (selectedNewPath) {
+  //     try {
+  //       await stopAllModels()
+  //       // emit(SystemEvent.KILL_SIDECAR)
+  //       webEventSystem.emit(SystemEvent.KILL_SIDECAR)
+  //       setTimeout(async () => {
+  //         try {
+  //           await relocateJanDataFolder(selectedNewPath)
+  //           setJanDataFolder(selectedNewPath)
+  //           // Only relaunch if relocation was successful
+  //           window.core?.api?.relaunch()
+  //           setSelectedNewPath(null)
+  //           setIsDialogOpen(false)
+  //         } catch (error) {
+  //           toast.error(
+  //             error instanceof Error
+  //               ? error.message
+  //               : 'Failed to relocate Jan data folder'
+  //           )
+  //         }
+  //       }, 1000)
+  //     } catch (error) {
+  //       console.error('Failed to relocate data folder:', error)
+  //       // Revert the data folder path on error
+  //       const originalPath = await getJanDataFolder()
+  //       setJanDataFolder(originalPath)
+
+  //       toast.error(
+  //         'Failed to relocate data folder. Please try again or choose a different location.'
+  //       )
+  //     }
+  //   }
+  // }
 
   const handleCheckForUpdate = useCallback(async () => {
     setIsCheckingUpdate(true)
@@ -347,7 +367,8 @@ function General() {
                         if (janDataFolder) {
                           try {
                             const logsPath = `${janDataFolder}/logs`
-                            await revealItemInDir(logsPath)
+                            // await revealItemInDir(logsPath)
+                            fileSystemUtils.revealInFileManager(logsPath)
                           } catch (error) {
                             console.error(
                               'Failed to reveal logs folder:',

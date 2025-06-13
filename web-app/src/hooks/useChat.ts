@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { usePrompt } from "./usePrompt";
 import { useModelProvider } from "./useModelProvider";
 import { useThreads } from "./useThreads";
@@ -21,9 +21,9 @@ import { ChatCompletionMessageToolCall } from "openai/resources";
 import { useAssistant } from "./useAssistant";
 import { toast } from "sonner";
 // import { getTools } from '@/services/mcp'
-import { MCPTool } from "@/types/completion";
-import { listen } from "@tauri-apps/api/event";
-import { SystemEvent } from "@/types/events";
+// import { MCPTool } from "@/types/completion";
+// import { webEventSystem } from "@/lib/storage";
+// import { SystemEvent } from "@/types/events";
 import { stopModel, startModel } from "@/services/models";
 
 import { useToolApproval } from "@/hooks/useToolApproval";
@@ -35,7 +35,7 @@ export const useChat = () => {
     tools,
     updateTokenSpeed,
     resetTokenSpeed,
-    updateTools,
+    // updateTools,
     updateStreamingContent,
     updateLoadingModel,
     setAbortController,
@@ -74,10 +74,11 @@ export const useChat = () => {
   //   setTools()
   //
   //   let unsubscribe = () => {}
-  //   listen(SystemEvent.MCP_UPDATE, setTools).then((unsub) => {
-  //     // Unsubscribe from the event when the component unmounts
-  //     unsubscribe = unsub
-  //   })
+  //   // listen(SystemEvent.MCP_UPDATE, setTools).then((unsub) => {
+  //   //   // Unsubscribe from the event when the component unmounts
+  //   //   unsubscribe = unsub
+  //   // })
+  //   unsubscribe = webEventSystem.on(SystemEvent.MCP_UPDATE, setTools)
   //   return unsubscribe
   // }, [updateTools])
 

@@ -30,9 +30,10 @@ import {
   IconDeviceDesktopAnalytics,
 } from '@tabler/icons-react'
 import { getHardwareInfo } from '@/services/hardware'
-import { WebviewWindow } from '@tauri-apps/api/webviewWindow'
+// import { WebviewWindow } from '@tauri-apps/api/webviewWindow'
+import { windowUtils } from '@/lib/storage'
 import { formatMegaBytes } from '@/lib/utils'
-import { windowKey } from '@/constants/windows'
+// import { windowKey } from '@/constants/windows'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const Route = createFileRoute(route.settings.hardware as any)({
@@ -168,35 +169,48 @@ function Hardware() {
 
   const handleClickSystemMonitor = async () => {
     try {
-      // Check if system monitor window already exists
-      const existingWindow = await WebviewWindow.getByLabel(
-        windowKey.systemMonitorWindow
-      )
+      // // Check if system monitor window already exists
+      // const existingWindow = await WebviewWindow.getByLabel(
+      //   windowKey.systemMonitorWindow
+      // )
 
-      if (existingWindow) {
-        // If window exists, focus it
-        await existingWindow.setFocus()
-        console.log('Focused existing system monitor window')
+      // if (existingWindow) {
+      //   // If window exists, focus it
+      //   await existingWindow.setFocus()
+      //   console.log('Focused existing system monitor window')
+      // } else {
+      //   // Create a new system monitor window
+      //   const monitorWindow = new WebviewWindow(windowKey.systemMonitorWindow, {
+      //     url: route.systemMonitor,
+      //     title: 'System Monitor - Jan',
+      //     width: 900,
+      //     height: 600,
+      //     resizable: true,
+      //     center: true,
+      //   })
+
+      //   // Listen for window creation
+      //   monitorWindow.once('tauri://created', () => {
+      //     console.log('System monitor window created')
+      //   })
+
+      //   // Listen for window errors
+      //   monitorWindow.once('tauri://error', (e) => {
+      //     console.error('Error creating system monitor window:', e)
+      //   })
+      // }
+
+      // Web-based replacement: open system monitor in new tab/window
+      const monitorWindow = windowUtils.createWindow(route.systemMonitor, {
+        title: 'System Monitor - Jan',
+        width: 900,
+        height: 600,
+      })
+
+      if (monitorWindow) {
+        console.log('System monitor window opened')
       } else {
-        // Create a new system monitor window
-        const monitorWindow = new WebviewWindow(windowKey.systemMonitorWindow, {
-          url: route.systemMonitor,
-          title: 'System Monitor - Jan',
-          width: 900,
-          height: 600,
-          resizable: true,
-          center: true,
-        })
-
-        // Listen for window creation
-        monitorWindow.once('tauri://created', () => {
-          console.log('System monitor window created')
-        })
-
-        // Listen for window errors
-        monitorWindow.once('tauri://error', (e) => {
-          console.error('Error creating system monitor window:', e)
-        })
+        console.error('Failed to open system monitor window')
       }
     } catch (error) {
       console.error('Failed to open system monitor window:', error)

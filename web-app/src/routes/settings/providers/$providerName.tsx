@@ -6,7 +6,7 @@ import { cn, getProviderTitle } from '@/lib/utils'
 import { Switch } from '@/components/ui/switch'
 // import { open } from '@tauri-apps/plugin-dialog'
 import {
-  getActiveModels,
+  // getActiveModels,
   importModel,
   startModel,
   stopModel,
