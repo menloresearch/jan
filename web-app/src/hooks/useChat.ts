@@ -36,7 +36,7 @@ export const useChat = () => {
     updateTokenSpeed,
     resetTokenSpeed,
     // updateTools,
-    updateStreamingContent,
+    updateStreamingContentForThread,
     updateLoadingModel,
     setAbortController,
   } = useAppState();
@@ -121,7 +121,7 @@ export const useChat = () => {
       const messages = getMessages(activeThread.id);
       const abortController = new AbortController();
       setAbortController(activeThread.id, abortController);
-      updateStreamingContent(emptyThreadContent);
+      updateStreamingContentForThread(activeThread.id, emptyThreadContent);
       addMessage(newUserThreadContent(activeThread.id, message));
       updateThreadTimestamp(activeThread.id);
       setPrompt("");
@@ -195,7 +195,7 @@ export const useChat = () => {
                     })),
                   },
                 );
-                updateStreamingContent(currentContent);
+                updateStreamingContentForThread(activeThread.id, currentContent);
                 await new Promise((resolve) => setTimeout(resolve, 0));
               }
               if (delta) {
@@ -212,7 +212,7 @@ export const useChat = () => {
                     })),
                   },
                 );
-                updateStreamingContent(currentContent);
+                updateStreamingContentForThread(activeThread.id, currentContent);
                 updateTokenSpeed(currentContent);
                 await new Promise((resolve) => setTimeout(resolve, 0));
               }
@@ -247,7 +247,7 @@ export const useChat = () => {
             false,
           );
           addMessage(updatedMessage ?? finalContent);
-          updateStreamingContent(emptyThreadContent);
+          updateStreamingContentForThread(activeThread.id, undefined);
           updateThreadTimestamp(activeThread.id);
 
           isCompleted = !toolCalls.length;
@@ -261,7 +261,7 @@ export const useChat = () => {
         console.error("Error sending message:", error);
       } finally {
         updateLoadingModel(false);
-        updateStreamingContent(undefined);
+        updateStreamingContentForThread(activeThread.id, undefined);
       }
     },
     [
@@ -272,7 +272,6 @@ export const useChat = () => {
       provider,
       getMessages,
       setAbortController,
-      updateStreamingContent,
       addMessage,
       updateThreadTimestamp,
       setPrompt,
@@ -285,6 +284,7 @@ export const useChat = () => {
       // allowAllMCPPermissions,
       // showApprovalModal,
       updateTokenSpeed,
+      updateStreamingContentForThread,
     ],
   );
 

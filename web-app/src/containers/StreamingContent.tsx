@@ -21,9 +21,10 @@ function extractReasoningSegment(text: string) {
 // Use memo with no dependencies to allow re-renders when props change
 // Avoid duplicate reasoning segments after tool calls
 export const StreamingContent = memo(({ threadId }: Props) => {
-  const { streamingContent } = useAppState()
+  const { getStreamingContentForThread } = useAppState()
   const { getMessages } = useMessages()
   const messages = getMessages(threadId)
+  const streamingContent = getStreamingContentForThread(threadId)
 
   const streamingReasoning = useMemo(() => {
     const text =
@@ -48,7 +49,7 @@ export const StreamingContent = memo(({ threadId }: Props) => {
     return extractReasoningSegment(text)
   }, [lastAssistant])
 
-  if (!streamingContent || streamingContent.thread_id !== threadId) return null
+  if (!streamingContent) return null
 
   if (streamingReasoning && streamingReasoning === lastAssistantReasoning) {
     return null

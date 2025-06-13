@@ -53,7 +53,7 @@ const ChatInput = ({
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [isFocused, setIsFocused] = useState(false)
   const [rows, setRows] = useState(1)
-  const { streamingContent, abortControllers, loadingModel } = // tools } =
+  const { abortControllers, loadingModel, getStreamingContentForThread } =
     useAppState()
   const { prompt, setPrompt } = usePrompt()
   const { currentThreadId } = useThreads()
@@ -76,9 +76,8 @@ const ChatInput = ({
       dataUrl: string
     }>
   >([])
-  // const [connectedServers, setConnectedServers] = useState<string[]>([])
-
-  // Check for connected MCP servers
+  // Get streaming content for current thread
+  const currentThreadStreamingContent = currentThreadId ? getStreamingContentForThread(currentThreadId) : undefined
   // useEffect(() => {
   //   const checkConnectedServers = async () => {
   //     try {
@@ -159,13 +158,13 @@ const ChatInput = ({
 
   // Focus when streaming content finishes
   useEffect(() => {
-    if (!streamingContent && textareaRef.current) {
+    if (!currentThreadStreamingContent && textareaRef.current) {
       // Small delay to ensure UI has updated
       setTimeout(() => {
         textareaRef.current?.focus()
       }, 10)
     }
-  }, [streamingContent])
+  }, [currentThreadStreamingContent])
 
   const stopStreaming = useCallback(
     (threadId: string) => {
@@ -297,10 +296,10 @@ const ChatInput = ({
         <div
           className={cn(
             'relative overflow-hidden p-[2px] rounded-lg',
-            Boolean(streamingContent) && 'opacity-70'
+            Boolean(currentThreadStreamingContent) && 'opacity-70'
           )}
         >
-          {streamingContent && (
+          {currentThreadStreamingContent && (
             <div className="absolute inset-0">
               <MovingBorder rx="10%" ry="10%">
                 <div
@@ -368,7 +367,7 @@ const ChatInput = ({
             )}
             <TextareaAutosize
               ref={textareaRef}
-              disabled={Boolean(streamingContent)}
+              disabled={Boolean(currentThreadStreamingContent)}
               minRows={2}
               rows={1}
               maxRows={10}
@@ -408,7 +407,7 @@ const ChatInput = ({
               <div
                 className={cn(
                   'px-1 flex items-center gap-1',
-                  streamingContent && 'opacity-50 pointer-events-none'
+                  currentThreadStreamingContent && 'opacity-50 pointer-events-none'
                 )}
               >
                 {model?.provider === 'llama.cpp' && loadingModel ? (
@@ -569,12 +568,12 @@ const ChatInput = ({
               )}
             </div>
 
-            {streamingContent ? (
+            {currentThreadStreamingContent ? (
               <Button
                 variant="destructive"
                 size="icon"
                 onClick={() =>
-                  stopStreaming(currentThreadId ?? streamingContent.thread_id)
+                  stopStreaming(currentThreadId ?? currentThreadStreamingContent.thread_id)
                 }
               >
                 <IconPlayerStopFilled />
@@ -586,7 +585,7 @@ const ChatInput = ({
                 disabled={!prompt.trim()}
                 onClick={() => handleSendMesage(prompt)}
               >
-                {streamingContent ? (
+                {currentThreadStreamingContent ? (
                   <span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
                 ) : (
                   <ArrowRight className="text-primary-fg" />

@@ -6,6 +6,7 @@ import { ChatCompletionMessageToolCall } from 'openai/resources'
 
 type AppState = {
   streamingContent?: ThreadMessage
+  streamingContentByThread: Record<string, ThreadMessage | undefined>
   loadingModel?: boolean
   tools: MCPTool[]
   serverStatus: 'running' | 'stopped' | 'pending'
@@ -14,6 +15,8 @@ type AppState = {
   currentToolCall?: ChatCompletionMessageToolCall
   setServerStatus: (value: 'running' | 'stopped' | 'pending') => void
   updateStreamingContent: (content: ThreadMessage | undefined) => void
+  updateStreamingContentForThread: (threadId: string, content: ThreadMessage | undefined) => void
+  getStreamingContentForThread: (threadId: string) => ThreadMessage | undefined
   updateCurrentToolCall: (
     toolCall: ChatCompletionMessageToolCall | undefined
   ) => void
@@ -24,8 +27,9 @@ type AppState = {
   resetTokenSpeed: () => void
 }
 
-export const useAppState = create<AppState>()((set) => ({
+export const useAppState = create<AppState>()((set, get) => ({
   streamingContent: undefined,
+  streamingContentByThread: {},
   loadingModel: false,
   tools: [],
   serverStatus: 'stopped',
@@ -45,6 +49,26 @@ export const useAppState = create<AppState>()((set) => ({
           }
         : undefined,
     }))
+  },
+  updateStreamingContentForThread: (threadId: string, content: ThreadMessage | undefined) => {
+    set((state) => ({
+      streamingContentByThread: {
+        ...state.streamingContentByThread,
+        [threadId]: content
+          ? {
+              ...content,
+              created_at: content.created_at || Date.now(),
+              metadata: {
+                ...content.metadata,
+                assistant: useAssistant.getState().currentAssistant,
+              },
+            }
+          : undefined,
+      },
+    }))
+  },
+  getStreamingContentForThread: (threadId: string) => {
+    return get().streamingContentByThread[threadId]
   },
   updateCurrentToolCall: (toolCall) => {
     set(() => ({

@@ -33,8 +33,10 @@ function ThreadDetail() {
   const { currentThreadId, setCurrentThreadId } = useThreads()
   const { setCurrentAssistant, assistants } = useAssistant()
   const { setMessages } = useMessages()
-  const { streamingContent } = useAppState()
+  const { getStreamingContentForThread } = useAppState()
   const { appMainViewBgColor } = useAppearance()
+  
+  const streamingContent = getStreamingContentForThread(threadId)
 
   const { messages } = useMessages(
     useShallow((state) => ({
