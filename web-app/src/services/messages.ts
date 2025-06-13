@@ -1,50 +1,48 @@
-import { ExtensionManager } from '@/lib/extension'
-import {
-  ConversationalExtension,
-  ExtensionTypeEnum,
-  ThreadMessage,
-} from '@janhq/core'
+import { indexedDBStorage } from '@/lib/indexeddb'
+import { ThreadMessage } from '@janhq/core'
 
 /**
- * @fileoverview Fetch messages from the extension manager.
+ * @fileoverview Fetch messages from IndexedDB.
  * @param threadId
  * @returns
  */
 export const fetchMessages = async (
   threadId: string
 ): Promise<ThreadMessage[]> => {
-  return (
-    ExtensionManager.getInstance()
-      .get<ConversationalExtension>(ExtensionTypeEnum.Conversational)
-      ?.listMessages(threadId)
-      ?.catch(() => []) ?? []
-  )
+  try {
+    return await indexedDBStorage.listMessages(threadId)
+  } catch (error) {
+    console.error('Error fetching messages:', error)
+    return []
+  }
 }
 
 /**
- * @fileoverview Create a message using the extension manager.
+ * @fileoverview Create a message using IndexedDB.
  * @param message
  * @returns
  */
 export const createMessage = async (
   message: ThreadMessage
 ): Promise<ThreadMessage> => {
-  return (
-    ExtensionManager.getInstance()
-      .get<ConversationalExtension>(ExtensionTypeEnum.Conversational)
-      ?.createMessage(message)
-      ?.catch(() => message) ?? message
-  )
+  try {
+    return await indexedDBStorage.createMessage(message)
+  } catch (error) {
+    console.error('Error creating message:', error)
+    return message
+  }
 }
 
 /**
- * @fileoverview Delete a message using the extension manager.
+ * @fileoverview Delete a message using IndexedDB.
  * @param threadId
  * @param messageID
  * @returns
  */
-export const deleteMessage = (threadId: string, messageId: string) => {
-  return ExtensionManager.getInstance()
-    .get<ConversationalExtension>(ExtensionTypeEnum.Conversational)
-    ?.deleteMessage(threadId, messageId)
+export const deleteMessage = async (threadId: string, messageId: string): Promise<void> => {
+  try {
+    await indexedDBStorage.deleteMessage(threadId, messageId)
+  } catch (error) {
+    console.error('Error deleting message:', error)
+  }
 }

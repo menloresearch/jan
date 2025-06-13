@@ -35,14 +35,24 @@ type ThreadModel = {
   provider: string
 }
 
+type ThreadAssistantInfo = {
+  id: string
+  name: string
+  instructions?: string
+  model?: {
+    id: string
+    engine: string
+  }
+}
+
 type Thread = {
   assistants?: ThreadAssistantInfo[]
   id: string
   title: string
   isFavorite?: boolean
-
   model?: ThreadModel
   updated: number
+  created?: number
   order?: number
 }
 

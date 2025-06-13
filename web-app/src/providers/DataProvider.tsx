@@ -19,6 +19,7 @@ import {
 import { useNavigate } from '@tanstack/react-router'
 import { route } from '@/constants/routes'
 import { useThreads } from '@/hooks/useThreads'
+import { indexedDBStorage } from '@/lib/indexeddb'
 
 export function DataProvider() {
   const { setProviders } = useModelProvider()
@@ -52,13 +53,18 @@ export function DataProvider() {
   }, [])
 
   useEffect(() => {
-    fetchThreads().then((threads) => {
-      setThreads(threads)
-      threads.forEach((thread) =>
-        fetchMessages(thread.id).then((messages) =>
-          setMessages(thread.id, messages)
+    // Initialize IndexedDB first, then load threads and messages
+    indexedDBStorage.init().then(() => {
+      fetchThreads().then((threads) => {
+        setThreads(threads)
+        threads.forEach((thread) =>
+          fetchMessages(thread.id).then((messages) =>
+            setMessages(thread.id, messages)
+          )
         )
-      )
+      })
+    }).catch((error) => {
+      console.error('Failed to initialize IndexedDB:', error)
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
