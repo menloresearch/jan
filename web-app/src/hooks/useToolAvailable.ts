@@ -1,7 +1,11 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { localStorageKey } from '@/constants/localStorage'
-import { MCPTool } from '@/types/completion'
+// import { MCPTool } from '@/types/completion'
+
+type SimpleTool = {
+  name: string
+}
 
 type ToolDisabledState = {
   // Track disabled tools per thread
@@ -20,7 +24,7 @@ type ToolDisabledState = {
   setDefaultDisabledTools: (toolNames: string[]) => void
   getDefaultDisabledTools: () => string[]
   // Initialize thread tools from default or existing thread settings
-  initializeThreadTools: (threadId: string, allTools: MCPTool[]) => void
+  initializeThreadTools: (threadId: string, allTools: SimpleTool[]) => void
 }
 
 export const useToolAvailable = create<ToolDisabledState>()(
@@ -81,7 +85,7 @@ export const useToolAvailable = create<ToolDisabledState>()(
         return get().defaultDisabledTools
       },
 
-      initializeThreadTools: (threadId: string, allTools: MCPTool[]) => {
+      initializeThreadTools: (threadId: string, allTools: SimpleTool[]) => {
         const state = get()
         // If thread already has settings, don't override
         if (state.disabledTools[threadId]) {

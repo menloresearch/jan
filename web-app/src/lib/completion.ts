@@ -18,10 +18,16 @@ import {
 } from "token.js";
 import { ulid } from "ulidx";
 import { normalizeProvider } from "./models";
-import { MCPTool } from "@/types/completion";
+// import { MCPTool } from "@/types/completion";
 import { CompletionMessagesBuilder } from "./messages";
 import { ChatCompletionMessageToolCall } from "openai/resources";
-import { callTool } from "@/services/mcp";
+// import { callTool } from "@/services/mcp";
+
+type SimpleTool = {
+  name: string
+  description?: string
+  inputSchema?: Record<string, unknown>
+}
 
 /**
  * @fileoverview Helper functions for creating thread content.
@@ -114,7 +120,7 @@ export const sendCompletion = async (
   provider: ModelProvider,
   messages: ChatCompletionMessageParam[],
   abortController: AbortController,
-  tools: MCPTool[] = [],
+  tools: SimpleTool[] = [],
   stream: boolean = true,
   params: Record<string, object> = {},
 ): Promise<StreamCompletionResponse | CompletionResponse | undefined> => {
@@ -212,7 +218,7 @@ export const stopModel = async (
  * @returns
  */
 export const normalizeTools = (
-  tools: MCPTool[],
+  tools: SimpleTool[],
 ): ChatCompletionTool[] | undefined => {
   if (tools.length === 0) return undefined;
   return tools.map((tool) => ({
@@ -325,23 +331,31 @@ export const postMessageProcessing = async (
           : true);
 
       const result = approved
-        ? await callTool({
-            toolName: toolCall.function.name,
-            arguments: toolCall.function.arguments.length
-              ? JSON.parse(toolCall.function.arguments)
-              : {},
-          }).catch((e) => {
-            console.error("Tool call failed:", e);
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: `Error calling tool ${toolCall.function.name}: ${e.message}`,
-                },
-              ],
-              error: true,
-            };
-          })
+        ? // await callTool({
+          //     toolName: toolCall.function.name,
+          //     arguments: toolCall.function.arguments.length
+          //       ? JSON.parse(toolCall.function.arguments)
+          //       : {},
+          //   }).catch((e) => {
+          //     console.error("Tool call failed:", e);
+          //     return {
+          //       content: [
+          //         {
+          //           type: "text",
+          //           text: `Error calling tool ${toolCall.function.name}: ${e.message}`,
+          //         },
+          //       ],
+          //       error: true,
+          //     };
+          //   })
+          {
+            content: [
+              {
+                type: "text",
+                text: "MCP tools are disabled.",
+              },
+            ],
+          }
         : {
             content: [
               {

@@ -8,8 +8,8 @@ import { getProviders } from '@/services/providers'
 import { fetchThreads } from '@/services/threads'
 import { ModelManager } from '@janhq/core'
 import { useEffect } from 'react'
-import { useMCPServers } from '@/hooks/useMCPServers'
-import { getMCPConfig } from '@/services/mcp'
+// import { useMCPServers } from '@/hooks/useMCPServers'
+// import { getMCPConfig } from '@/services/mcp'
 import { useAssistant } from '@/hooks/useAssistant'
 import { getAssistants } from '@/services/assistants'
 import {
@@ -26,7 +26,7 @@ export function DataProvider() {
 
   const { setMessages } = useMessages()
   const { checkForUpdate } = useAppUpdater()
-  const { setServers } = useMCPServers()
+  // const { setServers } = useMCPServers()
   const { setAssistants } = useAssistant()
   const { setThreads } = useThreads()
   // const navigate = useNavigate()
@@ -36,7 +36,7 @@ export function DataProvider() {
       models?.forEach((model) => ModelManager.instance().register(model))
       getProviders().then(setProviders)
     })
-    getMCPConfig().then((data) => setServers(data.mcpServers ?? []))
+    // getMCPConfig().then((data) => setServers(data.mcpServers ?? []))
     getAssistants()
       .then((data) => {
         // Only update assistants if we have valid data

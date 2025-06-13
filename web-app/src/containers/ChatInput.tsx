@@ -53,7 +53,7 @@ const ChatInput = ({
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [isFocused, setIsFocused] = useState(false)
   const [rows, setRows] = useState(1)
-  const { streamingContent, abortControllers, loadingModel, tools } =
+  const { streamingContent, abortControllers, loadingModel } = // tools } =
     useAppState()
   const { prompt, setPrompt } = usePrompt()
   const { currentThreadId } = useThreads()
@@ -100,7 +100,8 @@ const ChatInput = ({
 
   // Check if there are active MCP servers
   // const hasActiveMCPServers = connectedServers.length > 0 || tools.length > 0
-  const hasActiveMCPServers = tools.length > 0
+  // const hasActiveMCPServers = tools.length > 0
+  const hasActiveMCPServers = false
 
   const handleSendMesage = (prompt: string) => {
     if (!selectedModel) {

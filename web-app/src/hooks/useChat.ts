@@ -42,7 +42,7 @@ export const useChat = () => {
   } = useAppState();
   const { currentAssistant } = useAssistant();
 
-  const { approvedTools, showApprovalModal, allowAllMCPPermissions } =
+  const { approvedTools } = // showApprovalModal } = // allowAllMCPPermissions } =
     useToolApproval();
   const { getDisabledToolsForThread } = useToolAvailable();
 
@@ -241,8 +241,10 @@ export const useChat = () => {
             finalContent,
             abortController,
             approvedTools,
-            allowAllMCPPermissions ? undefined : showApprovalModal,
-            allowAllMCPPermissions,
+            // allowAllMCPPermissions ? undefined : showApprovalModal,
+            // allowAllMCPPermissions,
+            undefined,
+            false,
           );
           addMessage(updatedMessage ?? finalContent);
           updateStreamingContent(emptyThreadContent);
@@ -280,8 +282,8 @@ export const useChat = () => {
       updateLoadingModel,
       getDisabledToolsForThread,
       approvedTools,
-      allowAllMCPPermissions,
-      showApprovalModal,
+      // allowAllMCPPermissions,
+      // showApprovalModal,
       updateTokenSpeed,
     ],
   );
