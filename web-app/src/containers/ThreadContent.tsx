@@ -34,6 +34,7 @@ import {
 } from '@/components/ui/tooltip'
 import { formatDate } from '@/utils/formatDate'
 import { AvatarEmoji } from '@/containers/AvatarEmoji'
+import MessageTokenSpeed from '@/containers/MessageTokenSpeed'
 import CodeEditor from '@uiw/react-textarea-code-editor'
 import '@uiw/react-textarea-code-editor/dist.css'
 
@@ -430,6 +431,12 @@ export const ThreadContent = memo(
                       </TooltipContent>
                     </Tooltip>
                   )}
+                  
+                  <MessageTokenSpeed 
+                    messageId={item.id} 
+                    isStreaming={item.isLastMessage && !!streamingContent}
+                    metadata={item.metadata}
+                  />
                 </div>
               </div>
             )}

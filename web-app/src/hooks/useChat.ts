@@ -33,7 +33,9 @@ export const useChat = () => {
   const { prompt, setPrompt } = usePrompt();
   const {
     tools,
-    updateTokenSpeed,
+    updateStreamingTokenSpeed,
+    getStreamingTokenSpeed,
+    transferStreamingTokenSpeedToMessage,
     resetTokenSpeed,
     // updateTools,
     updateStreamingContentForThread,
@@ -212,8 +214,17 @@ export const useChat = () => {
                     })),
                   },
                 );
+                
                 updateStreamingContentForThread(activeThread.id, currentContent);
-                updateTokenSpeed(currentContent);
+                
+                // Update token speed - count tokens more accurately by counting words/spaces
+                // This gives a better approximation of actual tokens
+                const words = accumulatedText.trim().split(/\s+/).length;
+                const shouldUpdateTokenSpeed = words % 3 === 0 || delta.includes(' '); // Update every 3 words or on spaces
+                if (shouldUpdateTokenSpeed) {
+                  updateStreamingTokenSpeed(activeThread.id);
+                }
+                
                 await new Promise((resolve) => setTimeout(resolve, 0));
               }
             }
@@ -234,6 +245,21 @@ export const useChat = () => {
             activeThread.id,
             accumulatedText,
           );
+          
+          // Get the token speed data from streaming
+          const tokenSpeedData = getStreamingTokenSpeed(activeThread.id);
+          
+          // Add token speed to metadata if available
+          if (tokenSpeedData && tokenSpeedData.tokenSpeed > 0) {
+            finalContent.metadata = {
+              ...finalContent.metadata,
+              tokenSpeed: Math.round(tokenSpeedData.tokenSpeed * 100) / 100, // Round to 2 decimal places
+            };
+          }
+          
+          // Transfer token speed from streaming to final message
+          transferStreamingTokenSpeedToMessage(activeThread.id, finalContent.id);
+          
           builder.addAssistantMessage(accumulatedText, undefined, toolCalls);
           const updatedMessage = await postMessageProcessing(
             toolCalls,
@@ -246,7 +272,17 @@ export const useChat = () => {
             undefined,
             false,
           );
-          addMessage(updatedMessage ?? finalContent);
+          
+          // Ensure token speed is preserved in the final message
+          const messageToSave = updatedMessage ?? finalContent;
+          if (tokenSpeedData && tokenSpeedData.tokenSpeed > 0) {
+            messageToSave.metadata = {
+              ...messageToSave.metadata,
+              tokenSpeed: Math.round(tokenSpeedData.tokenSpeed * 100) / 100,
+            };
+          }
+          
+          addMessage(messageToSave);
           updateStreamingContentForThread(activeThread.id, undefined);
           updateThreadTimestamp(activeThread.id);
 
@@ -283,7 +319,9 @@ export const useChat = () => {
       approvedTools,
       // allowAllMCPPermissions,
       // showApprovalModal,
-      updateTokenSpeed,
+      updateStreamingTokenSpeed,
+      getStreamingTokenSpeed,
+      transferStreamingTokenSpeedToMessage,
       updateStreamingContentForThread,
     ],
   );

@@ -65,7 +65,6 @@ function Index() {
           </div>
           <div className="flex-1 shrink-0">
             <ChatInput
-              showSpeedToken={false}
               model={selectedModel}
               initialMessage={true}
             />

@@ -21,7 +21,6 @@ import {
   IconTool,
   IconCodeCircle2,
   IconPlayerStopFilled,
-  IconBrandSpeedtest,
   IconX,
 } from '@tabler/icons-react'
 import { useTranslation } from 'react-i18next'
@@ -39,7 +38,6 @@ import { stopAllModels } from '@/services/models'
 
 type ChatInputProps = {
   className?: string
-  showSpeedToken?: boolean
   model?: ThreadModel
   initialMessage?: boolean
 }
@@ -47,7 +45,6 @@ type ChatInputProps = {
 const ChatInput = ({
   model,
   className,
-  showSpeedToken = true,
   initialMessage,
 }: ChatInputProps) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -59,7 +56,7 @@ const ChatInput = ({
   const { currentThreadId } = useThreads()
   const { t } = useTranslation()
   const { spellCheckChatInput } = useGeneralSetting()
-  const { tokenSpeed } = useAppState()
+  // const { tokenSpeed } = useAppState()
   const maxRows = 10
 
   const { selectedModel } = useModelProvider()
@@ -558,14 +555,14 @@ const ChatInput = ({
                 )}
               </div>
 
-              {showSpeedToken && (
+              {/* {showSpeedToken && (
                 <div className="flex items-center gap-1 text-main-view-fg/60 text-xs">
                   <IconBrandSpeedtest size={18} />
                   <span>
                     {Math.round(tokenSpeed?.tokenSpeed ?? 0)} tokens/sec
                   </span>
                 </div>
-              )}
+              )} */}
             </div>
 
             {currentThreadStreamingContent ? (
