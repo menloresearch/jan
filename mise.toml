@@ -176,7 +176,7 @@ elif [[ "$OSTYPE" == "linux-gnu"* ]]; then
   rm -rf ./electron/pre-install/*.tgz 2>/dev/null || true
   rm -rf ./src-tauri/resources 2>/dev/null || true
   rm -rf ./src-tauri/target 2>/dev/null || true
-  rm -rf "~/jan/extensions" 2>/dev/null || true
+  rm -rf ~/jan/extensions 2>/dev/null || true
   rm -rf "~/.cache/jan*" 2>/dev/null || true
 else
   # macOS cleanup (matches Makefile)
