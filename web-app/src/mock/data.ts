@@ -149,6 +149,47 @@ export const predefinedProviders = [
       },
     ],
   },
+  {
+    active: true,
+    api_key: "sk-wSr98rEAQlDS4uYACKgYjA",
+    base_url: "https://api.jan.ai/v1",
+    explore_models_url: "https://menlo.ai",
+    provider: "Menlo-14B-Tool",
+    settings: [
+      {
+        key: "api-key",
+        title: "api key",
+        description: "the menlo platform api uses api keys for authentication.",
+        controller_type: "input",
+        controller_props: {
+          placeholder: "insert api key",
+          value: "",
+          type: "password",
+          input_actions: ["unobscure", "copy"],
+        },
+      },
+      {
+        key: "base-url",
+        title: "base url",
+        description:
+          "the base endpoint to use. see the [openai api documentation](https://platform.openai.com/docs/api-reference/chat/create) for more information.",
+        controller_type: "input",
+        controller_props: {
+          placeholder: "https://api.jan.ai/v1",
+          value: "https://api.jan.ai/v1",
+        },
+      },
+    ],
+    models: [
+      {
+        id: "Jan-Tool",
+        name: "Jan-Tool",
+        version: "1.0",
+        description: "",
+        capabilities: ["completion"],
+      },
+    ],
+  },
   // {
   //   active: true,
   //   api_key: '',
