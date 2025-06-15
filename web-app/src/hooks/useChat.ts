@@ -13,6 +13,7 @@ import {
   isCompletionResponse,
   newAssistantThreadContent,
   newUserThreadContent,
+  newUserThreadContentWithFiles,
   postMessageProcessing,
   sendCompletion,
 } from '@/lib/completion'
@@ -109,7 +110,13 @@ export const useChat = () => {
   ])
 
   const sendMessage = useCallback(
-    async (message: string) => {
+    async (message: string, uploadedFiles?: Array<{
+      name: string
+      type: string
+      size: number
+      base64: string
+      dataUrl: string
+    }>) => {
       const activeThread = await getCurrentThread()
 
       resetTokenSpeed()
@@ -121,7 +128,12 @@ export const useChat = () => {
       const abortController = new AbortController()
       setAbortController(activeThread.id, abortController)
       updateStreamingContent(emptyThreadContent)
-      addMessage(newUserThreadContent(activeThread.id, message))
+      // Create user message with files if available
+      if (uploadedFiles && uploadedFiles.length > 0) {
+        addMessage(newUserThreadContentWithFiles(activeThread.id, message, uploadedFiles))
+      } else {
+        addMessage(newUserThreadContent(activeThread.id, message))
+      }
       updateThreadTimestamp(activeThread.id)
       setPrompt('')
       try {
@@ -140,7 +152,16 @@ export const useChat = () => {
           currentAssistant?.instructions
         )
 
-        builder.addUserMessage(message)
+        // Enhanced: Support for uploaded files with automatic image and audio detection
+        if (uploadedFiles && uploadedFiles.length > 0) {
+          // Use enhanced method that automatically detects and processes:
+          // - Images: Uses OpenAI's ChatCompletionContentPartImage with detail control
+          // - Audio: Uses OpenAI's ChatCompletionContentPartInputAudio (wav/mp3)
+          // - Other files: Falls back to regular file handling
+          builder.addUploadedFiles(message, uploadedFiles)
+        } else {
+          builder.addUserMessage(message)
+        }
 
         let isCompleted = false
 
