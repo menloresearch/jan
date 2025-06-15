@@ -199,14 +199,54 @@ fn extract_extension_manifest<R: Read>(
 pub fn setup_mcp(app: &App) {
     let state = app.state::<AppState>().inner();
     let servers = state.mcp_servers.clone();
-    let app_handle: tauri::AppHandle = app.handle().clone();
+    let app_handle_for_mcp: tauri::AppHandle = app.handle().clone();
+    
+    // Start MCP servers
     tauri::async_runtime::spawn(async move {
-        if let Err(e) = run_mcp_commands(&app_handle, servers).await {
+        if let Err(e) = run_mcp_commands(&app_handle_for_mcp, servers.clone()).await {
             log::error!("Failed to run mcp commands: {}", e);
         }
-        app_handle
-            .emit("mcp-update", "MCP servers updated")
+        app_handle_for_mcp
+            .emit("mcp-update", "MCP servers started")
             .unwrap();
+    });
+    
+    // Setup periodic health checks
+    setup_mcp_health_monitoring(app);
+}
+
+pub fn setup_mcp_health_monitoring(app: &App) {
+    let app_handle = app.handle().clone();
+    
+    tauri::async_runtime::spawn(async move {
+        let mut interval = tokio::time::interval(Duration::from_secs(30)); // Check every 30 seconds
+        
+        loop {
+            interval.tick().await;
+            
+            let app_state = app_handle.state::<AppState>();
+            let servers = app_state.mcp_servers.clone();
+            let servers_map = servers.lock().await;
+            
+            for (name, service) in servers_map.iter() {
+                match service.list_all_tools().await {
+                    Ok(_) => {
+                        log::debug!("Health check passed for MCP server: {}", name);
+                    }
+                    Err(e) => {
+                        log::error!("Health check failed for MCP server {}: {}", name, e);
+                        
+                        // Emit health check failure event
+                        if let Err(emit_err) = app_handle.emit("mcp-health-check-failed", serde_json::json!({
+                            "server": name,
+                            "error": e.to_string()
+                        })) {
+                            log::error!("Failed to emit health check failure event: {}", emit_err);
+                        }
+                    }
+                }
+            }
+        }
     });
 }
 

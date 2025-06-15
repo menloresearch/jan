@@ -50,7 +50,6 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 20
-
       - name: Install dependencies
         run: |
           make config-yarn
@@ -79,6 +78,8 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 20
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v3
 
       - name: Set IS_TEST environment variable
         run: |
@@ -123,6 +124,8 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 20
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v3
 
       - name: 'Cleanup cache'
         continue-on-error: true
@@ -153,6 +156,8 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 20
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v3
 
       # Clean cache, continue on error
       - name: 'Cleanup cache'
@@ -196,6 +201,8 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 20
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v3
 
       # Clean cache, continue on error
       - name: 'Cleanup cache'
@@ -239,6 +246,8 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: 20
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v3
 
       # Clean cache, continue on error
       - name: 'Cleanup cache'
@@ -271,6 +280,8 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 20
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v3
 
       - name: 'Cleanup cache'
         continue-on-error: true
@@ -367,6 +378,8 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 20
+      - name: Install Protoc
+        uses: arduino/setup-protoc@v3
 
       - name: 'Cleanup cache'
         continue-on-error: true

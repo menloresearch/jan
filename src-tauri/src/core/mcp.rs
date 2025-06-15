@@ -2,9 +2,10 @@ use rmcp::model::{CallToolRequestParam, CallToolResult, Tool};
 use rmcp::{service::RunningService, transport::TokioChildProcess, RoleClient, ServiceExt};
 use serde_json::{Map, Value};
 use std::fs;
+use std::path::PathBuf;
 use std::{collections::HashMap, env, sync::Arc, time::Duration};
 use tauri::{AppHandle, Emitter, Runtime, State};
-use tokio::{process::Command, sync::Mutex, time::timeout};
+use tokio::{process::Command, sync::Mutex, time::{sleep, timeout}};
 
 use super::{cmd::get_jan_data_folder_path, state::AppState};
 
@@ -47,9 +48,11 @@ const DEFAULT_MCP_CONFIG: &str = r#"{
   }
 }
 "#;
+// TODO: find a way to bundle this into build
 
 // Timeout for MCP tool calls (30 seconds)
 const MCP_TOOL_CALL_TIMEOUT: Duration = Duration::from_secs(30);
+
 
 /// Runs MCP commands by reading configuration from a JSON file and initializing servers
 ///
@@ -70,6 +73,11 @@ pub async fn run_mcp_commands<R: Runtime>(
         "Load MCP configs from {}",
         app_path_str.clone() + "/mcp_config.json"
     );
+    
+    
+    // Ensure MCP config exists with default RAG server
+    ensure_mcp_config_exists(&app_path).await?;
+    
     let config_content = std::fs::read_to_string(app_path_str.clone() + "/mcp_config.json")
         .map_err(|e| format!("Failed to read config file: {}", e))?;
 
@@ -244,6 +252,128 @@ pub async fn deactivate_mcp_server(state: State<'_, AppState>, name: String) -> 
     Ok(())
 }
 
+/// Ensures MCP config exists and creates default with RAG server if not
+async fn ensure_mcp_config_exists(app_path: &PathBuf) -> Result<(), String> {
+    let config_path = app_path.join("mcp_config.json");
+    
+    if !config_path.exists() {
+        log::info!("Creating default MCP config with RAG server");
+        
+        // Ensure rag directory exists
+        let rag_dir = app_path.join("rag");
+        if !rag_dir.exists() {
+            fs::create_dir_all(&rag_dir)
+                .map_err(|e| format!("Failed to create rag directory: {}", e))?;
+        }
+        
+        // Create lancedb directory
+        let lancedb_dir = rag_dir.join("lancedb");
+        if !lancedb_dir.exists() {
+            fs::create_dir_all(&lancedb_dir)
+                .map_err(|e| format!("Failed to create lancedb directory: {}", e))?;
+        }
+        
+        // Create models directory
+        let models_dir = rag_dir.join("models");
+        if !models_dir.exists() {
+            fs::create_dir_all(&models_dir)
+                .map_err(|e| format!("Failed to create models directory: {}", e))?;
+        }
+        
+        // Create cache directory
+        let cache_dir = rag_dir.join("cache");
+        if !cache_dir.exists() {
+            fs::create_dir_all(&cache_dir)
+                .map_err(|e| format!("Failed to create cache directory: {}", e))?;
+        }
+        
+        fs::write(&config_path, DEFAULT_MCP_CONFIG)
+            .map_err(|e| format!("Failed to create default MCP config: {}", e))?;
+    }
+    
+    Ok(())
+}
+
+/// Starts an MCP server with retry mechanism and enhanced error handling
+async fn start_mcp_server_with_retry(
+    name: String,
+    config: &Value,
+    bin_path: &PathBuf,
+    _app_path: &PathBuf,
+    servers_state: Arc<Mutex<HashMap<String, RunningService<RoleClient, ()>>>>,
+) {
+    const MAX_RETRIES: u32 = 3;
+    const RETRY_DELAY_MS: u64 = 2000;
+    
+    for attempt in 1..=MAX_RETRIES {
+        log::info!("Starting MCP server '{}' (attempt {}/{})", name, attempt, MAX_RETRIES);
+        
+        if let Some((command, args, envs)) = extract_command_args(config) {
+            let mut cmd = Command::new(command.clone());
+            
+            // Handle special commands
+            if command.clone() == "npx" {
+                let bun_x_path = format!("{}/bun", bin_path.display());
+                cmd = Command::new(bun_x_path);
+                cmd.arg("x");
+            }
+
+            if command.clone() == "uvx" {
+                let bun_x_path = format!("{}/uv", bin_path.display());
+                cmd = Command::new(bun_x_path);
+                cmd.arg("tool");
+                cmd.arg("run");
+            }
+            
+
+            // Add arguments
+            args.iter().filter_map(Value::as_str).for_each(|arg| {
+                cmd.arg(arg);
+            });
+            
+            // Add environment variables
+            envs.iter().for_each(|(k, v)| {
+                if let Some(v_str) = v.as_str() {
+                    cmd.env(k, v_str);
+                }
+            });
+
+            log::info!("Executing command for {}: {:?}", name, cmd);
+
+            match TokioChildProcess::new(cmd) {
+                Ok(process) => {
+                    match ().serve(process).await {
+                        Ok(running_service) => {
+                            servers_state
+                                .lock()
+                                .await
+                                .insert(name.clone(), running_service);
+                            log::info!("Server '{}' started successfully on attempt {}", name, attempt);
+                            return; // Success, exit retry loop
+                        }
+                        Err(e) => {
+                            log::error!("Failed to start server '{}' on attempt {}: {}", name, attempt, e);
+                        }
+                    }
+                }
+                Err(e) => {
+                    log::error!("Failed to create process for server '{}' on attempt {}: {}", name, attempt, e);
+                }
+            }
+        } else {
+            log::error!("Invalid configuration for server '{}'", name);
+            return; // Don't retry for config errors
+        }
+        
+        if attempt < MAX_RETRIES {
+            log::info!("Retrying server '{}' in {}ms...", name, RETRY_DELAY_MS);
+            sleep(Duration::from_millis(RETRY_DELAY_MS)).await;
+        } else {
+            log::error!("Failed to start server '{}' after {} attempts", name, MAX_RETRIES);
+        }
+    }
+}
+
 fn extract_command_args(
     config: &Value,
 ) -> Option<(String, Vec<Value>, serde_json::Map<String, Value>)> {
@@ -270,11 +400,68 @@ pub async fn restart_mcp_servers(app: AppHandle, state: State<'_, AppState>) -> 
     // Stop the servers
     stop_mcp_servers(state.mcp_servers.clone()).await?;
 
+    // Wait a moment for cleanup
+    sleep(Duration::from_millis(1000)).await;
+
     // Restart the servers
     run_mcp_commands(&app, servers).await?;
 
     app.emit("mcp-update", "MCP servers updated")
         .map_err(|e| format!("Failed to emit event: {}", e))
+}
+
+#[tauri::command]
+pub async fn get_mcp_server_status(
+    _app: AppHandle,
+    state: State<'_, AppState>,
+) -> Result<HashMap<String, String>, String> {
+    let servers = state.mcp_servers.lock().await;
+    let mut status_map = HashMap::new();
+    
+    for (name, service) in servers.iter() {
+        // Check if server is responsive
+        match service.list_all_tools().await {
+            Ok(_) => {
+                status_map.insert(name.clone(), "running".to_string());
+            }
+            Err(_) => {
+                status_map.insert(name.clone(), "error".to_string());
+            }
+        }
+    }
+    
+    Ok(status_map)
+}
+
+#[tauri::command]
+pub async fn health_check_mcp_servers(
+    app: AppHandle,
+    state: State<'_, AppState>,
+) -> Result<(), String> {
+    let servers = state.mcp_servers.clone();
+    let servers_map = servers.lock().await;
+    
+    for (name, service) in servers_map.iter() {
+        match service.list_all_tools().await {
+            Ok(_) => {
+                log::info!("Health check passed for MCP server: {}", name);
+                app.emit("mcp-health-check", serde_json::json!({
+                    "server": name,
+                    "status": "healthy"
+                })).map_err(|e| format!("Failed to emit health check event: {}", e))?;
+            }
+            Err(e) => {
+                log::error!("Health check failed for MCP server {}: {}", name, e);
+                app.emit("mcp-health-check", serde_json::json!({
+                    "server": name,
+                    "status": "unhealthy",
+                    "error": e.to_string()
+                })).map_err(|e| format!("Failed to emit health check event: {}", e))?;
+            }
+        }
+    }
+    
+    Ok(())
 }
 
 pub async fn stop_mcp_servers(
@@ -300,7 +487,7 @@ pub async fn get_connected_servers(
     Ok(servers_map.keys().cloned().collect())
 }
 
-/// Retrieves all available tools from all MCP servers
+/// Retrieves all available tools from all MCP servers and built-in RAG tools
 ///
 /// # Arguments
 /// * `state` - Application state containing MCP server connections
@@ -311,14 +498,29 @@ pub async fn get_connected_servers(
 /// This function:
 /// 1. Locks the MCP servers mutex to access server connections
 /// 2. Iterates through all connected servers
-/// 3. Gets the list of tools from each server
-/// 4. Combines all tools into a single vector
-/// 5. Returns the combined list of all available tools
+/// 3. Gets the list of tools from each server with timeout
+/// 4. Adds built-in RAG tools
+/// 5. Combines all tools into a single vector
+/// 6. Returns the combined list of all available tools
 #[tauri::command]
-pub async fn get_tools(state: State<'_, AppState>) -> Result<Vec<Tool>, String> {
+pub async fn get_tools<R: Runtime>(app: AppHandle<R>, state: State<'_, AppState>) -> Result<Vec<Tool>, String> {
     let servers = state.mcp_servers.lock().await;
     let mut all_tools: Vec<Tool> = Vec::new();
 
+    // Add tools from RAG plugin first
+    if jan_plugin_rag::has_rag_mcp(&app) {
+        match jan_plugin_rag::get_rag_tools(&app) {
+            Ok(rag_tools) => {
+                log::info!("Adding {} RAG tools to MCP", rag_tools.len());
+                all_tools.extend(rag_tools);
+            }
+            Err(e) => {
+                log::warn!("Failed to get RAG tools: {}", e);
+            }
+        }
+    }
+
+    // Add tools from external MCP servers
     for (_, service) in servers.iter() {
         // List tools with timeout
         let tools_future = service.list_all_tools();
@@ -341,7 +543,8 @@ pub async fn get_tools(state: State<'_, AppState>) -> Result<Vec<Tool>, String> 
     Ok(all_tools)
 }
 
-/// Calls a tool on an MCP server by name with optional arguments
+
+/// Calls a tool by name with optional arguments, checking built-in RAG tools first, then MCP servers
 ///
 /// # Arguments
 /// * `state` - Application state containing MCP server connections
@@ -352,23 +555,56 @@ pub async fn get_tools(state: State<'_, AppState>) -> Result<Vec<Tool>, String> 
 /// * `Result<CallToolResult, String>` - Result of the tool call if successful, or error message if failed
 ///
 /// This function:
-/// 1. Locks the MCP servers mutex to access server connections
-/// 2. Searches through all servers for one containing the named tool
-/// 3. When found, calls the tool on that server with the provided arguments
+/// 1. Checks if the tool is a built-in RAG tool and calls it directly
+/// 2. If not found, searches through external MCP servers
+/// 3. When found, calls the tool on that server with the provided arguments and timeout
 /// 4. Returns error if no server has the requested tool
 #[tauri::command]
-pub async fn call_tool(
+pub async fn call_tool<R: Runtime>(
+    app: AppHandle<R>,
     state: State<'_, AppState>,
     tool_name: String,
     arguments: Option<Map<String, Value>>,
 ) -> Result<CallToolResult, String> {
+
+    // Check RAG plugin tools first
+    if jan_plugin_rag::has_rag_mcp(&app) {
+        // Get RAG tools to check if this tool belongs to the plugin
+        if let Ok(rag_tools) = jan_plugin_rag::get_rag_tools(&app) {
+            if rag_tools.iter().any(|t| t.name == tool_name) {
+                log::info!("Found RAG tool {} in plugin", tool_name);
+                
+                let args_value = match arguments {
+                    Some(map) => Value::Object(map),
+                    None => Value::Object(serde_json::Map::new()),
+                };
+                
+                match jan_plugin_rag::call_rag_tool(&app, &tool_name, args_value).await {
+                    Ok(content) => {
+                        return Ok(CallToolResult {
+                            content,
+                            is_error: Some(false),
+                        });
+                    }
+                    Err(e) => {
+                        return Ok(CallToolResult {
+                            content: vec![rmcp::model::Content::text(format!("Error: {}", e))],
+                            is_error: Some(true),
+                        });
+                    }
+                }
+            }
+        }
+    }
+
+    // Check external MCP servers
     let servers = state.mcp_servers.lock().await;
 
     // Iterate through servers and find the first one that contains the tool
     for (_, service) in servers.iter() {
         if let Ok(tools) = service.list_all_tools().await {
             if tools.iter().any(|t| t.name == tool_name) {
-                println!("Found tool {} in server", tool_name);
+                log::info!("Found tool {} in server", tool_name);
 
                 // Call the tool with timeout
                 let tool_call = service.call_tool(CallToolRequestParam {
@@ -390,6 +626,7 @@ pub async fn call_tool(
 
     Err(format!("Tool {} not found", tool_name))
 }
+
 
 #[tauri::command]
 pub async fn get_mcp_configs(app: AppHandle) -> Result<String, String> {

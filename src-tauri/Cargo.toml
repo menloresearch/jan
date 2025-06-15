@@ -15,6 +15,9 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 [build-dependencies]
 tauri-build = { version = "2.0.2", features = [] }
 
+[features]
+default = []
+
 [dependencies]
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
@@ -52,6 +55,17 @@ ash = "0.38.0"
 nvml-wrapper = "0.10.0"
 tauri-plugin-deep-link = "2"
 fix-path-env = { git = "https://github.com/tauri-apps/fix-path-env-rs" }
+# RAG plugin (replaces direct dependencies)
+jan-plugin-rag = { path = "../jan-plugin-rag" }
+# Keep these core dependencies for other functionality
+docx-rs = "0.4"
+pdf-extract = "0.7"
+base64 = "0.22"
+encoding_rs = "0.8"
+anyhow = "1.0"
+sha2 = "0.10.8"
+hex = "0.4.3"
+chrono = { version = "0.4", features = ["serde"] }
 
 [target.'cfg(windows)'.dependencies]
 libloading = "0.8.7"
@@ -61,3 +75,10 @@ libc = "0.2.172"
 tauri-plugin-updater = "2"
 once_cell = "1.18"
 tauri-plugin-single-instance = { version = "2.0.0", features = ["deep-link"] }
+
+[lints.clippy]
+all = "warn"  # or "deny" if you want errors instead of warnings
+
+[profile.dev]
+opt-level = 0
+incremental = true
