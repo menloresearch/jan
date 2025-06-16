@@ -7,7 +7,7 @@ describe('Jan-nano-gguf download and use flow', () => {
 
     // Click Jan-nano-gguf
     const nanoItem = await $(
-      '[data-test-id="hub-model-Menlo:Jan-nano-gguf:jan-nano-4b-iQ4_XS.gguf"'
+      '[data-test-id="hub-model-Menlo:Jan-nano-gguf:jan-nano-4b-iQ4_XS.gguf"]'
     )
     await nanoItem.waitForDisplayed({ timeout: 60000 })
     // Check if 'Use' button is already displayed
