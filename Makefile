@@ -38,6 +38,7 @@ dev-tauri: install-and-build
 	yarn install:cortex
 	yarn download:bin
 	yarn copy:lib
+	yarn copy:assets:tauri
 	yarn dev:tauri
 
 # Linting
