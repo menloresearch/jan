@@ -154,6 +154,10 @@ jobs:
         with:
           node-version: 20
 
+      - name: Install tauri-driver dependencies
+        run: |
+          cargo install tauri-driver --locked
+
       # Clean cache, continue on error
       - name: 'Cleanup cache'
         shell: powershell
@@ -196,6 +200,10 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 20
+
+      - name: Install tauri-driver dependencies
+        run: |
+          cargo install tauri-driver --locked
 
       # Clean cache, continue on error
       - name: 'Cleanup cache'
@@ -240,6 +248,10 @@ jobs:
         with:
           node-version: 20
 
+      - name: Install tauri-driver dependencies
+        run: |
+          cargo install tauri-driver --locked
+
       # Clean cache, continue on error
       - name: 'Cleanup cache'
         shell: powershell
@@ -276,6 +288,10 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y libglib2.0-dev libatk1.0-dev libpango1.0-dev libgtk-3-dev libsoup-3.0-dev libwebkit2gtk-4.1-dev librsvg2-dev libfuse2
+
+      - name: Install tauri-driver dependencies
+        run: |
+          cargo install tauri-driver --locked
 
       - name: 'Cleanup cache'
         continue-on-error: true
@@ -372,6 +388,10 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 20
+
+      - name: Install tauri-driver dependencies
+        run: |
+          cargo install tauri-driver --locked
 
       - name: 'Cleanup cache'
         continue-on-error: true
