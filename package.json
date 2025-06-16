@@ -4,7 +4,8 @@
   "workspaces": {
     "packages": [
       "core",
-      "web-app"
+      "web-app",
+      "webdriver/webdriverio"
     ]
   },
   "scripts": {
