@@ -47,6 +47,9 @@ lint: install-and-build
 # Testing
 test: lint
 	yarn build:web
+	yarn install:cortex
+	yarn download:bin
+	yarn copy:lib
 	yarn test
 	yarn test:e2e
 
