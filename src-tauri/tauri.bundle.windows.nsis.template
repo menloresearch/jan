@@ -22,6 +22,7 @@ ManifestDPIAwareness PerMonitorV2
 !include "Win\COM.nsh"
 !include "Win\Propkey.nsh"
 !include "StrFunc.nsh"
+!include "nsProcess.nsh"
 ${StrCase}
 ${StrLoc}
 
@@ -505,6 +506,23 @@ FunctionEnd
 
 
 Section EarlyChecks
+  ; Kill running processes that might interfere with installation
+  nsProcess::_FindProcess "cortex-server.exe"
+  Pop $R0
+  ${If} $R0 = 0
+    DetailPrint "Found running cortex-server.exe - terminating..."
+    nsProcess::_KillProcess "cortex-server.exe"
+    Pop $R0
+  ${EndIf}
+
+  nsProcess::_FindProcess "llama-server.exe"
+  Pop $R0
+  ${If} $R0 = 0
+    DetailPrint "Found running llama-server.exe - terminating..."
+    nsProcess::_KillProcess "llama-server.exe"
+    Pop $R0
+  ${EndIf}
+
   ; Abort silent installer if downgrades is disabled
   !if "${ALLOWDOWNGRADES}" == "false"
   ${If} ${Silent}
@@ -520,7 +538,6 @@ Section EarlyChecks
     ${EndIf}
   ${EndIf}
   !endif
-
 SectionEnd
 
 Section WebView2
