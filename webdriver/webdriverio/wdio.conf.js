@@ -25,7 +25,7 @@ exports.config = {
 
   // ensure the rust project is built since we expect this binary to exist for the webdriver sessions
   onPrepare: () => {
-    spawnSync('pnpm', ['build'], {
+    spawnSync('yarn', ['build'], {
       cwd: path.resolve(__dirname, '../..'),
       stdio: 'inherit',
       shell: true,
