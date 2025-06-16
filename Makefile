@@ -46,10 +46,9 @@ lint: install-and-build
 
 # Testing
 test: lint
-	# yarn build:test
-	# yarn test:coverage
-	# Need e2e setup for tauri backend
+	yarn build:web
 	yarn test
+	yarn test:e2e
 
 # Builds and publishes the app
 build-and-publish: install-and-build
