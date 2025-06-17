@@ -164,37 +164,39 @@ export class ExtensionManager {
   /**
    * Register a extension with its class.
    * @param {Extension} extension extension object as provided by the main process.
-   * @returns {void}
+   * @returns {Promise<void>}
    */
-  async activateExtension(extension: Extension) {
+  async activateExtension(extension: Extension): Promise<void> {
     // Import class
     const extensionUrl = extension.url
-    await import(/* @vite-ignore */convertFileSrc(extensionUrl)).then((extensionClass) => {
-      // Register class if it has a default export
-      if (
-        typeof extensionClass.default === 'function' &&
-        extensionClass.default.prototype
-      ) {
-        this.register(
-          extension.name,
-          new extensionClass.default(
-            extension.url,
+    await import(/* @vite-ignore */ convertFileSrc(extensionUrl)).then(
+      (extensionClass) => {
+        // Register class if it has a default export
+        if (
+          typeof extensionClass.default === 'function' &&
+          extensionClass.default.prototype
+        ) {
+          this.register(
             extension.name,
-            extension.productName,
-            extension.active,
-            extension.description,
-            extension.version
+            new extensionClass.default(
+              extension.url,
+              extension.name,
+              extension.productName,
+              extension.active,
+              extension.description,
+              extension.version
+            )
           )
-        )
+        }
       }
-    })
+    )
   }
 
   /**
    * Registers all active extensions.
-   * @returns {void}
+   * @returns {Promise<void>}
    */
-  async registerActive() {
+  async registerActive(): Promise<void> {
     // Get active extensions
     const activeExtensions = (await this.getActive()) ?? []
     // Activate all
@@ -206,9 +208,11 @@ export class ExtensionManager {
   /**
    * Install a new extension.
    * @param {Array.<installOptions | string>} extensions A list of NPM specifiers, or installation configuration objects.
-   * @returns {Promise.<Array.<Extension> | false>} extension as defined by the main process. Has property cancelled set to true if installation was cancelled in the main process.
+   * @returns {Promise.<void | Promise<Array.<Extension> | false>>} extension as defined by the main process. Has property cancelled set to true if installation was cancelled in the main process. void if window is undefined.
    */
-  async install(extensions: ExtensionManifest[]) {
+  async install(
+    extensions: ExtensionManifest[]
+  ): Promise<void | Promise<Extension | false>[]> {
     if (typeof window === 'undefined') {
       return
     }
@@ -226,9 +230,12 @@ export class ExtensionManager {
    * Uninstall provided extensions
    * @param {Array.<string>} extensions List of names of extensions to uninstall.
    * @param {boolean} reload Whether to reload all renderers after updating the extensions.
-   * @returns {Promise.<boolean>} Whether uninstalling the extensions was successful.
+   * @returns {void | Promise.<boolean>} Whether uninstalling the extensions was successful. void if window is undefined
    */
-  uninstall(extensions: string[], reload = true) {
+  uninstall(
+    extensions: string[],
+    reload: boolean = true
+  ): void | Promise<boolean> {
     if (typeof window === 'undefined') {
       return
     }
