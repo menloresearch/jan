@@ -1,4 +1,4 @@
-import { ThreadMessage, ThreadAssistantInfo, Thread } from '@janhq/core'
+import { ThreadMessage, Thread } from '@janhq/core'
 
 const DB_NAME = 'jan-conversations'
 const DB_VERSION = 1
@@ -99,13 +99,13 @@ class IndexedDBStorage {
         thread.assistants?.map((assistant) => ({
           ...assistant,
           model: {
-            id: thread.model?.id ?? '*',
-            engine: thread.model?.provider ?? 'llama.cpp',
+            id: assistant.model?.id ?? '*',
+            engine: assistant.model?.engine ?? 'llama.cpp',
           },
         })) ?? [],
       metadata: {
-        order: thread.order,
-        is_favorite: thread.isFavorite,
+        order: thread.metadata?.order,
+        is_favorite: thread.metadata?.is_favorite,
       },
     }
 
@@ -131,19 +131,20 @@ class IndexedDBStorage {
     const dbThread: Thread = {
       id: thread.id,
       title: thread.title,
+      created: now,
       updated: now,
       object: 'thread',
       assistants:
         thread.assistants?.map((assistant) => ({
           ...assistant,
           model: {
-            id: thread.model?.id ?? '*',
-            engine: thread.model?.provider ?? 'llama.cpp',
+            id: assistant.model?.id ?? '*',
+            engine: assistant.model?.engine ?? 'llama.cpp',
           },
         })) ?? [],
       metadata: {
-        order: thread.order,
-        is_favorite: thread.isFavorite,
+        order: thread.metadata?.order,
+        is_favorite: thread.metadata?.is_favorite,
       },
     }
 
