@@ -4,7 +4,7 @@ import SettingsMenu from '@/containers/SettingsMenu'
 import HeaderPage from '@/containers/HeaderPage'
 import { Switch } from '@/components/ui/switch'
 import { Card, CardItem } from '@/containers/Card'
-import { useTranslation } from 'react-i18next'
+import { useTranslation } from '@/i18n/react-i18next-compat'
 import { useAnalytic } from '@/hooks/useAnalytic'
 import posthog from 'posthog-js'
 
@@ -20,7 +20,7 @@ function Privacy() {
   return (
     <div className="flex flex-col h-full">
       <HeaderPage>
-        <h1 className="font-medium">{t('common.settings')}</h1>
+        <h1 className="font-medium">{t('common:settings')}</h1>
       </HeaderPage>
       <div className="flex h-full w-full">
         <SettingsMenu />
@@ -30,7 +30,7 @@ function Privacy() {
               header={
                 <div className="flex items-center justify-between mb-4">
                   <h1 className="text-main-view-fg font-medium text-base">
-                    Analytics
+                    {t('settings:privacy.analytics')}
                   </h1>
                   <div className="flex items-center gap-2">
                     <Switch
@@ -49,45 +49,33 @@ function Privacy() {
               }
             >
               <CardItem
-                title="Help us improve"
-                description={
-                  <p>
-                    By opting in, you help us make Jan better by sharing
-                    anonymous data, like feature usage and user counts. Your
-                    chats and personal information are never collected.
-                  </p>
-                }
+                title={t('settings:privacy.helpUsImprove')}
+                description={<p>{t('settings:privacy.helpUsImproveDesc')}</p>}
                 align="start"
               />
               <CardItem
                 description={
                   <div className="text-main-view-fg/90">
-                    <p>
-                      We prioritize your control over your data. Learn more
-                      about our Privacy Policy.
-                    </p>
+                    <p>{t('settings:privacy.privacyPolicy')}</p>
                     <p className="my-1">
-                      To make Jan better, we need to understand how it’s used -
-                      but only if you choose to help. You can change your Jan
-                      Analytics settings anytime.
+                      {t('settings:privacy.analyticsDesc')}
                     </p>
-                    <p>
-                      Your choice to opt-in or out doesn't change our core
-                      privacy promises:
-                    </p>
+                    <p>{t('settings:privacy.privacyPromises')}</p>
                     <ul className="list-disc pl-4 space-y-1 mt-4">
-                      <li className="font-medium">Your chats are never read</li>
                       <li className="font-medium">
-                        No personal information is collected
+                        {t('settings:privacy.promise1')}
                       </li>
                       <li className="font-medium">
-                        No accounts or logins required
+                        {t('settings:privacy.promise2')}
                       </li>
                       <li className="font-medium">
-                        We don’t access your files
+                        {t('settings:privacy.promise3')}
                       </li>
                       <li className="font-medium">
-                        Your chat history and settings stay on your device
+                        {t('settings:privacy.promise4')}
+                      </li>
+                      <li className="font-medium">
+                        {t('settings:privacy.promise5')}
                       </li>
                     </ul>
                   </div>
