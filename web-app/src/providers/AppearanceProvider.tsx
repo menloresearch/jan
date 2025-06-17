@@ -36,6 +36,7 @@ export function AppearanceProvider() {
     document.documentElement.style.setProperty('--font-size-base', fontSize)
 
     // Hide alpha slider when IS_LINUX || !IS_TAURI
+    console.log(IS_TAURI)
     const shouldHideAlpha = IS_LINUX || !IS_TAURI
     let alphaStyleElement = document.getElementById('alpha-slider-style')
 
