@@ -66,6 +66,7 @@ export class ExtensionManager {
       'conversational',
       () => import('../extensions/conversational-extension/src/index'),
     ],
+    ['assistant', () => import('../extensions/assistant-extension/src/index')],
   ])
 
   /**
