@@ -61,6 +61,13 @@ export class ExtensionManager {
   // Registered inference engines
   private engines = new Map<string, AIEngine>()
 
+  private static extensionRegistry = new Map<string, () => Promise<any>>([
+    [
+      'conversational',
+      () => import('../extensions/conversational-extension/src/index'),
+    ],
+  ])
+
   /**
    * Registers an extension.
    * @param extension - The extension to register.
@@ -145,7 +152,23 @@ export class ExtensionManager {
    * @returns An array of extensions.
    */
   async getActive(): Promise<Extension[]> {
-    const res = await invoke('get_active_extensions')
+    let res
+    if (IS_TAURI) {
+      res = await invoke('get_active_extensions')
+    } else {
+      res = Array.from(ExtensionManager.extensionRegistry.entries()).map(
+        ([name, _loader]) => {
+          return new Extension(
+            `browser://${name}`,
+            name,
+            name,
+            true,
+            `Browser ${name} extension`,
+            '1.0.0'
+          )
+        }
+      )
+    }
     if (!res || !Array.isArray(res)) return []
 
     const extensions: Extension[] = res.map((ext: ExtensionManifest) => {
@@ -158,6 +181,7 @@ export class ExtensionManager {
         ext.version
       )
     })
+
     return extensions
   }
 
@@ -168,10 +192,33 @@ export class ExtensionManager {
    */
   async activateExtension(extension: Extension): Promise<void> {
     // Import class
-    const extensionUrl = extension.url
-    await import(/* @vite-ignore */ convertFileSrc(extensionUrl)).then(
-      (extensionClass) => {
-        // Register class if it has a default export
+    if (IS_TAURI) {
+      const extensionUrl = extension.url
+      await import(/* @vite-ignore */ convertFileSrc(extensionUrl)).then(
+        (extensionClass) => {
+          // Register class if it has a default export
+          if (
+            typeof extensionClass.default === 'function' &&
+            extensionClass.default.prototype
+          ) {
+            this.register(
+              extension.name,
+              new extensionClass.default(
+                extension.url,
+                extension.name,
+                extension.productName,
+                extension.active,
+                extension.description,
+                extension.version
+              )
+            )
+          }
+        }
+      )
+    } else {
+      const loader = ExtensionManager.extensionRegistry.get(extension.name)
+      if (loader) {
+        const extensionClass = await loader()
         if (
           typeof extensionClass.default === 'function' &&
           extensionClass.default.prototype
@@ -189,7 +236,7 @@ export class ExtensionManager {
           )
         }
       }
-    )
+    }
   }
 
   /**
