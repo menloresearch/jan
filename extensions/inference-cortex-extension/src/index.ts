@@ -13,33 +13,34 @@ import {
   extractModelLoadParams,
   events,
   ModelEvent,
-} from "@janhq/core";
-import ky, { KyInstance } from "ky";
+} from '@janhq/core'
+import ky, { KyInstance } from 'ky'
 
 /**
  * Event subscription types of Downloader
  */
 enum DownloadTypes {
-  DownloadUpdated = "onFileDownloadUpdate",
-  DownloadError = "onFileDownloadError",
-  DownloadSuccess = "onFileDownloadSuccess",
-  DownloadStopped = "onFileDownloadStopped",
-  DownloadStarted = "onFileDownloadStarted",
+  DownloadUpdated = 'onFileDownloadUpdate',
+  DownloadError = 'onFileDownloadError',
+  DownloadSuccess = 'onFileDownloadSuccess',
+  DownloadStopped = 'onFileDownloadStopped',
+  DownloadStarted = 'onFileDownloadStarted',
 }
 
 enum Settings {
-  n_parallel = "n_parallel",
-  cont_batching = "cont_batching",
-  caching_enabled = "caching_enabled",
-  flash_attn = "flash_attn",
-  cache_type = "cache_type",
-  use_mmap = "use_mmap",
-  cpu_threads = "cpu_threads",
-  huggingfaceToken = "hugging-face-access-token",
-  auto_unload_models = "auto_unload_models",
+  n_parallel = 'n_parallel',
+  cont_batching = 'cont_batching',
+  caching_enabled = 'caching_enabled',
+  flash_attn = 'flash_attn',
+  cache_type = 'cache_type',
+  use_mmap = 'use_mmap',
+  cpu_threads = 'cpu_threads',
+  huggingfaceToken = 'hugging-face-access-token',
+  auto_unload_models = 'auto_unload_models',
+  context_shift = 'context_shift',
 }
 
-type LoadedModelResponse = { data: { engine: string; id: string }[] };
+type LoadedModelResponse = { data: { engine: string; id: string }[] }
 
 /**
  * A class that implements the InferenceExtension interface from the @janhq/core package.
@@ -47,11 +48,11 @@ type LoadedModelResponse = { data: { engine: string; id: string }[] };
  * It also subscribes to events emitted by the @janhq/core package and handles new message requests.
  */
 export default class JanInferenceCortexExtension extends LocalOAIEngine {
-  nodeModule: string = "node";
+  nodeModule: string = 'node'
 
-  provider: string = "cortex";
+  provider: string = 'cortex'
 
-  shouldReconnect = true;
+  shouldReconnect = true
 
   /** Default Engine model load settings */
   n_parallel?: number
@@ -62,26 +63,28 @@ export default class JanInferenceCortexExtension extends LocalOAIEngine {
   cache_type: string = 'q8'
   cpu_threads?: number
   auto_unload_models: boolean = true
+  reasoning_budget = -1 // Default reasoning budget in seconds
+  context_shift = true
   /**
    * The URL for making inference requests.
    */
-  inferenceUrl = `${CORTEX_API_URL}/v1/chat/completions`;
+  inferenceUrl = `${CORTEX_API_URL}/v1/chat/completions`
 
   /**
    * Socket instance of events subscription
    */
-  socket?: WebSocket = undefined;
+  socket?: WebSocket = undefined
 
-  abortControllers = new Map<string, AbortController>();
+  abortControllers = new Map<string, AbortController>()
 
-  api?: KyInstance;
+  api?: KyInstance
   /**
    * Get the API instance
    * @returns
    */
   async apiInstance(): Promise<KyInstance> {
-    if (this.api) return this.api;
-    const apiKey = await window.core?.api.appToken();
+    if (this.api) return this.api
+    const apiKey = await window.core?.api.appToken()
     this.api = ky.extend({
       prefixUrl: CORTEX_API_URL,
       headers: apiKey
@@ -90,8 +93,8 @@ export default class JanInferenceCortexExtension extends LocalOAIEngine {
           }
         : {},
       retry: 10,
-    });
-    return this.api;
+    })
+    return this.api
   }
 
   /**
@@ -101,35 +104,22 @@ export default class JanInferenceCortexExtension extends LocalOAIEngine {
   headers(): Promise<HeadersInit> {
     return window.core?.api.appToken().then((token: string) => ({
       Authorization: `Bearer ${token}`,
-    }));
+    }))
   }
 
   /**
    * Called when the extension is loaded.
    */
   async onLoad() {
-    super.onLoad();
+    super.onLoad()
 
     // Register Settings
-    this.registerSettings(SETTINGS);
+    this.registerSettings(SETTINGS)
 
-    const numParallel = await this.getSetting<string>(Settings.n_parallel, "");
+    const numParallel = await this.getSetting<string>(Settings.n_parallel, '')
     if (numParallel.length > 0 && parseInt(numParallel) > 0) {
-      this.n_parallel = parseInt(numParallel);
+      this.n_parallel = parseInt(numParallel)
     }
-<<<<<<< HEAD
-    this.cont_batching = await this.getSetting<boolean>(
-      Settings.cont_batching,
-      true,
-    );
-    this.caching_enabled = await this.getSetting<boolean>(
-      Settings.caching_enabled,
-      true,
-    );
-    this.flash_attn = await this.getSetting<boolean>(Settings.flash_attn, true);
-    this.use_mmap = await this.getSetting<boolean>(Settings.use_mmap, true);
-    this.cache_type = await this.getSetting<string>(Settings.cache_type, "f16");
-=======
     if (this.n_parallel && this.n_parallel > 1)
       this.cont_batching = await this.getSetting<boolean>(
         Settings.cont_batching,
@@ -140,43 +130,40 @@ export default class JanInferenceCortexExtension extends LocalOAIEngine {
       true
     )
     this.flash_attn = await this.getSetting<boolean>(Settings.flash_attn, true)
+    this.context_shift = await this.getSetting<boolean>(
+      Settings.context_shift,
+      true
+    )
     this.use_mmap = await this.getSetting<boolean>(Settings.use_mmap, true)
     if (this.caching_enabled)
       this.cache_type = await this.getSetting<string>(Settings.cache_type, 'q8')
->>>>>>> dev
     this.auto_unload_models = await this.getSetting<boolean>(
       Settings.auto_unload_models,
-      true,
-    );
+      true
+    )
     const threads_number = Number(
-<<<<<<< HEAD
-      await this.getSetting<string>(Settings.cpu_threads, ""),
-    );
-    if (!Number.isNaN(threads_number)) this.cpu_threads = threads_number;
-=======
       await this.getSetting<string>(Settings.cpu_threads, '')
     )
 
     if (!Number.isNaN(threads_number)) this.cpu_threads = threads_number
->>>>>>> dev
 
     const huggingfaceToken = await this.getSetting<string>(
       Settings.huggingfaceToken,
-      "",
-    );
+      ''
+    )
     if (huggingfaceToken) {
-      this.updateCortexConfig({ huggingface_token: huggingfaceToken });
+      this.updateCortexConfig({ huggingface_token: huggingfaceToken })
     }
-    this.subscribeToEvents();
+    this.subscribeToEvents()
 
-    window.addEventListener("beforeunload", () => {
-      this.clean();
-    });
+    window.addEventListener('beforeunload', () => {
+      this.clean()
+    })
 
     // Migrate configs
-    if (!localStorage.getItem("cortex_migration_completed")) {
-      const config = await this.getCortexConfig();
-      console.log("Start cortex.cpp migration", config);
+    if (!localStorage.getItem('cortex_migration_completed')) {
+      const config = await this.getCortexConfig()
+      console.log('Start cortex.cpp migration', config)
       if (config && config.huggingface_token) {
         this.updateSettings([
           {
@@ -185,20 +172,20 @@ export default class JanInferenceCortexExtension extends LocalOAIEngine {
               value: config.huggingface_token,
             },
           },
-        ]);
+        ])
         this.updateCortexConfig({
           huggingface_token: config.huggingface_token,
-        });
-        localStorage.setItem("cortex_migration_completed", "true");
+        })
+        localStorage.setItem('cortex_migration_completed', 'true')
       }
     }
   }
 
   async onUnload() {
-    console.log("Clean up cortex.cpp services");
-    this.shouldReconnect = false;
-    this.clean();
-    super.onUnload();
+    console.log('Clean up cortex.cpp services')
+    this.shouldReconnect = false
+    this.clean()
+    super.onUnload()
   }
 
   /**
@@ -207,74 +194,74 @@ export default class JanInferenceCortexExtension extends LocalOAIEngine {
    * @param value
    */
   onSettingUpdate<T>(key: string, value: T): void {
-    if (key === Settings.n_parallel && typeof value === "string") {
+    if (key === Settings.n_parallel && typeof value === 'string') {
       if (value.length > 0 && parseInt(value) > 0) {
-        this.n_parallel = parseInt(value);
+        this.n_parallel = parseInt(value)
       }
-    } else if (key === Settings.cont_batching && typeof value === "boolean") {
-      this.cont_batching = value as boolean;
-    } else if (key === Settings.caching_enabled && typeof value === "boolean") {
-      this.caching_enabled = value as boolean;
-    } else if (key === Settings.flash_attn && typeof value === "boolean") {
-      this.flash_attn = value as boolean;
-    } else if (key === Settings.cache_type && typeof value === "string") {
-      this.cache_type = value as string;
-    } else if (key === Settings.use_mmap && typeof value === "boolean") {
-      this.use_mmap = value as boolean;
-    } else if (key === Settings.cpu_threads && typeof value === "string") {
-      const threads_number = Number(value);
-      if (!Number.isNaN(threads_number)) this.cpu_threads = threads_number;
+    } else if (key === Settings.cont_batching && typeof value === 'boolean') {
+      this.cont_batching = value as boolean
+    } else if (key === Settings.caching_enabled && typeof value === 'boolean') {
+      this.caching_enabled = value as boolean
+    } else if (key === Settings.flash_attn && typeof value === 'boolean') {
+      this.flash_attn = value as boolean
+    } else if (key === Settings.cache_type && typeof value === 'string') {
+      this.cache_type = value as string
+    } else if (key === Settings.use_mmap && typeof value === 'boolean') {
+      this.use_mmap = value as boolean
+    } else if (key === Settings.cpu_threads && typeof value === 'string') {
+      const threads_number = Number(value)
+      if (!Number.isNaN(threads_number)) this.cpu_threads = threads_number
     } else if (key === Settings.huggingfaceToken) {
-      this.updateCortexConfig({ huggingface_token: value });
+      this.updateCortexConfig({ huggingface_token: value })
     } else if (key === Settings.auto_unload_models) {
-      this.auto_unload_models = value as boolean;
+      this.auto_unload_models = value as boolean
+    } else if (key === Settings.context_shift && typeof value === 'boolean') {
+      this.context_shift = value
     }
   }
 
   override async loadModel(
     model: Partial<Model> & {
-      id: string;
-      settings?: object;
-      file_path?: string;
+      id: string
+      settings?: object
+      file_path?: string
     },
-    abortController: AbortController,
+    abortController: AbortController
   ): Promise<void> {
     // Cortex will handle these settings
-    const { llama_model_path, mmproj, ...settings } = model.settings ?? {};
-    model.settings = settings;
+    const { llama_model_path, mmproj, ...settings } = model.settings ?? {}
+    model.settings = settings
 
-    const controller = abortController ?? new AbortController();
-    const { signal } = controller;
+    const controller = abortController ?? new AbortController()
+    const { signal } = controller
 
-    this.abortControllers.set(model.id, controller);
+    this.abortControllers.set(model.id, controller)
 
-    const loadedModels = await this.activeModels();
-
-    console.log("Loaded models:", loadedModels);
+    const loadedModels = await this.activeModels()
 
     // This is to avoid loading the same model multiple times
     if (loadedModels.some((e: { id: string }) => e.id === model.id)) {
-      console.log(`Model ${model.id} already loaded`);
-      return;
+      console.log(`Model ${model.id} already loaded`)
+      return
     }
     if (this.auto_unload_models) {
       // Unload the last used model if it is not the same as the current one
       for (const lastUsedModel of loadedModels) {
         if (lastUsedModel.id !== model.id) {
-          console.log(`Unloading last used model: ${lastUsedModel.id}`);
-          await this.unloadModel(lastUsedModel as Model);
+          console.log(`Unloading last used model: ${lastUsedModel.id}`)
+          await this.unloadModel(lastUsedModel as Model)
         }
       }
     }
     return await this.apiInstance().then((api) =>
       api
-        .post("v1/models/start", {
+        .post('v1/models/start', {
           json: {
             ...extractModelLoadParams(model.settings),
             model: model.id,
             engine:
-              model.engine === "nitro" // Legacy model cache
-                ? "llama-cpp"
+              model.engine === 'nitro' // Legacy model cache
+                ? 'llama-cpp'
                 : model.engine,
             ...(this.n_parallel ? { n_parallel: this.n_parallel } : {}),
             ...(this.use_mmap ? { use_mmap: true } : {}),
@@ -289,23 +276,29 @@ export default class JanInferenceCortexExtension extends LocalOAIEngine {
             ...(this.cont_batching && this.n_parallel && this.n_parallel > 1
               ? { cont_batching: this.cont_batching }
               : {}),
+            ...(model.id.toLowerCase().includes('jan-nano')
+              ? { reasoning_budget: 0 }
+              : { reasoning_budget: this.reasoning_budget }),
+            ...(this.context_shift === false
+              ? { 'no-context-shift': true }
+              : {}),
           },
           timeout: false,
           signal,
         })
         .json()
         .catch(async (e) => {
-          throw (await e.response?.json()) ?? e;
+          throw (await e.response?.json()) ?? e
         })
         .finally(() => this.abortControllers.delete(model.id))
-        .then(),
-    );
+        .then()
+    )
   }
 
   override async unloadModel(model: Model): Promise<void> {
     return this.apiInstance().then((api) =>
       api
-        .post("v1/models/stop", {
+        .post('v1/models/stop', {
           json: { model: model.id },
           retry: {
             limit: 0,
@@ -313,24 +306,24 @@ export default class JanInferenceCortexExtension extends LocalOAIEngine {
         })
         .json()
         .finally(() => {
-          this.abortControllers.get(model.id)?.abort();
+          this.abortControllers.get(model.id)?.abort()
         })
-        .then(),
-    );
+        .then()
+    )
   }
 
   async activeModels(): Promise<(object & { id: string })[]> {
     return await this.apiInstance()
       .then((e) =>
-        e.get("inferences/server/models", {
+        e.get('inferences/server/models', {
           retry: {
             limit: 0, // Do not retry
           },
-        }),
+        })
       )
       .then((e) => e.json())
       .then((e) => (e as LoadedModelResponse).data ?? [])
-      .catch(() => []);
+      .catch(() => [])
   }
 
   /**
@@ -340,16 +333,16 @@ export default class JanInferenceCortexExtension extends LocalOAIEngine {
   private async clean(): Promise<any> {
     return this.apiInstance()
       .then((api) =>
-        api.delete("processmanager/destroy", {
+        api.delete('processmanager/destroy', {
           timeout: 2000, // maximum 2 seconds
           retry: {
             limit: 0,
           },
-        }),
+        })
       )
       .catch(() => {
         // Do nothing
-      });
+      })
   }
 
   /**
@@ -357,11 +350,11 @@ export default class JanInferenceCortexExtension extends LocalOAIEngine {
    * @param body
    */
   private async updateCortexConfig(body: {
-    [key: string]: any;
+    [key: string]: any
   }): Promise<void> {
     return this.apiInstance()
-      .then((api) => api.patch("v1/configs", { json: body }).then(() => {}))
-      .catch((e) => console.debug(e));
+      .then((api) => api.patch('v1/configs', { json: body }).then(() => {}))
+      .catch((e) => console.debug(e))
   }
 
   /**
@@ -370,28 +363,28 @@ export default class JanInferenceCortexExtension extends LocalOAIEngine {
    */
   private async getCortexConfig(): Promise<any> {
     return this.apiInstance()
-      .then((api) => api.get("v1/configs").json())
-      .catch((e) => console.debug(e));
+      .then((api) => api.get('v1/configs').json())
+      .catch((e) => console.debug(e))
   }
 
   /**
    * Subscribe to cortex.cpp websocket events
    */
   private subscribeToEvents() {
-    this.socket = new WebSocket(`${CORTEX_SOCKET_URL}/events`);
+    this.socket = new WebSocket(`${CORTEX_SOCKET_URL}/events`)
 
-    this.socket.addEventListener("message", (event) => {
-      const data = JSON.parse(event.data);
+    this.socket.addEventListener('message', (event) => {
+      const data = JSON.parse(event.data)
 
       const transferred = data.task.items.reduce(
         (acc: number, cur: any) => acc + cur.downloadedBytes,
-        0,
-      );
+        0
+      )
       const total = data.task.items.reduce(
         (acc: number, cur: any) => acc + cur.bytes,
-        0,
-      );
-      const percent = total > 0 ? transferred / total : 0;
+        0
+      )
+      const percent = total > 0 ? transferred / total : 0
 
       events.emit(DownloadTypes[data.type as keyof typeof DownloadTypes], {
         modelId: data.task.id,
@@ -401,14 +394,14 @@ export default class JanInferenceCortexExtension extends LocalOAIEngine {
           total: total,
         },
         downloadType: data.task.type,
-      });
+      })
 
-      if (data.task.type === "Engine") {
+      if (data.task.type === 'Engine') {
         events.emit(EngineEvent.OnEngineUpdate, {
           type: DownloadTypes[data.type as keyof typeof DownloadTypes],
           percent: percent,
           id: data.task.id,
-        });
+        })
       } else {
         if (data.type === DownloadTypes.DownloadSuccess) {
           // Delay for the state update from cortex.cpp
@@ -416,23 +409,23 @@ export default class JanInferenceCortexExtension extends LocalOAIEngine {
           setTimeout(() => {
             events.emit(ModelEvent.OnModelsUpdate, {
               fetch: true,
-            });
-          }, 500);
+            })
+          }, 500)
         }
       }
-    });
+    })
 
     /**
      * This is to handle the server segfault issue
      */
     this.socket.onclose = (event) => {
       // Notify app to update model running state
-      events.emit(ModelEvent.OnModelStopped, {});
+      events.emit(ModelEvent.OnModelStopped, {})
 
       // Reconnect to the /events websocket
       if (this.shouldReconnect) {
-        setTimeout(() => this.subscribeToEvents(), 1000);
+        setTimeout(() => this.subscribeToEvents(), 1000)
       }
-    };
+    }
   }
 }

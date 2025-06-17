@@ -35,6 +35,7 @@ import { ModelLoader } from '@/containers/loaders/ModelLoader'
 import DropdownToolsAvailable from '@/containers/DropdownToolsAvailable'
 // import { getConnectedServers } from '@/services/mcp'
 import { stopAllModels } from '@/services/models'
+import { useOutOfContextPromiseModal } from './dialogs/OutOfContextDialog'
 
 type ChatInputProps = {
   className?: string
@@ -42,11 +43,7 @@ type ChatInputProps = {
   initialMessage?: boolean
 }
 
-const ChatInput = ({
-  model,
-  className,
-  initialMessage,
-}: ChatInputProps) => {
+const ChatInput = ({ model, className, initialMessage }: ChatInputProps) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const [isFocused, setIsFocused] = useState(false)
   const [rows, setRows] = useState(1)
@@ -56,7 +53,8 @@ const ChatInput = ({
   const { currentThreadId } = useThreads()
   const { t } = useTranslation()
   const { spellCheckChatInput } = useGeneralSetting()
-  // const { tokenSpeed } = useAppState()
+  const { showModal, PromiseModal: OutOfContextModal } =
+    useOutOfContextPromiseModal()
   const maxRows = 10
 
   const { selectedModel } = useModelProvider()
@@ -108,7 +106,7 @@ const ChatInput = ({
       return
     }
     setMessage('')
-    sendMessage(prompt)
+    sendMessage(prompt, showModal)
   }
 
   useEffect(() => {
@@ -554,44 +552,36 @@ const ChatInput = ({
                   </TooltipProvider>
                 )}
               </div>
+            </div >
 
-              {/* {showSpeedToken && (
-                <div className="flex items-center gap-1 text-main-view-fg/60 text-xs">
-                  <IconBrandSpeedtest size={18} />
-                  <span>
-                    {Math.round(tokenSpeed?.tokenSpeed ?? 0)} tokens/sec
-                  </span>
-                </div>
-              )} */}
-            </div>
-
-            {currentThreadStreamingContent ? (
-              <Button
-                variant="destructive"
-                size="icon"
-                onClick={() =>
-                  stopStreaming(currentThreadId ?? currentThreadStreamingContent.thread_id)
-                }
-              >
-                <IconPlayerStopFilled />
-              </Button>
-            ) : (
-              <Button
-                variant={!prompt.trim() ? null : 'default'}
-                size="icon"
-                disabled={!prompt.trim()}
-                onClick={() => handleSendMesage(prompt)}
-              >
-                {currentThreadStreamingContent ? (
-                  <span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
-                ) : (
-                  <ArrowRight className="text-primary-fg" />
-                )}
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
+            {
+              currentThreadStreamingContent ? (
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  onClick={() =>
+                    stopStreaming(currentThreadId ?? currentThreadStreamingContent.thread_id)
+                  }
+                >
+                  <IconPlayerStopFilled />
+                </Button >
+              ) : (
+                <Button
+                  variant={!prompt.trim() ? null : 'default'}
+                  size="icon"
+                  disabled={!prompt.trim()}
+                  onClick={() => handleSendMesage(prompt)}
+                >
+                  {currentThreadStreamingContent ? (
+                    <span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
+                  ) : (
+                    <ArrowRight className="text-primary-fg" />
+                  )}
+                </Button>
+              )}
+          </div >
+        </div >
+      </div >
       {message && (
         <div className="bg-main-view-fg/2 -mt-0.5 mx-2 pb-2 px-3 pt-1.5 rounded-b-lg text-xs text-destructive transition-all duration-200 ease-in-out">
           <div className="flex items-center gap-1 justify-between">
@@ -609,7 +599,8 @@ const ChatInput = ({
           </div>
         </div>
       )}
-    </div>
+      <OutOfContextModal />
+    </div >
   )
 }
 

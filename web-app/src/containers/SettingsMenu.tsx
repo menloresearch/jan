@@ -3,6 +3,7 @@ import { Link } from '@tanstack/react-router'
 import { route } from '@/constants/routes'
 import { useTranslation } from 'react-i18next'
 // import { useModelProvider } from '@/hooks/useModelProvider'
+// import { isProd } from '@/lib/version'
 
 const menuSettings = [
   {
@@ -22,8 +23,29 @@ const menuSettings = [
     route: route.settings.shortcuts,
   },
   // {
-  //   title: 'MCP Servers',
-  //   route: route.settings.mcp_servers,
+  //   title: 'Hardware',
+  //   route: route.settings.hardware,
+  // },
+  // Only show MCP Servers in non-production environment
+  // ...(!isProd
+  //   ? [
+  //       {
+  //         title: 'MCP Servers',
+  //         route: route.settings.mcp_servers,
+  //       },
+  //     ]
+  //   : []),
+  // {
+  //   title: 'Local API Server',
+  //   route: route.settings.local_api_server,
+  // },
+  // {
+  //   title: 'HTTPS Proxy',
+  //   route: route.settings.https_proxy,
+  // },
+  // {
+  //   title: 'Extensions',
+  //   route: route.settings.extensions,
   // },
 ]
 

@@ -1,12 +1,12 @@
-import { useCallback, useMemo } from "react";
-import { usePrompt } from "./usePrompt";
-import { useModelProvider } from "./useModelProvider";
-import { useThreads } from "./useThreads";
-import { useAppState } from "./useAppState";
-import { useMessages } from "./useMessages";
-import { useRouter } from "@tanstack/react-router";
-import { defaultModel } from "@/lib/models";
-import { route } from "@/constants/routes";
+import { useCallback, useMemo } from 'react'
+import { usePrompt } from './usePrompt'
+import { useModelProvider } from './useModelProvider'
+import { useThreads } from './useThreads'
+import { useAppState } from './useAppState'
+import { useMessages } from './useMessages'
+import { useRouter } from '@tanstack/react-router'
+import { defaultModel } from '@/lib/models'
+import { route } from '@/constants/routes'
 import {
   emptyThreadContent,
   extractToolCall,
@@ -15,22 +15,24 @@ import {
   newUserThreadContent,
   postMessageProcessing,
   sendCompletion,
-} from "@/lib/completion";
-import { CompletionMessagesBuilder } from "@/lib/messages";
-import { ChatCompletionMessageToolCall } from "openai/resources";
-import { useAssistant } from "./useAssistant";
-import { toast } from "sonner";
+} from '@/lib/completion'
+import { CompletionMessagesBuilder } from '@/lib/messages'
+import { ChatCompletionMessageToolCall } from 'openai/resources'
+import { useAssistant } from './useAssistant'
+import { toast } from 'sonner'
 // import { getTools } from '@/services/mcp'
-// import { MCPTool } from "@/types/completion";
-// import { webEventSystem } from "@/lib/storage";
-// import { SystemEvent } from "@/types/events";
-import { stopModel, startModel } from "@/services/models";
+// import { MCPTool } from '@/types/completion'
+// import { listen } from '@tauri-apps/api/event'
+// import { SystemEvent } from '@/types/events'
+import { stopModel, startModel, stopAllModels } from '@/services/models'
 
-import { useToolApproval } from "@/hooks/useToolApproval";
-import { useToolAvailable } from "@/hooks/useToolAvailable";
+import { useToolApproval } from '@/hooks/useToolApproval'
+import { useToolAvailable } from '@/hooks/useToolAvailable'
+import { OUT_OF_CONTEXT_SIZE } from '@/utils/error'
+import { updateSettings } from '@/services/providers'
 
 export const useChat = () => {
-  const { prompt, setPrompt } = usePrompt();
+  const { prompt, setPrompt } = usePrompt()
   const {
     tools,
     updateStreamingTokenSpeed,
@@ -41,31 +43,31 @@ export const useChat = () => {
     updateStreamingContentForThread,
     updateLoadingModel,
     setAbortController,
-  } = useAppState();
-  const { currentAssistant } = useAssistant();
+  } = useAppState()
+  const { currentAssistant } = useAssistant()
+  const { updateProvider } = useModelProvider()
 
-  const { approvedTools } = // showApprovalModal } = // allowAllMCPPermissions } =
-    useToolApproval();
-  const { getDisabledToolsForThread } = useToolAvailable();
+  const { approvedTools } = useToolApproval() // showApprovalModal } = // allowAllMCPPermissions } =
+  const { getDisabledToolsForThread } = useToolAvailable()
 
   const { getProviderByName, selectedModel, selectedProvider } =
-    useModelProvider();
+    useModelProvider()
 
   const {
     getCurrentThread: retrieveThread,
     createThread,
     updateThreadTimestamp,
-  } = useThreads();
-  const { getMessages, addMessage } = useMessages();
-  const router = useRouter();
+  } = useThreads()
+  const { getMessages, addMessage } = useMessages()
+  const router = useRouter()
 
   const provider = useMemo(() => {
-    return getProviderByName(selectedProvider);
-  }, [selectedProvider, getProviderByName]);
+    return getProviderByName(selectedProvider)
+  }, [selectedProvider, getProviderByName])
 
   const currentProviderId = useMemo(() => {
-    return provider?.provider || selectedProvider;
-  }, [provider, selectedProvider]);
+    return provider?.provider || selectedProvider
+  }, [provider, selectedProvider])
 
   // useEffect(() => {
   //   function setTools() {
@@ -85,7 +87,7 @@ export const useChat = () => {
   // }, [updateTools])
 
   const getCurrentThread = useCallback(async () => {
-    let currentThread = retrieveThread();
+    let currentThread = retrieveThread()
     if (!currentThread) {
       currentThread = await createThread(
         {
@@ -93,14 +95,14 @@ export const useChat = () => {
           provider: selectedProvider,
         },
         prompt,
-        currentAssistant,
-      );
+        currentAssistant
+      )
       router.navigate({
         to: route.threadsDetail,
         params: { threadId: currentThread.id },
-      });
+      })
     }
-    return currentThread;
+    return currentThread
   }, [
     createThread,
     prompt,
@@ -109,55 +111,180 @@ export const useChat = () => {
     selectedModel?.id,
     selectedProvider,
     currentAssistant,
-  ]);
+  ])
+
+  const restartModel = useCallback(
+    async (
+      provider: ProviderObject,
+      modelId: string,
+      abortController: AbortController
+    ) => {
+      await stopAllModels()
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+      updateLoadingModel(true)
+      await startModel(provider, modelId, abortController).catch(console.error)
+      updateLoadingModel(false)
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+    },
+    [updateLoadingModel]
+  )
+
+  const increaseModelContextSize = useCallback(
+    async (
+      modelId: string,
+      provider: ProviderObject,
+      controller: AbortController
+    ) => {
+      /**
+       * Should increase the context size of the model by 2x
+       * If the context size is not set or too low, it defaults to 8192.
+       */
+      const model = provider.models.find((m) => m.id === modelId)
+      if (!model) return undefined
+      const ctxSize = Math.max(
+        model.settings?.ctx_len?.controller_props.value
+          ? typeof model.settings.ctx_len.controller_props.value === 'string'
+            ? parseInt(model.settings.ctx_len.controller_props.value as string)
+            : (model.settings.ctx_len.controller_props.value as number)
+          : 16384,
+        16384
+      )
+      const updatedModel = {
+        ...model,
+        settings: {
+          ...model.settings,
+          ctx_len: {
+            ...(model.settings?.ctx_len != null ? model.settings?.ctx_len : {}),
+            controller_props: {
+              ...(model.settings?.ctx_len?.controller_props ?? {}),
+              value: ctxSize * 2,
+            },
+          },
+        },
+      }
+
+      // Find the model index in the provider's models array
+      const modelIndex = provider.models.findIndex((m) => m.id === model.id)
+
+      if (modelIndex !== -1) {
+        // Create a copy of the provider's models array
+        const updatedModels = [...provider.models]
+
+        // Update the specific model in the array
+        updatedModels[modelIndex] = updatedModel as Model
+
+        // Update the provider with the new models array
+        updateProvider(provider.provider, {
+          models: updatedModels,
+        })
+      }
+      const updatedProvider = getProviderByName(provider.provider)
+      if (updatedProvider)
+        await restartModel(updatedProvider, model.id, controller)
+
+      console.log(
+        updatedProvider?.models.find((e) => e.id === model.id)?.settings
+          ?.ctx_len?.controller_props.value
+      )
+      return updatedProvider
+    },
+    [getProviderByName, restartModel, updateProvider]
+  )
+  const toggleOnContextShifting = useCallback(
+    async (
+      modelId: string,
+      provider: ProviderObject,
+      controller: AbortController
+    ) => {
+      const providerName = provider.provider
+      const newSettings = [...provider.settings]
+      const settingKey = 'context_shift'
+      // Handle different value types by forcing the type
+      // Use type assertion to bypass type checking
+      const settingIndex = provider.settings.findIndex(
+        (s) => s.key === settingKey
+      )
+      ;(
+        newSettings[settingIndex].controller_props as {
+          value: string | boolean | number
+        }
+      ).value = true
+
+      // Create update object with updated settings
+      const updateObj: Partial<ModelProvider> = {
+        settings: newSettings,
+      }
+
+      await updateSettings(providerName, updateObj.settings ?? [])
+      updateProvider(providerName, {
+        ...provider,
+        ...updateObj,
+      })
+      const updatedProvider = getProviderByName(providerName)
+      if (updatedProvider)
+        await restartModel(updatedProvider, modelId, controller)
+      return updatedProvider
+    },
+    [updateProvider, getProviderByName, restartModel]
+  )
 
   const sendMessage = useCallback(
-    async (message: string) => {
-      const activeThread = await getCurrentThread();
+    async (
+      message: string,
+      showModal?: () => Promise<unknown>,
+      troubleshooting = true
+    ) => {
+      const activeThread = await getCurrentThread()
 
-      resetTokenSpeed();
-      const activeProvider = currentProviderId
+      resetTokenSpeed()
+      let activeProvider = currentProviderId
         ? getProviderByName(currentProviderId)
-        : provider;
-      if (!activeThread || !activeProvider) return;
-      const messages = getMessages(activeThread.id);
-      const abortController = new AbortController();
-      setAbortController(activeThread.id, abortController);
-      updateStreamingContentForThread(activeThread.id, emptyThreadContent);
-      addMessage(newUserThreadContent(activeThread.id, message));
-      updateThreadTimestamp(activeThread.id);
-      setPrompt("");
+        : provider
+      if (!activeThread || !activeProvider) return
+      const messages = getMessages(activeThread.id)
+      const abortController = new AbortController()
+      setAbortController(activeThread.id, abortController)
+      updateStreamingContent(emptyThreadContent)
+      // Do not add new message on retry
+      if (troubleshooting)
+        addMessage(newUserThreadContent(activeThread.id, message))
+      updateThreadTimestamp(activeThread.id)
+      setPrompt('')
       try {
         if (selectedModel?.id) {
-          updateLoadingModel(true);
+          updateLoadingModel(true)
           await startModel(
             activeProvider,
             selectedModel.id,
-            abortController,
-          ).catch(console.error);
-          updateLoadingModel(false);
+            abortController
+          ).catch(console.error)
+          updateLoadingModel(false)
         }
 
         const builder = new CompletionMessagesBuilder(
           messages,
-          currentAssistant?.instructions,
-        );
+          currentAssistant?.instructions
+        )
 
-        builder.addUserMessage(message);
+        builder.addUserMessage(message)
 
-        let isCompleted = false;
+        let isCompleted = false
 
         // Filter tools based on model capabilities and available tools for this thread
-        let availableTools = selectedModel?.capabilities?.includes("tools")
+        let availableTools = selectedModel?.capabilities?.includes('tools')
           ? tools.filter((tool) => {
-              const disabledTools = getDisabledToolsForThread(activeThread.id);
-              return !disabledTools.includes(tool.name);
+              const disabledTools = getDisabledToolsForThread(activeThread.id)
+              return !disabledTools.includes(tool.name)
             })
-          : [];
+          : []
 
         // TODO: Later replaced by Agent setup?
-        const followUpWithToolUse = true;
-        while (!isCompleted && !abortController.signal.aborted) {
+        const followUpWithToolUse = true
+        while (
+          !isCompleted &&
+          !abortController.signal.aborted &&
+          activeProvider
+        ) {
           const completion = await sendCompletion(
             activeThread,
             activeProvider,
@@ -165,68 +292,101 @@ export const useChat = () => {
             abortController,
             availableTools,
             currentAssistant.parameters?.stream === false ? false : true,
-            currentAssistant.parameters as unknown as Record<string, object>,
+            currentAssistant.parameters as unknown as Record<string, object>
             // TODO: replace it with according provider setting later on
             // selectedProvider === 'llama.cpp' && availableTools.length > 0
             //   ? false
             //   : true
-          );
+          )
 
-          if (!completion) throw new Error("No completion received");
-          let accumulatedText = "";
-          const currentCall: ChatCompletionMessageToolCall | null = null;
-          const toolCalls: ChatCompletionMessageToolCall[] = [];
-          if (isCompletionResponse(completion)) {
-            accumulatedText = completion.choices[0]?.message?.content || "";
-            if (completion.choices[0]?.message?.tool_calls) {
-              toolCalls.push(...completion.choices[0].message.tool_calls);
-            }
-          } else {
-            for await (const part of completion) {
-              const delta = part.choices[0]?.delta?.content || "";
-
-              if (part.choices[0]?.delta?.tool_calls) {
-                const calls = extractToolCall(part, currentCall, toolCalls);
-                const currentContent = newAssistantThreadContent(
-                  activeThread.id,
-                  accumulatedText,
-                  {
-                    tool_calls: calls.map((e) => ({
-                      ...e,
-                      state: "pending",
-                    })),
-                  },
-                );
-                updateStreamingContentForThread(activeThread.id, currentContent);
-                await new Promise((resolve) => setTimeout(resolve, 0));
+          if (!completion) throw new Error('No completion received')
+          let accumulatedText = ''
+          const currentCall: ChatCompletionMessageToolCall | null = null
+          const toolCalls: ChatCompletionMessageToolCall[] = []
+          try {
+            if (isCompletionResponse(completion)) {
+              accumulatedText = completion.choices[0]?.message?.content || ''
+              if (completion.choices[0]?.message?.tool_calls) {
+                toolCalls.push(...completion.choices[0].message.tool_calls)
               }
-              if (delta) {
-                accumulatedText += delta;
-                // Create a new object each time to avoid reference issues
-                // Use a timeout to prevent React from batching updates too quickly
-                const currentContent = newAssistantThreadContent(
-                  activeThread.id,
-                  accumulatedText,
-                  {
-                    tool_calls: toolCalls.map((e) => ({
-                      ...e,
-                      state: "pending",
-                    })),
-                  },
-                );
-                
-                updateStreamingContentForThread(activeThread.id, currentContent);
-                
-                // Update token speed - count tokens more accurately by counting words/spaces
-                // This gives a better approximation of actual tokens
-                const words = accumulatedText.trim().split(/\s+/).length;
-                const shouldUpdateTokenSpeed = words % 3 === 0 || delta.includes(' '); // Update every 3 words or on spaces
-                if (shouldUpdateTokenSpeed) {
-                  updateStreamingTokenSpeed(activeThread.id);
+            } else {
+              for await (const part of completion) {
+                // Error message
+                if (!part.choices) {
+                  throw new Error(
+                    'message' in part
+                      ? (part.message as string)
+                      : (JSON.stringify(part) ?? '')
+                  )
                 }
-                
-                await new Promise((resolve) => setTimeout(resolve, 0));
+                const delta = part.choices[0]?.delta?.content || ''
+
+                if (part.choices[0]?.delta?.tool_calls) {
+                  const calls = extractToolCall(part, currentCall, toolCalls)
+                  const currentContent = newAssistantThreadContent(
+                    activeThread.id,
+                    accumulatedText,
+                    {
+                      tool_calls: calls.map((e) => ({
+                        ...e,
+                        state: 'pending',
+                      })),
+                    }
+                  )
+                  updateStreamingContent(currentContent)
+                  await new Promise((resolve) => setTimeout(resolve, 0))
+                }
+                if (delta) {
+                  accumulatedText += delta
+                  // Create a new object each time to avoid reference issues
+                  // Use a timeout to prevent React from batching updates too quickly
+                  const currentContent = newAssistantThreadContent(
+                    activeThread.id,
+                    accumulatedText,
+                    {
+                      tool_calls: toolCalls.map((e) => ({
+                        ...e,
+                        state: 'pending',
+                      })),
+                    }
+                  )
+                  updateStreamingContent(currentContent)
+                  updateTokenSpeed(currentContent)
+                  await new Promise((resolve) => setTimeout(resolve, 0))
+                }
               }
+            }
+          } catch (error) {
+            const errorMessage =
+              error && typeof error === 'object' && 'message' in error
+                ? error.message
+                : error
+            if (
+              typeof errorMessage === 'string' &&
+              errorMessage.includes(OUT_OF_CONTEXT_SIZE) &&
+              selectedModel &&
+              troubleshooting
+            ) {
+              const method = await showModal?.()
+              if (method === 'ctx_len') {
+                /// Increase context size
+                activeProvider = await increaseModelContextSize(
+                  selectedModel.id,
+                  activeProvider,
+                  abortController
+                )
+                continue
+              } else if (method === 'context_shift' && selectedModel?.id) {
+                /// Enable context_shift
+                activeProvider = await toggleOnContextShifting(
+                  selectedModel?.id,
+                  activeProvider,
+                  abortController
+                )
+                continue
+              } else throw error
+            } else {
+              throw error
             }
           }
           // TODO: Remove this check when integrating new llama.cpp extension
@@ -234,33 +394,22 @@ export const useChat = () => {
             accumulatedText.length === 0 &&
             toolCalls.length === 0 &&
             activeThread.model?.id &&
-            activeProvider.provider === "llama.cpp"
+            activeProvider.provider === 'llama.cpp'
           ) {
-            await stopModel(activeThread.model.id, "cortex");
-            throw new Error("No response received from the model");
+            await stopModel(activeThread.model.id, 'cortex')
+            throw new Error('No response received from the model')
           }
 
           // Create a final content object for adding to the thread
           const finalContent = newAssistantThreadContent(
             activeThread.id,
             accumulatedText,
-          );
-          
-          // Get the token speed data from streaming
-          const tokenSpeedData = getStreamingTokenSpeed(activeThread.id);
-          
-          // Add token speed to metadata if available
-          if (tokenSpeedData && tokenSpeedData.tokenSpeed > 0) {
-            finalContent.metadata = {
-              ...finalContent.metadata,
-              tokenSpeed: Math.round(tokenSpeedData.tokenSpeed * 100) / 100, // Round to 2 decimal places
-            };
-          }
-          
-          // Transfer token speed from streaming to final message
-          transferStreamingTokenSpeedToMessage(activeThread.id, finalContent.id);
-          
-          builder.addAssistantMessage(accumulatedText, undefined, toolCalls);
+            {
+              tokenSpeed: useAppState.getState().tokenSpeed,
+            }
+          )
+
+          builder.addAssistantMessage(accumulatedText, undefined, toolCalls)
           const updatedMessage = await postMessageProcessing(
             toolCalls,
             builder,
@@ -270,34 +419,37 @@ export const useChat = () => {
             // allowAllMCPPermissions ? undefined : showApprovalModal,
             // allowAllMCPPermissions,
             undefined,
-            false,
-          );
-          
+            false
+          )
+
           // Ensure token speed is preserved in the final message
-          const messageToSave = updatedMessage ?? finalContent;
+          const messageToSave = updatedMessage ?? finalContent
           if (tokenSpeedData && tokenSpeedData.tokenSpeed > 0) {
             messageToSave.metadata = {
               ...messageToSave.metadata,
               tokenSpeed: Math.round(tokenSpeedData.tokenSpeed * 100) / 100,
-            };
+            }
           }
-          
-          addMessage(messageToSave);
-          updateStreamingContentForThread(activeThread.id, undefined);
-          updateThreadTimestamp(activeThread.id);
 
-          isCompleted = !toolCalls.length;
+          addMessage(messageToSave)
+          updateStreamingContentForThread(activeThread.id, undefined)
+          updateThreadTimestamp(activeThread.id)
+
+          isCompleted = !toolCalls.length
           // Do not create agent loop if there is no need for it
-          if (!followUpWithToolUse) availableTools = [];
+          if (!followUpWithToolUse) availableTools = []
         }
       } catch (error) {
-        toast.error(
-          `Error sending message: ${error && typeof error === "object" && "message" in error ? error.message : error}`,
-        );
-        console.error("Error sending message:", error);
+        const errorMessage =
+          error && typeof error === 'object' && 'message' in error
+            ? error.message
+            : error
+
+        toast.error(`Error sending message: ${errorMessage}`)
+        console.error('Error sending message:', error)
       } finally {
-        updateLoadingModel(false);
-        updateStreamingContentForThread(activeThread.id, undefined);
+        updateLoadingModel(false)
+        updateStreamingContentForThread(activeThread.id, undefined)
       }
     },
     [
@@ -312,19 +464,19 @@ export const useChat = () => {
       updateThreadTimestamp,
       setPrompt,
       selectedModel,
-      currentAssistant,
+      currentAssistant?.instructions,
+      currentAssistant.parameters,
       tools,
       updateLoadingModel,
       getDisabledToolsForThread,
       approvedTools,
       // allowAllMCPPermissions,
       // showApprovalModal,
-      updateStreamingTokenSpeed,
-      getStreamingTokenSpeed,
-      transferStreamingTokenSpeedToMessage,
-      updateStreamingContentForThread,
-    ],
-  );
+      updateTokenSpeed,
+      increaseModelContextSize,
+      toggleOnContextShifting,
+    ]
+  )
 
-  return { sendMessage };
-};
+  return { sendMessage }
+}

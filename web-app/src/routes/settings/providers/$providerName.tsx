@@ -9,6 +9,7 @@ import {
   // getActiveModels,
   importModel,
   startModel,
+  stopAllModels,
   stopModel,
 } from '@/services/models'
 import {
@@ -38,6 +39,7 @@ import { toast } from 'sonner'
 import { ActiveModel } from '@/types/models'
 import { useEffect, useState } from 'react'
 import { predefinedProviders } from '@/mock/data'
+import { isProd } from '@/lib/version'
 
 // as route.threadsDetail
 export const Route = createFileRoute('/settings/providers/$providerName')({
@@ -299,6 +301,8 @@ function ProviderDetail() {
                                 ...provider,
                                 ...updateObj,
                               })
+
+                              stopAllModels()
                             }
                           }}
                         />
@@ -457,10 +461,12 @@ function ProviderDetail() {
                           }
                           actions={
                             <div className="flex items-center gap-1">
-                              <DialogEditModel
-                                provider={provider}
-                                modelId={model.id}
-                              />
+                              {!isProd && (
+                                <DialogEditModel
+                                  provider={provider}
+                                  modelId={model.id}
+                                />
+                              )}
                               {model.settings && (
                                 <ModelSetting
                                   provider={provider}

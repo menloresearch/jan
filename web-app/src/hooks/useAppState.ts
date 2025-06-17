@@ -16,9 +16,13 @@ type AppState = {
   messageTokenSpeeds: Record<string, TokenSpeed>
   streamingTokenSpeeds: Record<string, TokenSpeed> // threadId -> TokenSpeed for active streaming
   currentToolCall?: ChatCompletionMessageToolCall
+  showOutOfContextDialog?: boolean
   setServerStatus: (value: 'running' | 'stopped' | 'pending') => void
   updateStreamingContent: (content: ThreadMessage | undefined) => void
-  updateStreamingContentForThread: (threadId: string, content: ThreadMessage | undefined) => void
+  updateStreamingContentForThread: (
+    threadId: string,
+    content: ThreadMessage | undefined
+  ) => void
   getStreamingContentForThread: (threadId: string) => ThreadMessage | undefined
   updateCurrentToolCall: (
     toolCall: ChatCompletionMessageToolCall | undefined
@@ -34,13 +38,18 @@ type AppState = {
   // New: Get streaming token speed for thread
   getStreamingTokenSpeed: (threadId: string) => TokenSpeed | undefined
   // New: Transfer streaming token speed to final message
-  transferStreamingTokenSpeedToMessage: (threadId: string, messageId: string) => void
+  transferStreamingTokenSpeedToMessage: (
+    threadId: string,
+    messageId: string
+  ) => void
   getMessageTokenSpeed: (messageId: string) => TokenSpeed | undefined
   // New: Transfer token speed from one message to another
-  transferMessageTokenSpeed: (fromMessageId: string, toMessageId: string) => void
+  transferMessageTokenSpeed: (
+    fromMessageId: string,
+    toMessageId: string
+  ) => void
   resetTokenSpeed: () => void
-  // New: Reset token speed for specific message
-  resetMessageTokenSpeed: (messageId: string) => void
+  setOutOfContextDialog: (show: boolean) => void
 }
 
 export const useAppState = create<AppState>()((set, get) => ({
@@ -68,7 +77,10 @@ export const useAppState = create<AppState>()((set, get) => ({
         : undefined,
     }))
   },
-  updateStreamingContentForThread: (threadId: string, content: ThreadMessage | undefined) => {
+  updateStreamingContentForThread: (
+    threadId: string,
+    content: ThreadMessage | undefined
+  ) => {
     set((state) => ({
       streamingContentByThread: {
         ...state.streamingContentByThread,
@@ -142,7 +154,7 @@ export const useAppState = create<AppState>()((set, get) => ({
       const currentTimestamp = new Date().getTime()
       const messageId = message.id
       const existingSpeed = state.messageTokenSpeeds[messageId]
-      
+
       if (!existingSpeed) {
         // First update for this message
         const newSpeed = {
@@ -159,17 +171,19 @@ export const useAppState = create<AppState>()((set, get) => ({
         }
       }
 
-      const timeDiffInSeconds = (currentTimestamp - existingSpeed.lastTimestamp) / 1000
+      const timeDiffInSeconds =
+        (currentTimestamp - existingSpeed.lastTimestamp) / 1000
       const totalTokenCount = existingSpeed.tokenCount + 1
-      const averageTokenSpeed = totalTokenCount / (timeDiffInSeconds > 0 ? timeDiffInSeconds : 1)
-      
+      const averageTokenSpeed =
+        totalTokenCount / (timeDiffInSeconds > 0 ? timeDiffInSeconds : 1)
+
       const updatedSpeed = {
         ...existingSpeed,
         tokenSpeed: averageTokenSpeed,
         tokenCount: totalTokenCount,
         lastTimestamp: currentTimestamp,
       }
-      
+
       return {
         messageTokenSpeeds: {
           ...state.messageTokenSpeeds,
@@ -181,7 +195,7 @@ export const useAppState = create<AppState>()((set, get) => ({
     set((state) => {
       const currentTimestamp = new Date().getTime()
       const existingSpeed = state.streamingTokenSpeeds[threadId]
-      
+
       if (!existingSpeed) {
         // First update for this thread - initialize with start time
         return {
@@ -199,13 +213,15 @@ export const useAppState = create<AppState>()((set, get) => ({
 
       // Increment token count
       const newTokenCount = existingSpeed.tokenCount + 1
-      
+
       // Calculate total time elapsed since we started streaming (using the original lastTimestamp as start time)
-      const totalTimeElapsed = (currentTimestamp - existingSpeed.lastTimestamp) / 1000
-      
+      const totalTimeElapsed =
+        (currentTimestamp - existingSpeed.lastTimestamp) / 1000
+
       // Calculate tokens per second
-      const tokensPerSecond = totalTimeElapsed > 0 ? newTokenCount / totalTimeElapsed : 0
-      
+      const tokensPerSecond =
+        totalTimeElapsed > 0 ? newTokenCount / totalTimeElapsed : 0
+
       return {
         streamingTokenSpeeds: {
           ...state.streamingTokenSpeeds,
@@ -227,19 +243,19 @@ export const useAppState = create<AppState>()((set, get) => ({
       if (!streamingSpeed) {
         return state
       }
-      
+
       const newMessageTokenSpeeds = { ...state.messageTokenSpeeds }
       const newStreamingTokenSpeeds = { ...state.streamingTokenSpeeds }
-      
+
       // Transfer to message
       newMessageTokenSpeeds[messageId] = {
         ...streamingSpeed,
         message: messageId,
       }
-      
+
       // Clean up streaming entry
       delete newStreamingTokenSpeeds[threadId]
-      
+
       return {
         messageTokenSpeeds: newMessageTokenSpeeds,
         streamingTokenSpeeds: newStreamingTokenSpeeds,
@@ -255,7 +271,7 @@ export const useAppState = create<AppState>()((set, get) => ({
       if (!fromSpeed) {
         return state
       }
-      
+
       const newMessageTokenSpeeds = { ...state.messageTokenSpeeds }
       newMessageTokenSpeeds[toMessageId] = {
         ...fromSpeed,
@@ -263,7 +279,7 @@ export const useAppState = create<AppState>()((set, get) => ({
       }
       // Clean up the old entry
       delete newMessageTokenSpeeds[fromMessageId]
-      
+
       return {
         messageTokenSpeeds: newMessageTokenSpeeds,
       }
@@ -273,12 +289,9 @@ export const useAppState = create<AppState>()((set, get) => ({
     set({
       tokenSpeed: undefined,
     }),
-  resetMessageTokenSpeed: (messageId) =>
-    set((state) => {
-      const newMessageTokenSpeeds = { ...state.messageTokenSpeeds }
-      delete newMessageTokenSpeeds[messageId]
-      return {
-        messageTokenSpeeds: newMessageTokenSpeeds,
-      }
-    }),
+  setOutOfContextDialog: (show) => {
+    set(() => ({
+      showOutOfContextDialog: show,
+    }))
+  },
 }))
