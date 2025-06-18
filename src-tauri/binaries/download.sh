@@ -39,16 +39,7 @@ if [ "$OS_TYPE" == "Linux" ]; then
     cp ./cortex-server ./cortex-server-x86_64-unknown-linux-gnu
 
     # Download engines for Linux
-    download "${ENGINE_DOWNLOAD_URL}-linux-noavx-x64.tar.gz" 2 "${SHARED_PATH}/engines/llama.cpp/linux-noavx-x64/${ENGINE_VERSION}" 
-    download "${ENGINE_DOWNLOAD_URL}-linux-avx-x64.tar.gz" 2 "${SHARED_PATH}/engines/llama.cpp/linux-avx-x64/${ENGINE_VERSION}"
     download "${ENGINE_DOWNLOAD_URL}-linux-avx2-x64.tar.gz" 2 "${SHARED_PATH}/engines/llama.cpp/linux-avx2-x64/${ENGINE_VERSION}"
-    download "${ENGINE_DOWNLOAD_URL}-linux-avx512-x64.tar.gz" 2 "${SHARED_PATH}/engines/llama.cpp/linux-avx512-x64/${ENGINE_VERSION}"
-    download "${ENGINE_DOWNLOAD_URL}-linux-avx2-cuda-cu12.0-x64.tar.gz" 2 "${SHARED_PATH}/engines/llama.cpp/linux-avx2-cuda-cu12.0-x64/${ENGINE_VERSION}"
-    # download "${ENGINE_DOWNLOAD_URL}-linux-avx2-cuda-cu11.7-x64.tar.gz" 2 "${SHARED_PATH}/engines/llama.cpp/linux-avx2-cuda-cu11.7-x64/${ENGINE_VERSION}"
-    download "${ENGINE_DOWNLOAD_URL}-linux-noavx-cuda-cu12.0-x64.tar.gz" 2 "${SHARED_PATH}/engines/llama.cpp/linux-noavx-cuda-cu12.0-x64/${ENGINE_VERSION}"
-    # download "${ENGINE_DOWNLOAD_URL}-linux-noavx-cuda-cu11.7-x64.tar.gz" 2 "${SHARED_PATH}/engines/llama.cpp/linux-noavx-cuda-cu11.7-x64/${ENGINE_VERSION}"
-    download "${ENGINE_DOWNLOAD_URL}-linux-vulkan-x64.tar.gz" 2 "${SHARED_PATH}/engines/llama.cpp/linux-vulkan-x64/${ENGINE_VERSION}"
-    download "${CUDA_DOWNLOAD_URL}/cudart-llama-bin-linux-cu12.0-x64.tar.gz" 0 "${BIN_PATH}/deps"
     # Should not bundle this by default, users can install cuda runtime separately
     # Ship cuda 12.0 by default only for now
     # download "${CUDA_DOWNLOAD_URL}/cudart-llama-bin-linux-cu11.7-x64.tar.gz" 0 "${BIN_PATH}/deps"
