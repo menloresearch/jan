@@ -68,21 +68,23 @@ export const useChat = () => {
     return provider?.provider || selectedProvider
   }, [provider, selectedProvider])
 
-  useEffect(() => {
-    function setTools() {
-      getTools().then((data: MCPTool[]) => {
-        updateTools(data)
-      })
-    }
-    setTools()
+  if (IS_TAURI) {
+    useEffect(() => {
+      function setTools() {
+        getTools().then((data: MCPTool[]) => {
+          updateTools(data)
+        })
+      }
+      setTools()
 
-    let unsubscribe = () => {}
-    listen(SystemEvent.MCP_UPDATE, setTools).then((unsub) => {
-      // Unsubscribe from the event when the component unmounts
-      unsubscribe = unsub
-    })
-    return unsubscribe
-  }, [updateTools])
+      let unsubscribe = () => {}
+      listen(SystemEvent.MCP_UPDATE, setTools).then((unsub) => {
+        // Unsubscribe from the event when the component unmounts
+        unsubscribe = unsub
+      })
+      return unsubscribe
+    }, [updateTools])
+  }
 
   const getCurrentThread = useCallback(async () => {
     let currentThread = retrieveThread()
