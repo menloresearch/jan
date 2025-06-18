@@ -1,6 +1,6 @@
 [package]
-name = "Jan"
-version = "0.5.16"
+name = "Jan-nightly"
+version = "0.5.18-1000"
 description = "Use offline LLMs with your own data. Run open source models like Llama2 or Falcon on your internal computers/servers."
 authors = ["Jan <service@jan.ai>"]
 license = "MIT"
@@ -20,7 +20,7 @@ serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 log = "0.4"
 tauri = { version = "2.4.0", features = [ "protocol-asset", "macos-private-api",
-    "test",
+    "test", "devtools"
 ] }
 tauri-plugin-log = "2.0.0-rc"
 tauri-plugin-shell = "2.2.0"
