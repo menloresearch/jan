@@ -35,7 +35,6 @@ export function DataProvider() {
       models?.forEach((model) => ModelManager.instance().register(model))
       getProviders().then(setProviders)
     })
-    getMCPConfig().then((data) => setServers(data.mcpServers ?? []))
     getAssistants()
       .then((data) => {
         // Only update assistants if we have valid data
@@ -46,8 +45,12 @@ export function DataProvider() {
       .catch((error) => {
         console.warn('Failed to load assistants, keeping default:', error)
       })
-    getCurrentDeepLinkUrls().then(handleDeepLink)
-    onOpenUrl(handleDeepLink)
+
+    if (IS_TAURI) {
+      getMCPConfig().then((data) => setServers(data.mcpServers ?? []))
+      getCurrentDeepLinkUrls().then(handleDeepLink)
+      onOpenUrl(handleDeepLink)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
