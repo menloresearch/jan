@@ -71,14 +71,16 @@ function General() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isCheckingUpdate, setIsCheckingUpdate] = useState(false)
 
-  useEffect(() => {
-    const fetchDataFolder = async () => {
-      const path = await getJanDataFolder()
-      setJanDataFolder(path)
-    }
+  if (IS_TAURI) {
+    useEffect(() => {
+      const fetchDataFolder = async () => {
+        const path = await getJanDataFolder()
+        setJanDataFolder(path)
+      }
 
-    fetchDataFolder()
-  }, [])
+      fetchDataFolder()
+    }, [])
+  }
 
   const resetApp = async () => {
     // TODO: Loading indicator
@@ -241,135 +243,138 @@ function General() {
             </Card>
 
             {/* Data folder */}
-            <Card title={t('common.dataFolder')}>
-              <CardItem
-                title={t('settings.dataFolder.appData', {
-                  ns: 'settings',
-                })}
-                align="start"
-                description={
-                  <>
-                    <span>
-                      {t('settings.dataFolder.appDataDesc', {
-                        ns: 'settings',
-                      })}
-                      &nbsp;
-                    </span>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span
-                        title={janDataFolder}
-                        className="bg-main-view-fg/10 text-xs px-1 py-0.5 rounded-sm text-main-view-fg/80"
-                      >
-                        {janDataFolder}
+            {IS_TAURI ?
+              <Card title={t('common.dataFolder')}>
+                <CardItem
+                  title={t('settings.dataFolder.appData', {
+                    ns: 'settings',
+                  })}
+                  align="start"
+                  description={
+                    <>
+                      <span>
+                        {t('settings.dataFolder.appDataDesc', {
+                          ns: 'settings',
+                        })}
+                        &nbsp;
                       </span>
-                      <button
-                        onClick={() =>
-                          janDataFolder && copyToClipboard(janDataFolder)
-                        }
-                        className="cursor-pointer flex items-center justify-center rounded hover:bg-main-view-fg/15 bg-main-view-fg/10 transition-all duration-200 ease-in-out p-1"
-                        title={isCopied ? 'Copied!' : 'Copy path'}
+                      <div className="flex items-center gap-2 mt-1">
+                        <span
+                          title={janDataFolder}
+                          className="bg-main-view-fg/10 text-xs px-1 py-0.5 rounded-sm text-main-view-fg/80"
+                        >
+                          {janDataFolder}
+                        </span>
+                        <button
+                          onClick={() =>
+                            janDataFolder && copyToClipboard(janDataFolder)
+                          }
+                          className="cursor-pointer flex items-center justify-center rounded hover:bg-main-view-fg/15 bg-main-view-fg/10 transition-all duration-200 ease-in-out p-1"
+                          title={isCopied ? 'Copied!' : 'Copy path'}
+                        >
+                          {isCopied ? (
+                            <div className="flex items-center gap-1">
+                              <IconCopyCheck size={12} className="text-accent" />
+                              <span className="text-xs leading-0">Copied</span>
+                            </div>
+                          ) : (
+                            <IconCopy
+                              size={12}
+                              className="text-main-view-fg/50"
+                            />
+                          )}
+                        </button>
+                      </div>
+                    </>
+                  }
+                  actions={
+                    <>
+                      <Button
+                        variant="link"
+                        size="sm"
+                        className="p-0"
+                        title="App Data Folder"
+                        onClick={handleDataFolderChange}
                       >
-                        {isCopied ? (
-                          <div className="flex items-center gap-1">
-                            <IconCopyCheck size={12} className="text-accent" />
-                            <span className="text-xs leading-0">Copied</span>
-                          </div>
-                        ) : (
-                          <IconCopy
+                        <div className="cursor-pointer flex items-center justify-center rounded-sm hover:bg-main-view-fg/15 bg-main-view-fg/10 transition-all duration-200 ease-in-out px-2 py-1 gap-1">
+                          <IconFolder
                             size={12}
                             className="text-main-view-fg/50"
                           />
-                        )}
-                      </button>
-                    </div>
-                  </>
-                }
-                actions={
-                  <>
-                    <Button
-                      variant="link"
-                      size="sm"
-                      className="p-0"
-                      title="App Data Folder"
-                      onClick={handleDataFolderChange}
-                    >
-                      <div className="cursor-pointer flex items-center justify-center rounded-sm hover:bg-main-view-fg/15 bg-main-view-fg/10 transition-all duration-200 ease-in-out px-2 py-1 gap-1">
-                        <IconFolder
-                          size={12}
-                          className="text-main-view-fg/50"
-                        />
-                        <span>Change Location</span>
-                      </div>
-                    </Button>
-                    {selectedNewPath && (
-                      <ChangeDataFolderLocation
-                        currentPath={janDataFolder || ''}
-                        newPath={selectedNewPath}
-                        onConfirm={confirmDataFolderChange}
-                        open={isDialogOpen}
-                        onOpenChange={(open) => {
-                          setIsDialogOpen(open)
-                          if (!open) {
-                            setSelectedNewPath(null)
+                          <span>Change Location</span>
+                        </div>
+                      </Button>
+                      {selectedNewPath && (
+                        <ChangeDataFolderLocation
+                          currentPath={janDataFolder || ''}
+                          newPath={selectedNewPath}
+                          onConfirm={confirmDataFolderChange}
+                          open={isDialogOpen}
+                          onOpenChange={(open) => {
+                            setIsDialogOpen(open)
+                            if (!open) {
+                              setSelectedNewPath(null)
+                            }
+                          }}
+                        >
+                          <div />
+                        </ChangeDataFolderLocation>
+                      )}
+                    </>
+                  }
+                />
+                <CardItem
+                  title={t('settings.dataFolder.appLogs', {
+                    ns: 'settings',
+                  })}
+                  description="View detailed logs of the App"
+                  actions={
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="link"
+                        size="sm"
+                        className="p-0"
+                        onClick={handleOpenLogs}
+                        title="App Logs"
+                      >
+                        <div className="cursor-pointer flex items-center justify-center rounded-sm hover:bg-main-view-fg/15 bg-main-view-fg/10 transition-all duration-200 ease-in-out px-2 py-1 gap-1">
+                          <IconLogs size={12} className="text-main-view-fg/50" />
+                          <span>Open Logs</span>
+                        </div>
+                      </Button>
+                      <Button
+                        variant="link"
+                        size="sm"
+                        className="p-0"
+                        onClick={async () => {
+                          if (janDataFolder) {
+                            try {
+                              const logsPath = `${janDataFolder}/logs`
+                              await revealItemInDir(logsPath)
+                            } catch (error) {
+                              console.error(
+                                'Failed to reveal logs folder:',
+                                error
+                              )
+                            }
                           }
                         }}
+                        title="Reveal logs folder in file explorer"
                       >
-                        <div />
-                      </ChangeDataFolderLocation>
-                    )}
-                  </>
-                }
-              />
-              <CardItem
-                title={t('settings.dataFolder.appLogs', {
-                  ns: 'settings',
-                })}
-                description="View detailed logs of the App"
-                actions={
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="link"
-                      size="sm"
-                      className="p-0"
-                      onClick={handleOpenLogs}
-                      title="App Logs"
-                    >
-                      <div className="cursor-pointer flex items-center justify-center rounded-sm hover:bg-main-view-fg/15 bg-main-view-fg/10 transition-all duration-200 ease-in-out px-2 py-1 gap-1">
-                        <IconLogs size={12} className="text-main-view-fg/50" />
-                        <span>Open Logs</span>
-                      </div>
-                    </Button>
-                    <Button
-                      variant="link"
-                      size="sm"
-                      className="p-0"
-                      onClick={async () => {
-                        if (janDataFolder) {
-                          try {
-                            const logsPath = `${janDataFolder}/logs`
-                            await revealItemInDir(logsPath)
-                          } catch (error) {
-                            console.error(
-                              'Failed to reveal logs folder:',
-                              error
-                            )
-                          }
-                        }
-                      }}
-                      title="Reveal logs folder in file explorer"
-                    >
-                      <div className="cursor-pointer flex items-center justify-center rounded-sm hover:bg-main-view-fg/15 bg-main-view-fg/10 transition-all duration-200 ease-in-out px-2 py-1 gap-1">
-                        <IconFolder
-                          size={12}
-                          className="text-main-view-fg/50"
-                        />
-                        <span>{openFileTitle()}</span>
-                      </div>
-                    </Button>
-                  </div>
-                }
-              />
-            </Card>
+                        <div className="cursor-pointer flex items-center justify-center rounded-sm hover:bg-main-view-fg/15 bg-main-view-fg/10 transition-all duration-200 ease-in-out px-2 py-1 gap-1">
+                          <IconFolder
+                            size={12}
+                            className="text-main-view-fg/50"
+                          />
+                          <span>{openFileTitle()}</span>
+                        </div>
+                      </Button>
+                    </div>
+                  }
+                />
+              </Card>
+              : null
+            }
 
             {/* Other */}
             <Card title={t('common.others')}>
