@@ -228,7 +228,7 @@ function ThreadDetail() {
                 return (
                   <div
                     key={item.id}
-                    data-test-id={`message-response-${item.id}`}
+                    data-test-id={`message-${item.role}-${item.id}`}
                     data-message-author-role={item.role}
                     className="mb-4"
                   >

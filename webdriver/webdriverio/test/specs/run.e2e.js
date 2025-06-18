@@ -35,7 +35,7 @@ describe('Jan-nano-gguf download and use flow', () => {
     await sendButton.waitForDisplayed({ timeout: 5000 })
     await sendButton.click()
     // Wait for the response to appear
-    const responseText = await $('[data-test-id^="message-response-"]')
+    const responseText = await $('[data-test-id^="message-assistant-"]')
     await responseText.waitForDisplayed({ timeout: 120000 })
     const responseContent = await responseText.getText()
     // Check if the response content is not empty
