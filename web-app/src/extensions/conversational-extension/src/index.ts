@@ -1,9 +1,4 @@
-import {
-  ConversationalExtension,
-  Thread,
-  ThreadAssistantInfo,
-  ThreadMessage,
-} from '@janhq/core'
+import { ConversationalExtension, Thread, ThreadMessage } from '@janhq/core'
 import { indexedDBStorage } from './indexeddb'
 
 export default class BrowserConversationalExtension extends ConversationalExtension {
@@ -48,24 +43,5 @@ export default class BrowserConversationalExtension extends ConversationalExtens
 
   async listMessages(threadId: string): Promise<ThreadMessage[]> {
     return indexedDBStorage.listMessages(threadId)
-  }
-
-  async getThreadAssistant(threadId: string): Promise<ThreadAssistantInfo> {
-    // return indexedDBStorage.getThreadAssistant(threadId)
-    return
-  }
-
-  async createThreadAssistant(
-    threadId: string,
-    assistant: ThreadAssistantInfo
-  ): Promise<ThreadAssistantInfo> {
-    return
-  }
-
-  async modifyThreadAssistant(
-    threadId: string,
-    assistant: ThreadAssistantInfo
-  ): Promise<ThreadAssistantInfo> {
-    return
   }
 }

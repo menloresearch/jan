@@ -67,15 +67,7 @@ class IndexedDBStorage {
         const cursor = request.result
         if (cursor) {
           const thread = cursor.value as Thread
-          threads.push({
-            ...thread,
-            order: thread.metadata?.order,
-            isFavorite: thread.metadata?.is_favorite,
-            model: {
-              id: thread.assistants?.[0]?.model?.id,
-              provider: thread.assistants?.[0]?.model?.engine,
-            },
-          } as Thread)
+          threads.push(thread)
           cursor.continue()
         } else {
           resolve(threads)
@@ -99,8 +91,8 @@ class IndexedDBStorage {
         thread.assistants?.map((assistant) => ({
           ...assistant,
           model: {
-            id: assistant.model?.id ?? '*',
-            engine: assistant.model?.engine ?? 'llama.cpp',
+            id: assistant.model?.id ?? 'Jan-Nano',
+            engine: assistant.model?.engine ?? 'Menlo',
           },
         })) ?? [],
       metadata: {
@@ -138,8 +130,8 @@ class IndexedDBStorage {
         thread.assistants?.map((assistant) => ({
           ...assistant,
           model: {
-            id: assistant.model?.id ?? '*',
-            engine: assistant.model?.engine ?? 'llama.cpp',
+            id: assistant.model?.id ?? 'Jan-Nano',
+            engine: assistant.model?.engine ?? 'Menlo',
           },
         })) ?? [],
       metadata: {
