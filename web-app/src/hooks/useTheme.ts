@@ -28,10 +28,14 @@ export const useTheme = create<ThemeState>()(
         setTheme: async (activeTheme: AppTheme) => {
           if (activeTheme === 'auto') {
             const isDarkMode = checkOSDarkMode()
-            await getCurrentWindow().setTheme(null)
+            if (IS_TAURI) {
+              await getCurrentWindow().setTheme(null)
+            }
             set(() => ({ activeTheme, isDark: isDarkMode }))
           } else {
-            await getCurrentWindow().setTheme(activeTheme as Theme)
+            if (IS_TAURI) {
+              await getCurrentWindow().setTheme(activeTheme as Theme)
+            }
             set(() => ({ activeTheme, isDark: activeTheme === 'dark' }))
           }
         },
