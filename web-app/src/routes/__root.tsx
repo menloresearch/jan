@@ -92,8 +92,8 @@ function RootLayout() {
       </ExtensionProvider>
       {isLocalAPIServerLogsRoute ? <LogsLayout /> : <AppLayout />}
       {/* <TanStackRouterDevtools position="bottom-right" /> */}
-      <CortexFailureDialog />
-      <ToolApproval />
+      {IS_TAURI ? <CortexFailureDialog /> : null}
+      {IS_TAURI ? <ToolApproval /> : null}
     </Fragment>
   )
 }
