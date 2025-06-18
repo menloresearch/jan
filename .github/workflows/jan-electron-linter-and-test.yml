@@ -205,6 +205,13 @@ jobs:
         run: |
           cargo install tauri-driver --locked
 
+      - name: Setup Edge
+        uses: browser-actions/setup-edge@v1
+        with:
+          edge-version: stable
+      - name: Print Edge version
+        run: (Get-Item (Get-Command msedge).Source).VersionInfo.ProductVersion
+
       # Clean cache, continue on error
       - name: 'Cleanup cache'
         shell: powershell
