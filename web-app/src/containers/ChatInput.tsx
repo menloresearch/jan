@@ -76,24 +76,26 @@ const ChatInput = ({ model, className, initialMessage }: ChatInputProps) => {
   const [connectedServers, setConnectedServers] = useState<string[]>([])
 
   // Check for connected MCP servers
-  useEffect(() => {
-    const checkConnectedServers = async () => {
-      try {
-        const servers = await getConnectedServers()
-        setConnectedServers(servers)
-      } catch (error) {
-        console.error('Failed to get connected servers:', error)
-        setConnectedServers([])
+  if (IS_TAURI) {
+    useEffect(() => {
+      const checkConnectedServers = async () => {
+        try {
+          const servers = await getConnectedServers()
+          setConnectedServers(servers)
+        } catch (error) {
+          console.error('Failed to get connected servers:', error)
+          setConnectedServers([])
+        }
       }
-    }
 
-    checkConnectedServers()
+      checkConnectedServers()
 
-    // Poll for connected servers every 3 seconds
-    const intervalId = setInterval(checkConnectedServers, 3000)
+      // Poll for connected servers every 3 seconds
+      const intervalId = setInterval(checkConnectedServers, 3000)
 
-    return () => clearInterval(intervalId)
-  }, [])
+      return () => clearInterval(intervalId)
+    }, [])
+  }
 
   // Check if there are active MCP servers
   const hasActiveMCPServers = connectedServers.length > 0 || tools.length > 0
