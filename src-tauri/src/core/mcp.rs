@@ -3,16 +3,13 @@ use rmcp::model::{
 };
 use rmcp::transport::streamable_http_client::StreamableHttpClientTransportConfig;
 use rmcp::ServiceError;
-use rmcp::{
-    service::RunningService, transport::StreamableHttpClientTransport,
-    transport::TokioChildProcess, RoleClient, ServiceExt,
-};
+use rmcp::{transport::StreamableHttpClientTransport, transport::TokioChildProcess, ServiceExt};
 use serde_json::{Map, Value};
 use std::fs;
-use std::{collections::HashMap, env, sync::Arc, time::Duration};
+use std::{env, time::Duration};
 use tauri::{AppHandle, Emitter, Runtime, State};
 use tauri_plugin_http::reqwest;
-use tokio::{process::Command, sync::Mutex, time::timeout};
+use tokio::{process::Command, time::timeout};
 
 use crate::core::state::{RunningServiceEnum, SharedMcpServers};
 
@@ -163,22 +160,29 @@ async fn start_mcp_server<R: Runtime>(
     let bin_path = exe_parent_path.to_path_buf();
     if let Some((command, args, envs)) = extract_command_args(&config) {
         if command.starts_with("http://") || command.starts_with("https://") {
-            let transport =
-                // StreamableHttpClientTransport::from_uri("http://mcp-server.menlo.ai/mcp");
-            StreamableHttpClientTransport::with_client(
+            // Extract auth value before the closure to avoid lifetime issues
+            let auth_value = envs
+                .get_key_value("Authorization")
+                .or_else(|| envs.get_key_value("authorization"))
+                .and_then(|(_, v)| v.as_str())
+                .unwrap_or("Bearer YOUR_API_KEY_HERE")
+                .to_string();
+
+            let transport = StreamableHttpClientTransport::with_client(
                 reqwest::Client::builder()
                     .default_headers({
                         let mut headers = reqwest::header::HeaderMap::new();
-                        headers.insert(
-                            reqwest::header::AUTHORIZATION,
-                            reqwest::header::HeaderValue::from_static("Bearer YOUR_TOKEN_HERE"),
-                        );
+                        if let Ok(header_value) =
+                            reqwest::header::HeaderValue::from_str(&auth_value)
+                        {
+                            headers.insert(reqwest::header::AUTHORIZATION, header_value);
+                        }
                         headers
                     })
                     .build()
                     .unwrap(),
                 StreamableHttpClientTransportConfig {
-                    uri: "http://mcp-server.menlo.ai/mcp".into(),
+                    uri: command.into(),
                     ..Default::default()
                 },
             );
@@ -194,6 +198,20 @@ async fn start_mcp_server<R: Runtime>(
             let client = client_info.serve(transport).await.inspect_err(|e| {
                 log::error!("client error: {:?}", e);
             });
+            match client {
+                Ok(client) => {
+                    log::info!("Connected to server: {:?}", client.peer_info());
+                    servers
+                        .lock()
+                        .await
+                        .insert(name.clone(), RunningServiceEnum::WithInit(client));
+                }
+                Err(e) => {
+                    log::error!("Failed to connect to server: {}", e);
+                    return Err(format!("Failed to connect to server: {}", e));
+                }
+            }
+            // Now move the service into the HashMap
         } else {
             let mut cmd = Command::new(command.clone());
             if command.clone() == "npx" {
