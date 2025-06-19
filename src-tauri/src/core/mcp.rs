@@ -1,9 +1,16 @@
-use rmcp::model::{CallToolRequestParam, CallToolResult, Tool};
-use rmcp::{service::RunningService, transport::TokioChildProcess, RoleClient, ServiceExt};
+use rmcp::model::{
+    CallToolRequestParam, CallToolResult, ClientCapabilities, ClientInfo, Implementation, Tool,
+};
+use rmcp::transport::streamable_http_client::StreamableHttpClientTransportConfig;
+use rmcp::{
+    service::RunningService, transport::StreamableHttpClientTransport,
+    transport::TokioChildProcess, RoleClient, ServiceExt,
+};
 use serde_json::{Map, Value};
 use std::fs;
 use std::{collections::HashMap, env, sync::Arc, time::Duration};
 use tauri::{AppHandle, Emitter, Runtime, State};
+use tauri_plugin_http::reqwest;
 use tokio::{process::Command, sync::Mutex, time::timeout};
 
 use super::{cmd::get_jan_data_folder_path, state::AppState};
@@ -135,95 +142,112 @@ async fn start_mcp_server<R: Runtime>(
         .expect("Executable must have a parent directory");
     let bin_path = exe_parent_path.to_path_buf();
     if let Some((command, args, envs)) = extract_command_args(&config) {
-        let mut cmd = Command::new(command.clone());
-        if command.clone() == "npx" {
-            let mut cache_dir = app_path.clone();
-            cache_dir.push(".npx");
-            let bun_x_path = format!("{}/bun", bin_path.display());
-            cmd = Command::new(bun_x_path);
-            cmd.arg("x");
-            cmd.env("BUN_INSTALL", cache_dir.to_str().unwrap().to_string());
-        }
+        if command.starts_with("http://") || command.starts_with("https://") {
+            let transport =
+                // StreamableHttpClientTransport::from_uri("http://mcp-server.menlo.ai/mcp");
+            StreamableHttpClientTransport::with_client(
+                reqwest::Client::builder()
+                    .default_headers({
+                        let mut headers = reqwest::header::HeaderMap::new();
+                        headers.insert(
+                            reqwest::header::AUTHORIZATION,
+                            reqwest::header::HeaderValue::from_static("Bearer YOUR_TOKEN_HERE"),
+                        );
+                        headers
+                    })
+                    .build()
+                    .unwrap(),
+                StreamableHttpClientTransportConfig {
+                    uri: "http://mcp-server.menlo.ai/mcp".into(),
+                    ..Default::default()
+                },
+            );
 
-        if command.clone() == "uvx" {
-            let mut cache_dir = app_path.clone();
-            cache_dir.push(".uvx");
-            let bun_x_path = format!("{}/uv", bin_path.display());
-            cmd = Command::new(bun_x_path);
-            cmd.arg("tool");
-            cmd.arg("run");
-            cmd.env("UV_CACHE_DIR", cache_dir.to_str().unwrap().to_string());
-        }
-        #[cfg(windows)]
-        {
-            cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW: prevents shell window on Windows
-        }
-        let app_path_str = app_path.to_str().unwrap().to_string();
-        let log_file_path = format!("{}/logs/app.log", app_path_str);
-        match std::fs::OpenOptions::new()
-            .create(true)
-            .append(true)
-            .open(log_file_path)
-        {
-            Ok(file) => {
-                cmd.stderr(std::process::Stdio::from(file));
+            let client_info = ClientInfo {
+                protocol_version: Default::default(),
+                capabilities: ClientCapabilities::default(),
+                client_info: Implementation {
+                    name: "Jan Streamable Client".to_string(),
+                    version: "0.0.1".to_string(),
+                },
+            };
+            let client = client_info.serve(transport).await.inspect_err(|e| {
+                log::error!("client error: {:?}", e);
+            });
+        } else {
+            let mut cmd = Command::new(command.clone());
+            if command.clone() == "npx" {
+                let mut cache_dir = app_path.clone();
+                cache_dir.push(".npx");
+                let bun_x_path = format!("{}/bun", bin_path.display());
+                cmd = Command::new(bun_x_path);
+                cmd.arg("x");
+                cmd.env("BUN_INSTALL", cache_dir.to_str().unwrap().to_string());
             }
-            Err(err) => {
-                log::error!("Failed to open log file: {}", err);
+
+            if command.clone() == "uvx" {
+                let mut cache_dir = app_path.clone();
+                cache_dir.push(".uvx");
+                let bun_x_path = format!("{}/uv", bin_path.display());
+                cmd = Command::new(bun_x_path);
+                cmd.arg("tool");
+                cmd.arg("run");
+                cmd.env("UV_CACHE_DIR", cache_dir.to_str().unwrap().to_string());
             }
-        };
-
-        cmd.kill_on_drop(true);
-
-        log::trace!("Command: {cmd:#?}");
-
-        args.iter().filter_map(Value::as_str).for_each(|arg| {
-            cmd.arg(arg);
-        });
-        envs.iter().for_each(|(k, v)| {
-            if let Some(v_str) = v.as_str() {
-                cmd.env(k, v_str);
+            #[cfg(windows)]
+            {
+                cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW: prevents shell window on Windows
             }
-        });
+            let app_path_str = app_path.to_str().unwrap().to_string();
+            let log_file_path = format!("{}/logs/app.log", app_path_str);
+            match std::fs::OpenOptions::new()
+                .create(true)
+                .append(true)
+                .open(log_file_path)
+            {
+                Ok(file) => {
+                    cmd.stderr(std::process::Stdio::from(file));
+                }
+                Err(err) => {
+                    log::error!("Failed to open log file: {}", err);
+                }
+            };
 
-        let process = TokioChildProcess::new(cmd);
-        match process {
-            Ok(p) => {
-                let service = ().serve(p).await;
+            cmd.kill_on_drop(true);
 
-                match service {
-                    Ok(running_service) => {
-                        // Get peer info and clone the needed values before moving the service
-                        let (server_name, server_version) = {
+            log::trace!("Command: {cmd:#?}");
+
+            args.iter().filter_map(Value::as_str).for_each(|arg| {
+                cmd.arg(arg);
+            });
+            envs.iter().for_each(|(k, v)| {
+                if let Some(v_str) = v.as_str() {
+                    cmd.env(k, v_str);
+                }
+            });
+
+            let process = TokioChildProcess::new(cmd);
+            match process {
+                Ok(p) => {
+                    let service = ().serve(p).await;
+
+                    match service {
+                        Ok(running_service) => {
                             let server_info = running_service.peer_info();
                             log::trace!("Connected to server: {server_info:#?}");
-                            (
-                                server_info.server_info.name.clone(),
-                                server_info.server_info.version.clone(),
-                            )
-                        };
 
-                        // Now move the service into the HashMap
-                        servers.lock().await.insert(name.clone(), running_service);
-                        log::info!("Server {name} started successfully.");
-
-                        // Emit event to the frontend
-                        let event = format!("mcp-connected");
-                        let payload = serde_json::json!({
-                            "name": server_name,
-                            "version": server_version,
-                        });
-                        app.emit(&event, payload)
-                            .map_err(|e| format!("Failed to emit event: {}", e))?;
-                    }
-                    Err(e) => {
-                        return Err(format!("Failed to start MCP server {name}: {e}"));
+                            // Now move the service into the HashMap
+                            servers.lock().await.insert(name.clone(), running_service);
+                        }
+                        Err(e) => {
+                            return Err(format!("Failed to start MCP server {name}: {e}"));
+                        }
                     }
                 }
-            }
-            Err(e) => {
-                log::error!("Failed to run command {name}: {e}");
-                return Err(format!("Failed to run command {name}: {e}"));
+                Err(e) => {
+                    log::error!("Failed to run command {name}: {e}");
+                    return Err(format!("Failed to run command {name}: {e}"));
+                }
             }
         }
     }
@@ -377,12 +401,10 @@ pub async fn call_tool(
                 });
 
                 return match timeout(MCP_TOOL_CALL_TIMEOUT, tool_call).await {
-                    Ok(result) => {
-                        match result {
-                            Ok(ok_result) => Ok(ok_result),
-                            Err(e) => Err(e.to_string()),
-                        }
-                    }
+                    Ok(result) => match result {
+                        Ok(ok_result) => Ok(ok_result),
+                        Err(e) => Err(e.to_string()),
+                    },
                     Err(_) => Err(format!(
                         "Tool call '{}' timed out after {} seconds",
                         tool_name,
