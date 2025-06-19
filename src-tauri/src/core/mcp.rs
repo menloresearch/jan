@@ -2,6 +2,7 @@ use rmcp::model::{
     CallToolRequestParam, CallToolResult, ClientCapabilities, ClientInfo, Implementation, Tool,
 };
 use rmcp::transport::streamable_http_client::StreamableHttpClientTransportConfig;
+use rmcp::ServiceError;
 use rmcp::{
     service::RunningService, transport::StreamableHttpClientTransport,
     transport::TokioChildProcess, RoleClient, ServiceExt,
@@ -13,7 +14,27 @@ use tauri::{AppHandle, Emitter, Runtime, State};
 use tauri_plugin_http::reqwest;
 use tokio::{process::Command, sync::Mutex, time::timeout};
 
+use crate::core::state::{RunningServiceEnum, SharedMcpServers};
+
 use super::{cmd::get_jan_data_folder_path, state::AppState};
+
+impl RunningServiceEnum {
+    pub async fn list_all_tools(&self) -> Result<Vec<Tool>, ServiceError> {
+        match self {
+            Self::NoInit(s) => s.list_all_tools().await,
+            Self::WithInit(s) => s.list_all_tools().await,
+        }
+    }
+    pub async fn call_tool(
+        &self,
+        params: CallToolRequestParam,
+    ) -> Result<CallToolResult, ServiceError> {
+        match self {
+            Self::NoInit(s) => s.call_tool(params).await,
+            Self::WithInit(s) => s.call_tool(params).await,
+        }
+    }
+}
 
 const DEFAULT_MCP_CONFIG: &str = r#"{
   "mcpServers": {
@@ -69,7 +90,7 @@ const MCP_TOOL_CALL_TIMEOUT: Duration = Duration::from_secs(30);
 /// * `Err(String)` if there was an error reading config or starting servers
 pub async fn run_mcp_commands<R: Runtime>(
     app: &AppHandle<R>,
-    servers_state: Arc<Mutex<HashMap<String, RunningService<RoleClient, ()>>>>,
+    servers_state: SharedMcpServers,
 ) -> Result<(), String> {
     let app_path = get_jan_data_folder_path(app.clone());
     let app_path_str = app_path.to_str().unwrap().to_string();
@@ -124,14 +145,13 @@ pub async fn activate_mcp_server<R: Runtime>(
     name: String,
     config: Value,
 ) -> Result<(), String> {
-    let servers: Arc<Mutex<HashMap<String, RunningService<RoleClient, ()>>>> =
-        state.mcp_servers.clone();
+    let servers: SharedMcpServers = state.mcp_servers.clone();
     start_mcp_server(app, servers, name, config).await
 }
 
 async fn start_mcp_server<R: Runtime>(
     app: tauri::AppHandle<R>,
-    servers: Arc<Mutex<HashMap<String, RunningService<RoleClient, ()>>>>,
+    servers: SharedMcpServers,
     name: String,
     config: Value,
 ) -> Result<(), String> {
@@ -237,7 +257,10 @@ async fn start_mcp_server<R: Runtime>(
                             log::trace!("Connected to server: {server_info:#?}");
 
                             // Now move the service into the HashMap
-                            servers.lock().await.insert(name.clone(), running_service);
+                            servers
+                                .lock()
+                                .await
+                                .insert(name.clone(), RunningServiceEnum::NoInit(running_service));
                         }
                         Err(e) => {
                             return Err(format!("Failed to start MCP server {name}: {e}"));
@@ -260,7 +283,16 @@ pub async fn deactivate_mcp_server(state: State<'_, AppState>, name: String) -> 
     let mut servers_map = servers.lock().await;
 
     if let Some(service) = servers_map.remove(&name) {
-        service.cancel().await.map_err(|e| e.to_string())?;
+        match service {
+            RunningServiceEnum::NoInit(service) => {
+                log::info!("Stopping server {name}...");
+                service.cancel().await.map_err(|e| e.to_string())?;
+            }
+            RunningServiceEnum::WithInit(service) => {
+                log::info!("Stopping server {name} with initialization...");
+                service.cancel().await.map_err(|e| e.to_string())?;
+            }
+        }
         log::info!("Server {name} stopped successfully.");
     } else {
         return Err(format!("Server {} not found", name));
@@ -301,14 +333,21 @@ pub async fn restart_mcp_servers(app: AppHandle, state: State<'_, AppState>) -> 
         .map_err(|e| format!("Failed to emit event: {}", e))
 }
 
-pub async fn stop_mcp_servers(
-    servers_state: Arc<Mutex<HashMap<String, RunningService<RoleClient, ()>>>>,
-) -> Result<(), String> {
+pub async fn stop_mcp_servers(servers_state: SharedMcpServers) -> Result<(), String> {
     let mut servers_map = servers_state.lock().await;
     let keys: Vec<String> = servers_map.keys().cloned().collect();
     for key in keys {
         if let Some(service) = servers_map.remove(&key) {
-            service.cancel().await.map_err(|e| e.to_string())?;
+            match service {
+                RunningServiceEnum::NoInit(service) => {
+                    log::info!("Stopping server {key}...");
+                    service.cancel().await.map_err(|e| e.to_string())?;
+                }
+                RunningServiceEnum::WithInit(service) => {
+                    log::info!("Stopping server {key} with initialization...");
+                    service.cancel().await.map_err(|e| e.to_string())?;
+                }
+            }
         }
     }
     drop(servers_map); // Release the lock after stopping
@@ -344,7 +383,6 @@ pub async fn get_tools(state: State<'_, AppState>) -> Result<Vec<Tool>, String> 
     let mut all_tools: Vec<Tool> = Vec::new();
 
     for (_, service) in servers.iter() {
-        // List tools with timeout
         let tools_future = service.list_all_tools();
         let tools = match timeout(MCP_TOOL_CALL_TIMEOUT, tools_future).await {
             Ok(result) => result.map_err(|e| e.to_string())?,
@@ -360,6 +398,7 @@ pub async fn get_tools(state: State<'_, AppState>) -> Result<Vec<Tool>, String> 
         for tool in tools {
             all_tools.push(tool);
         }
+        // List tools with timeout
     }
 
     Ok(all_tools)
@@ -464,8 +503,7 @@ mod tests {
             .expect("Failed to write to config file");
 
         // Call the run_mcp_commands function
-        let servers_state: Arc<Mutex<HashMap<String, RunningService<RoleClient, ()>>>> =
-            Arc::new(Mutex::new(HashMap::new()));
+        let servers_state: SharedMcpServers = Arc::new(Mutex::new(HashMap::new()));
         let result = run_mcp_commands(app.handle(), servers_state).await;
 
         // Assert that the function returns Ok(())

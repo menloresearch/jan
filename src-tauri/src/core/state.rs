@@ -2,17 +2,24 @@ use std::{collections::HashMap, sync::Arc};
 
 use crate::core::utils::download::DownloadManagerState;
 use rand::{distributions::Alphanumeric, Rng};
-use rmcp::{service::RunningService, RoleClient};
+use rmcp::model::InitializeRequestParam;
+use rmcp::service::RunningService;
+use rmcp::RoleClient;
 use tokio::sync::Mutex;
 use tokio::task::JoinHandle;
 
 /// Server handle type for managing the proxy server lifecycle
 pub type ServerHandle = JoinHandle<Result<(), Box<dyn std::error::Error + Send + Sync>>>;
+pub enum RunningServiceEnum {
+    NoInit(RunningService<RoleClient, ()>),
+    WithInit(RunningService<RoleClient, InitializeRequestParam>),
+}
+pub type SharedMcpServers = Arc<Mutex<HashMap<String, RunningServiceEnum>>>;
 
 #[derive(Default)]
 pub struct AppState {
     pub app_token: Option<String>,
-    pub mcp_servers: Arc<Mutex<HashMap<String, RunningService<RoleClient, ()>>>>,
+    pub mcp_servers: SharedMcpServers,
     pub download_manager: Arc<Mutex<DownloadManagerState>>,
     pub cortex_restart_count: Arc<Mutex<u32>>,
     pub cortex_killed_intentionally: Arc<Mutex<bool>>,
