@@ -12,6 +12,7 @@ const LANGUAGES = [
   { value: 'en', label: 'English' },
   { value: 'id', label: 'Bahasa' },
   { value: 'vn', label: 'Tiếng Việt' },
+  { value: 'ja', label: '日本語'}
 ]
 
 export default function LanguageSwitcher() {
