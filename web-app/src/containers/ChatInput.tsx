@@ -74,6 +74,7 @@ const ChatInput = ({ model, className, initialMessage }: ChatInputProps) => {
     }>
   >([])
   const [connectedServers, setConnectedServers] = useState<string[]>([])
+  const [webSearchEnabled, setWebSearchEnabled] = useState(true)
 
   // Check for connected MCP servers
   useEffect(() => {
@@ -427,6 +428,34 @@ const ChatInput = ({ model, className, initialMessage }: ChatInputProps) => {
                     onChange={handleFileChange}
                   />
                 </div>
+
+                {selectedModel?.id.toLowerCase().includes('jan') && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div
+                          className={cn(
+                            'h-6 p-1 flex items-center justify-center rounded-sm hover:bg-main-view-fg/10 transition-all duration-200 ease-in-out gap-1 cursor-pointer',
+                            webSearchEnabled && 'bg-main-view-fg/10'
+                          )}
+                          onClick={() => setWebSearchEnabled(!webSearchEnabled)}
+                        >
+                          <IconWorld
+                            size={18}
+                            className={cn(
+                              'text-main-view-fg/50',
+                              webSearchEnabled && 'text-accent'
+                            )}
+                          />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Web Search</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+
                 {/* Microphone - always available - Temp Hide */}
                 {/* <div className="h-6 p-1 flex items-center justify-center rounded-sm hover:bg-main-view-fg/10 transition-all duration-200 ease-in-out gap-1">
                 <IconMicrophone size={18} className="text-main-view-fg/50" />

@@ -9,6 +9,8 @@ export function getProviderLogo(provider: string) {
   switch (provider) {
     case 'llama.cpp':
       return '/images/model-provider/llamacpp.svg'
+    case 'jan':
+      return '/images/model-provider/jan.svg'
     case 'anthropic':
       return '/images/model-provider/anthropic.svg'
     case 'mistral':

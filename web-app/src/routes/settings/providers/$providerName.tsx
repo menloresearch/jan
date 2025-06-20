@@ -252,105 +252,117 @@ function ProviderDetail() {
                 )}
               >
                 {/* Settings */}
-                <Card>
-                  {provider?.settings.map((setting, settingIndex) => {
-                    // Use the DynamicController component
-                    const actionComponent = (
-                      <div className="mt-2">
-                        <DynamicControllerSetting
-                          controllerType={setting.controller_type}
-                          controllerProps={setting.controller_props}
-                          className={cn(
-                            setting.key === 'api-key' &&
-                              'third-step-setup-remote-provider'
-                          )}
-                          onChange={(newValue) => {
-                            if (provider) {
-                              const newSettings = [...provider.settings]
-                              // Handle different value types by forcing the type
-                              // Use type assertion to bypass type checking
+                {provider &&
+                !provider.provider.toLowerCase().includes('jan') ? (
+                  <Card>
+                    {provider?.settings.map((setting, settingIndex) => {
+                      // Use the DynamicController component
+                      const actionComponent = (
+                        <div className="mt-2">
+                          <DynamicControllerSetting
+                            controllerType={setting.controller_type}
+                            controllerProps={setting.controller_props}
+                            className={cn(
+                              setting.key === 'api-key' &&
+                                'third-step-setup-remote-provider'
+                            )}
+                            onChange={(newValue) => {
+                              if (provider) {
+                                const newSettings = [...provider.settings]
+                                // Handle different value types by forcing the type
+                                // Use type assertion to bypass type checking
 
-                              ;(
-                                newSettings[settingIndex].controller_props as {
-                                  value: string | boolean | number
+                                ;(
+                                  newSettings[settingIndex]
+                                    .controller_props as {
+                                    value: string | boolean | number
+                                  }
+                                ).value = newValue
+
+                                // Create update object with updated settings
+                                const updateObj: Partial<ModelProvider> = {
+                                  settings: newSettings,
                                 }
-                              ).value = newValue
-
-                              // Create update object with updated settings
-                              const updateObj: Partial<ModelProvider> = {
-                                settings: newSettings,
-                              }
-                              // Check if this is an API key or base URL setting and update the corresponding top-level field
-                              const settingKey = setting.key
-                              if (
-                                settingKey === 'api-key' &&
-                                typeof newValue === 'string'
-                              ) {
-                                updateObj.api_key = newValue
-                              } else if (
-                                settingKey === 'base-url' &&
-                                typeof newValue === 'string'
-                              ) {
-                                updateObj.base_url = newValue
-                              }
-                              updateSettings(
-                                providerName,
-                                updateObj.settings ?? []
-                              )
-                              updateProvider(providerName, {
-                                ...provider,
-                                ...updateObj,
-                              })
-
-                              stopAllModels()
-                            }
-                          }}
-                        />
-                      </div>
-                    )
-
-                    return (
-                      <CardItem
-                        key={settingIndex}
-                        title={setting.title}
-                        column={
-                          setting.controller_type === 'input' &&
-                          setting.controller_props.type !== 'number'
-                            ? true
-                            : false
-                        }
-                        description={
-                          <RenderMarkdown
-                            className="![>p]:text-main-view-fg/70 select-none"
-                            content={setting.description}
-                            components={{
-                              // Make links open in a new tab
-                              a: ({ ...props }) => {
-                                return (
-                                  <a
-                                    {...props}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className={cn(
-                                      setting.key === 'api-key' &&
-                                        'second-step-setup-remote-provider'
-                                    )}
-                                  />
+                                // Check if this is an API key or base URL setting and update the corresponding top-level field
+                                const settingKey = setting.key
+                                if (
+                                  settingKey === 'api-key' &&
+                                  typeof newValue === 'string'
+                                ) {
+                                  updateObj.api_key = newValue
+                                } else if (
+                                  settingKey === 'base-url' &&
+                                  typeof newValue === 'string'
+                                ) {
+                                  updateObj.base_url = newValue
+                                }
+                                updateSettings(
+                                  providerName,
+                                  updateObj.settings ?? []
                                 )
-                              },
-                              p: ({ ...props }) => (
-                                <p {...props} className="!mb-0" />
-                              ),
+                                updateProvider(providerName, {
+                                  ...provider,
+                                  ...updateObj,
+                                })
+
+                                stopAllModels()
+                              }
                             }}
                           />
-                        }
-                        actions={actionComponent}
-                      />
-                    )
-                  })}
+                        </div>
+                      )
 
-                  <DeleteProvider provider={provider} />
-                </Card>
+                      return (
+                        <CardItem
+                          key={settingIndex}
+                          title={setting.title}
+                          column={
+                            setting.controller_type === 'input' &&
+                            setting.controller_props.type !== 'number'
+                              ? true
+                              : false
+                          }
+                          description={
+                            <RenderMarkdown
+                              className="![>p]:text-main-view-fg/70 select-none"
+                              content={setting.description}
+                              components={{
+                                // Make links open in a new tab
+                                a: ({ ...props }) => {
+                                  return (
+                                    <a
+                                      {...props}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className={cn(
+                                        setting.key === 'api-key' &&
+                                          'second-step-setup-remote-provider'
+                                      )}
+                                    />
+                                  )
+                                },
+                                p: ({ ...props }) => (
+                                  <p {...props} className="!mb-0" />
+                                ),
+                              }}
+                            />
+                          }
+                          actions={actionComponent}
+                        />
+                      )
+                    })}
+
+                    <DeleteProvider provider={provider} />
+                  </Card>
+                ) : (
+                  <Card>
+                    <CardItem
+                      title="Jan Provider"
+                      description="This is Jan's own AI provider service, similar to OpenAI, Anthropic, or other AI providers. 
+                      Jan offers its own AI models and services that you can use directly through this interface."
+                    />
+                  </Card>
+                )}
 
                 {/* Models */}
                 <Card

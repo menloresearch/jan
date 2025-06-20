@@ -28,6 +28,39 @@ export const predefinedProviders = [
   {
     active: true,
     api_key: '',
+    base_url: 'https://nano.jan.ai/v1',
+    provider: 'jan',
+    settings: [
+      {
+        key: 'api-key',
+        title: 'API Key',
+        description:
+          "The OpenAI API uses API keys for authentication. Visit your [API Keys](https://platform.openai.com/account/api-keys) page to retrieve the API key you'll use in your requests.",
+        controller_type: 'input',
+        controller_props: {
+          placeholder: 'Insert API Key',
+          value: '',
+          type: 'password',
+          input_actions: ['unobscure', 'copy'],
+        },
+      },
+      {
+        key: 'base-url',
+        title: 'Base URL',
+        description:
+          'The base endpoint to use. See the [OpenAI API documentation](https://platform.openai.com/docs/api-reference/chat/create) for more information.',
+        controller_type: 'input',
+        controller_props: {
+          placeholder: 'https://nano.jan.ai/v1',
+          value: 'https://nano.jan.ai/v1',
+        },
+      },
+    ],
+    models: [{ id: 'Jan-nano' }],
+  },
+  {
+    active: true,
+    api_key: '',
     base_url: 'https://api.openai.com/v1',
     explore_models_url: 'https://platform.openai.com/docs/models',
     provider: 'openai',
