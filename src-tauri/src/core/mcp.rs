@@ -11,28 +11,23 @@ use super::{cmd::get_jan_data_folder_path, state::AppState};
 /// Helper function to wrap commands on Windows to prevent console windows
 #[cfg(target_os = "windows")]
 fn wrap_command_for_windows(program: &str, args: &[&str]) -> Command {
-    let mut cmd = Command::new("cmd");
-    cmd.arg("/C");
-    cmd.arg("start");
-    cmd.arg("/B");
-    // Helper function to escape arguments for Windows command line
-    fn escape_arg(arg: &str) -> String {
-        if arg.contains(' ') || arg.contains('"') || arg.contains('\t') || arg.contains('\n') {
-            // Escape quotes and wrap in quotes
-            let escaped = arg.replace('"', "\\\"");
-            format!("\"{}\"", escaped)
-        } else {
-            arg.to_string()
-        }
+    let mut cmd = Command::new("powershell.exe");
+    cmd.arg("-WindowStyle");
+    cmd.arg("Hidden");
+    cmd.arg("-NoProfile");
+    cmd.arg("-NonInteractive");
+    cmd.arg("-Command");
+    
+    // Build PowerShell command with proper escaping
+    let mut ps_command = format!("& '{}'", program.replace("'", "''"));
+    for arg in args {
+        ps_command.push_str(&format!(" '{}'", arg.replace("'", "''")));
     }
     
-    // Build the command with properly escaped arguments
-    let mut full_command = escape_arg(program);
-    for arg in args {
-        full_command.push(' ');
-        full_command.push_str(&escape_arg(arg));
-    }
-    cmd.arg(full_command);
+    // Log before moving ps_command
+    log::debug!("powershell.exe -WindowStyle Hidden -Command \"{}\"", ps_command);
+    
+    cmd.arg(ps_command);
     
     // Apply creation flags to prevent console window
     const CREATE_NO_WINDOW: u32 = 0x08000000;
@@ -40,8 +35,6 @@ fn wrap_command_for_windows(program: &str, args: &[&str]) -> Command {
     const CREATE_NEW_PROCESS_GROUP: u32 = 0x00000200;
     let creation_flags = CREATE_NO_WINDOW | DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP;
     cmd.creation_flags(creation_flags);
-    
-    log::debug!("Wrapping command with cmd /C start /B: {} {:?}", program, args);
     cmd
 }
 
@@ -80,14 +73,14 @@ fn setup_command(
         "npx" => {
             let mut cache_dir = app_path.to_path_buf();
             cache_dir.push(".npx");
-            let bun_x_path = format!("{}/bun", bin_path.display());
+            let bun_x_path = bin_path.join("bun").to_string_lossy().to_string();
             env_vars.push(("BUN_INSTALL".to_string(), cache_dir.to_str().unwrap().to_string()));
             create_command_with_args(&bun_x_path, &["x"], args)
         }
         "uvx" => {
             let mut cache_dir = app_path.to_path_buf();
             cache_dir.push(".uvx");
-            let uv_path = format!("{}/uv", bin_path.display());
+            let uv_path = bin_path.join("uv").to_string_lossy().to_string();
             env_vars.push(("UV_CACHE_DIR".to_string(), cache_dir.to_str().unwrap().to_string()));
             create_command_with_args(&uv_path, &["tool", "run"], args)
         }
