@@ -13,7 +13,7 @@ use super::{cmd::get_jan_data_folder_path, state::AppState};
 fn wrap_command_for_windows(program: &str, args: &[&str]) -> Command {
     let mut cmd = Command::new("powershell.exe");
     cmd.arg("-WindowStyle");
-    cmd.arg("Minimized");  // Try Minimized first, then hide immediately
+    cmd.arg("Hidden");
     cmd.arg("-NoProfile");
     cmd.arg("-NonInteractive");
     cmd.arg("-NoLogo");
@@ -21,23 +21,29 @@ fn wrap_command_for_windows(program: &str, args: &[&str]) -> Command {
     cmd.arg("Bypass");
     cmd.arg("-Command");
     
-    // Build PowerShell command that immediately hides itself and runs the target
-    let mut ps_command = format!("Add-Type -Name Window -Namespace Console -MemberDefinition '[DllImport(\"Kernel32.dll\")] public static extern IntPtr GetConsoleWindow(); [DllImport(\"user32.dll\")] public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow);'; $consolePtr = [Console.Window]::GetConsoleWindow(); [Console.Window]::ShowWindow($consolePtr, 0); & '{}'", program.replace("'", "''"));
+    // Build simple PowerShell command without Windows API calls
+    let mut ps_command = format!("& '{}'", program.replace("'", "''"));
     for arg in args {
         ps_command.push_str(&format!(" '{}'", arg.replace("'", "''")));
     }
     
     // Log before moving ps_command
-    log::debug!("powershell.exe -WindowStyle Minimized -Command \"{}\"", ps_command);
-    
+    log::debug!("powershell.exe -WindowStyle Hidden -NoProfile -NonInteractive -NoLogo -ExecutionPolicy Bypass -Command \"{}\"", ps_command);
     cmd.arg(ps_command);
     
     // Apply creation flags to prevent console window
+    // Note: DETACHED_PROCESS conflicts with CREATE_NEW_PROCESS_GROUP, so we exclude it
     use std::os::windows::process::CommandExt;
     const CREATE_NO_WINDOW: u32 = 0x08000000;
-    const DETACHED_PROCESS: u32 = 0x00000008;
     const CREATE_NEW_PROCESS_GROUP: u32 = 0x00000200;
-    let creation_flags = CREATE_NO_WINDOW | DETACHED_PROCESS | CREATE_NEW_PROCESS_GROUP;
+    const CREATE_BREAKAWAY_FROM_JOB: u32 = 0x01000000;
+    
+    // Recommended combination: CREATE_NO_WINDOW prevents console window creation
+    // CREATE_NEW_PROCESS_GROUP isolates the process group
+    // CREATE_BREAKAWAY_FROM_JOB allows breaking away from job objects
+    let creation_flags = CREATE_NO_WINDOW | CREATE_NEW_PROCESS_GROUP | CREATE_BREAKAWAY_FROM_JOB;
+    
+    log::debug!("Using creation flags: 0x{:08X}", creation_flags);
     cmd.creation_flags(creation_flags);
     cmd
 }
