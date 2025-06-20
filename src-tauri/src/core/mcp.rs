@@ -13,23 +13,27 @@ use super::{cmd::get_jan_data_folder_path, state::AppState};
 fn wrap_command_for_windows(program: &str, args: &[&str]) -> Command {
     let mut cmd = Command::new("powershell.exe");
     cmd.arg("-WindowStyle");
-    cmd.arg("Hidden");
+    cmd.arg("Minimized");  // Try Minimized first, then hide immediately
     cmd.arg("-NoProfile");
     cmd.arg("-NonInteractive");
+    cmd.arg("-NoLogo");
+    cmd.arg("-ExecutionPolicy");
+    cmd.arg("Bypass");
     cmd.arg("-Command");
     
-    // Build PowerShell command with proper escaping
-    let mut ps_command = format!("& '{}'", program.replace("'", "''"));
+    // Build PowerShell command that immediately hides itself and runs the target
+    let mut ps_command = format!("Add-Type -Name Window -Namespace Console -MemberDefinition '[DllImport(\"Kernel32.dll\")] public static extern IntPtr GetConsoleWindow(); [DllImport(\"user32.dll\")] public static extern bool ShowWindow(IntPtr hWnd, Int32 nCmdShow);'; $consolePtr = [Console.Window]::GetConsoleWindow(); [Console.Window]::ShowWindow($consolePtr, 0); & '{}'", program.replace("'", "''"));
     for arg in args {
         ps_command.push_str(&format!(" '{}'", arg.replace("'", "''")));
     }
     
     // Log before moving ps_command
-    log::debug!("powershell.exe -WindowStyle Hidden -Command \"{}\"", ps_command);
+    log::debug!("powershell.exe -WindowStyle Minimized -Command \"{}\"", ps_command);
     
     cmd.arg(ps_command);
     
     // Apply creation flags to prevent console window
+    use std::os::windows::process::CommandExt;
     const CREATE_NO_WINDOW: u32 = 0x08000000;
     const DETACHED_PROCESS: u32 = 0x00000008;
     const CREATE_NEW_PROCESS_GROUP: u32 = 0x00000200;
