@@ -1,0 +1,227 @@
+---
+title: Jan Data Folder
+description: A guide to Jan's data structure.
+sidebar_position: 2
+keywords:
+  [
+    Jan,
+    Customizable Intelligence, LLM,
+    local AI,
+    privacy focus,
+    free and open source,
+    private and offline,
+    conversational AI,
+    no-subscription fee,
+    large language models,
+    quickstart,
+    getting started,
+    using AI model,
+  ]
+---
+
+import { Tabs, TabItem, Aside, Steps } from '@astrojs/starlight/components'
+import { Settings, FolderOpen } from 'lucide-react'
+
+
+# Jan Data Folder
+Jan stores your data locally in JSON format. Your data is yours alone.
+
+## Open Jan Data Folder
+
+Via Jan:
+1. Settings (<Settings width={16} height={16} style={{display:"inline"}}/>) > Advanced Settings
+2. Click <FolderOpen width={16} height={16} style={{display:"inline"}}/>
+
+<br/>
+![Open Jan Data Folder](./_assets/settings-11.png)
+<br/>
+
+Via Terminal:
+
+```bash
+# Windows
+cd %APPDATA%/Jan/data
+
+# Mac
+cd ~/Library/Application\ Support/Jan/data
+
+# Linux
+cd $XDG_CONFIG_HOME/Jan/data  # Custom install
+cd ~/.config/Jan/data         # Default install
+```
+
+## Directory Structure
+
+<Aside type="tip">
+Root directory: `~/jan`
+</Aside>
+```sh
+/assistants
+  /jan
+    assistant.json
+/extensions
+  extensions.json
+  /@janhq
+    /extension_A
+     package.json
+/logs
+  /app.txt
+/models
+  /model_A
+    model.yaml
+  model_A.yaml
+/settings
+  settings.json
+  /@janhq
+    /extension_A_Settings
+     settings.json
+/themes
+  /dark-dimmed
+  /joi-dark
+  /joi-light
+  /night-blue
+/threads
+  /jan_thread_A
+   messages.jsonl
+   thread.json
+  messages.jsonl
+```
+
+### `assistants/`
+Where AI personalities live. The default one (`/assistants/jan/`):
+
+```json
+{
+  "avatar": "",
+  "id": "jan",
+  "object": "assistant",
+  "created_at": 1715132389207,
+  "name": "Jan",
+  "description": "A default assistant that can use all downloaded models",
+  "model": "*",
+  "instructions": ""
+}
+```
+
+Parameters:
+
+| Parameter               | Description                                                  | Type    | Default |
+|------------------------|--------------------------------------------------------------|---------|---------|
+| id                     | Assistant identifier                                         | string  | jan     |
+| avatar                 | Assistant image                                              | string  | None    |
+| object                 | OpenAI API compatibility marker                              | string  | None    |
+| created_at             | Creation timestamp                                          | string  | None    |
+| name                   | Display name                                                | string  | Jan     |
+| description            | Role description                                            | string  | Default |
+| model                  | Allowed models (* = all)                                    | string  | *       |
+| instructions           | Default thread instructions                                 | string  | None    |
+| file_ids              | OpenAI compatibility field                                  | string  | None    |
+| tools                  | Available tools (retrieval only currently)                  | array   | retrieval|
+| type                   | Tool type                                                   | string  | retrieval|
+| enabled               | Tool status                                                 | boolean | true    |
+| useTimeWeightedRetriever| Time-weighted retrieval toggle                            | boolean | false   |
+| settings              | Tool configuration                                          | object  | None    |
+| top_k                 | Max retrieval results                                       | number  | 2       |
+| chunk_size            | Text chunk size                                             | number  | 1024    |
+| chunk_overlap         | Chunk overlap amount                                        | number  | 64      |
+| retrieval_template    | Response format template                                    | string  | None    |
+
+### `extensions/`
+Add-on central. Organization extensions live in `@janhq/`, solo ones in root.
+
+### `logs/`
+Debugging headquarters (`/logs/app.txt`):
+- **[APP]**: Core logs
+- **[SERVER]**: API drama
+- **[SPECS]**: Hardware confessions
+
+### `models/`
+The silicon brain collection. Each model has its own `model.json`.
+
+<Aside type="tip">
+Full parameters: [here](/docs/models/model-parameters)
+</Aside>
+
+### `settings/`
+Control panel. Extension settings in `/settings/@janhq/`:
+
+| Parameter       | Description                                        |
+|----------------|----------------------------------------------------|
+| key            | Setting identifier                                 |
+| title          | Display name                                      |
+| description    | Setting explanation                               |
+| controllerType | UI component type                                 |
+| controllerProps| Component properties                              |
+| extensionName  | Parent extension link                             |
+
+GPU settings (`settings.json`):
+
+| Parameter             | Description                                |
+|----------------------|--------------------------------------------|
+| notify               | Notification status                        |
+| run_mode             | Operating mode                             |
+| nvidia_driver.exist  | NVIDIA driver presence                     |
+| nvidia_driver.version| Driver version                             |
+| cuda.exist          | CUDA availability                          |
+| cuda.version        | CUDA version                               |
+| gpus[0].id          | GPU identifier                             |
+| gpus[0].vram        | GPU memory (MB)                            |
+| gpus[0].name        | GPU model                                  |
+| gpus[0].arch        | GPU architecture                           |
+| gpu_highest_vram    | Most capable GPU                           |
+| gpus_in_use         | Active GPUs                                |
+| is_initial          | First run flag                             |
+| vulkan              | Vulkan support                             |
+
+### `themes/`
+Visual wardrobe. Each theme's `theme.json`:
+
+| Parameter         | Description                               |
+|------------------|-------------------------------------------|
+| id               | Theme identifier                          |
+| displayName      | UI name                                   |
+| reduceTransparent| Transparency control                      |
+| nativeTheme      | OS theme sync                             |
+| variables        | Component settings                        |
+
+### `threads/`
+Chat archive. Each thread (`/threads/jan_unixstamp/`) contains:
+
+- `messages.jsonl`:
+```json
+    {
+      "id":"01J6Y6FH8PFTHQB5PNJTHEN27C",
+      "thread_id":"jan_1725437954",
+      "type":"Thread",
+      "role":"assistant",
+      "content":
+      [
+        {
+          "type": "text",
+          "text": {
+            "value": "Hello! Is there something I can help you with or would you like to chat?",
+            "annotations": []
+          }
+        }
+      ],
+      "status": "ready",
+      "created": 1725442802966,
+      "updated": 1725442802966,
+      "object": "thread.message"
+    }
+```
+
+- `thread.json`:
+
+| Parameter   | Description                                    |
+|------------|------------------------------------------------|
+| id         | Thread identifier                              |
+| object     | OpenAI compatibility marker                    |
+| title      | Thread name                                    |
+| assistants | Assistant configuration clone                  |
+| model      | Active model settings                          |
+| metadata   | Additional thread data                         |
+
+## Delete Jan Data
+Uninstall guides: [Mac](/docs/desktop/mac#step-2-clean-up-data-optional),
+[Windows](/docs/desktop/windows#step-2-handle-jan-data), or [Linux](docs/desktop/linux#uninstall-jan).

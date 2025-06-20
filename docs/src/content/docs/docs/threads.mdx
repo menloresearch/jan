@@ -1,0 +1,86 @@
+---
+title: Start Chatting
+description: Manage your interaction with AI models locally.
+keywords:
+  [
+    Jan,
+    Customizable Intelligence, LLM,
+    local AI,
+    privacy focus,
+    free and open source,
+    private and offline,
+    conversational AI,
+    no-subscription fee,
+    large language models,
+    threads,
+    chat history,
+    thread history,
+  ]
+---
+
+import { Aside } from '@astrojs/starlight/components'
+import { SquarePen, Pencil, Ellipsis, Paintbrush, Trash2 } from 'lucide-react'
+
+
+# Chat with a Model
+
+Jan organizes your conversations with a model into chats or threads, making it easy to track and revisit
+your interactions. This guide will help you effectively manage your chat history.
+
+## Creating New Conversation/Thread
+1. Click **New Chat** (<SquarePen width={16} height={16} style={{display:"inline"}}/>) icon on the
+bottom left of Jan.
+2. Select your preferred model in **Model Selector** in input field & start chatting.
+
+<br/>
+![Create New Thread](./_assets/threads-new-chat.png)
+
+## View Your Chat History
+
+1. Once you open Jan, the default screen is **Chat**
+2. On the **left sidebar**, you can:
+  - View your **Conversations** and scroll through your history
+  - Click any chat to open the full conversation
+
+## Favorites and Recents
+
+Jan helps you quickly access important and recent conversations with **Favorites** and **Recents**
+in the left sidebar:
+- **Favorites**: Pin threads you use often for instant access. Click the three dots icon on the right of the
+thread and a context menu will pop up with the favorite option for you to click on.
+- **Recents**: See your most recently accessed threads for quick navigation.
+
+<br/>
+![Favorites and Recents](./_assets/threads-favorites-and-recents.png)
+
+
+## Edit a Chat Title
+1. Navigate to the **Conversation** that you want to edit title on the sidebar to your left
+2. Hover on the conversation and click on **three dots** (<Ellipsis width={16} height={16} style={{display:"inline"}}/>) icon
+3. Click <Pencil width={16} height={16} style={{display:"inline"}}/> **Rename**
+4. Add new title & save
+
+<br/>
+![Context Menu](./_assets/threads-context-menu.png)
+
+## Delete Thread
+
+<Aside type="caution">
+There's no undo for chat deletion, so make sure you REALLY want to remove it permanently.
+</Aside>
+
+When you want to completely remove a thread:
+
+1. Navigate to the **Thread** that you want to delete in left sidebar
+2. Hover on the thread and click on **three dots** (<Ellipsis width={16} height={16} style={{display:"inline"}}/>) icon
+3. Click <Trash2 width={16} height={16} style={{display:"inline"}}/> **Delete**
+
+
+<br/>
+![Delete Thread](./_assets/threads-context-menu.png)
+
+### Delete all threads at once
+
+In case you need to remove all conversations at once:
+1. Hover on the `Recents` category and click on **three dots** (<Ellipsis width={16} height={16} style={{display:"inline"}}/>) icon
+2. Select <Trash2 width={16} height={16} style={{display:"inline"}}/> **Delete All**

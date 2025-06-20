@@ -1,0 +1,98 @@
+---
+title: Installation
+description: Jan is an open-source AI assistant and self-hosted AI platform - build and run AI on your own desktop or server.
+sidebar_position: 2
+keywords:
+  [
+    Jan,
+    Customizable Intelligence, LLM,
+    local AI,
+    privacy focus,
+    free and open source,
+    private and offline,
+    conversational AI,
+    no-subscription fee,
+    large language models,
+    quickstart,
+    getting started,
+    using AI model,
+    installation,
+  ]
+---
+
+import { Aside, Steps } from '@astrojs/starlight/components'
+import { Settings } from 'lucide-react'
+
+
+# Quickstart
+
+1. **Install Jan** - [Download Jan](/download), install on your system ([Mac](/docs/desktop/mac), [Windows](/docs/desktop/windows), [Linux](/docs/desktop/linux)), and launch the app
+2. **Download a Model** - Go to the Hub Tab, browse available models (GGUF format), select one that matches your hardware specs, and hit Download
+3. **Enable GPU Acceleration (Optional)** - For Windows/Linux users with compatible graphics cards, go to Settings > Hardware and toggle GPU acceleration ON
+4. **Customize Assistant Instructions** - Tailor how your model responds by setting up custom instructions in the [Assistant](/docs/assistants) section
+5. **Start Chatting** - Type your message in the input field and fine-tune your experience by adjusting [model parameters](/docs/model-parameters) and switching models as needed
+6. **Connect Cloud Models (Optional)** - Add API keys for OpenAI, Anthropic, Groq, or other providers in Settings > Model Providers to access cloud-based models
+
+
+## Getting Started Details
+
+### Installing Jan
+
+Once installed, you'll see Jan's interface with no pre-installed models. You can download and run local AI models or connect to cloud-based AI model providers if desired.
+
+![Default State](./_assets/jan_ui.png)
+
+### Downloading Models
+
+Jan offers various local AI models, from nimble lightweights to hefty powerhouses. You can find models in the Hub Tab or on [HuggingFace](https://huggingface.co/models).
+
+![Download a Model](./_assets/model-management-01.png)
+
+<Aside type="caution">
+Local models consume your computer's memory and processing power. Choose carefully based on your hardware specifications ([Mac](/docs/desktop/mac#minimum-requirements), [Windows](/docs/desktop/windows#compatibility), [Linux](/docs/desktop/linux#compatibility)).
+</Aside>
+
+**Note:** Some Hugging Face models require an access token. Enter yours in **Settings > Model Providers > Llama.cpp > Hugging Face Access Token** before importing.
+
+![Add HF Token](./_assets/hf_token.png)
+
+For alternative installation methods, see the [Model Management](/manage-models) section.
+
+### GPU Acceleration
+
+While your model downloads, you can supercharge your setup. On **Windows** or **Linux** with a compatible graphics card, you can dramatically boost performance with GPU acceleration.
+
+![Turn on GPU acceleration](./_assets/gpu_accl.png)
+
+<Aside type="tip">
+Install all required dependencies and drivers before enabling GPU acceleration. Check the **GPU Setup Guide** for [Windows](/docs/desktop/windows#gpu-acceleration) & [Linux](/docs/desktop/linux#gpu-acceleration).
+</Aside>
+
+### Assistant Instructions
+
+With your model ready to roll, you can tailor how it responds by tweaking instructions or model configurations in [Assistant](/docs/assistants).
+
+![Assistant Instruction](./_assets/assistant-dropdown.png)
+
+You can also go to the assistant tab to manage all of your personalized instructions. The cool thing about these is that you can use them no matter which model you choose.
+
+![Add an Assistant Instruction](./_assets/add_assistant.png)
+
+### Start Chatting
+
+Model downloaded? Instructions set? Time to chat. Type your message in the **input field** at the bottom to kickstart the conversation.
+
+Fine-tune your experience by:
+- Tweaking [model parameters](/docs/model-parameters) via the **Gear icon** next to your model or in **Assistant Settings**
+- Switching models for different tasks through the **model selector** in **Model** tab or **input field**
+- [Creating new threads](/docs/threads#creating-new-thread) with custom instructions and configurations
+
+![Chat with a Model](./_assets/model-parameters.png)
+
+### Cloud Models
+
+Jan plays nice with both open source and cloud models. Connect to OpenAI (GPT-4o, o1), Anthropic (Claude), Groq, Mistral, and others by adding your API keys in Settings > Model Providers.
+
+For detailed setup, check [Remote APIs](/docs/remote-models/openai).
+
+![Connect Remote APIs](./_assets/quick-start-03.png)

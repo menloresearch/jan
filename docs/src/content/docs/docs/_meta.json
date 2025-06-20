@@ -1,0 +1,42 @@
+{
+  "index": "Overview",
+  "how-to-separator": {
+    "title": "HOW TO",
+    "type": "separator"
+  },
+  "desktop": "Install 👋 Jan",
+  "threads": "Start Chatting",
+  "manage-models": "Manage Models",
+  "assistants": "Create Assistants",
+
+  "tutorials-separators": {
+    "title": "TUTORIALS",
+    "type": "separator"
+  },
+  "quickstart": "Quickstart",
+  "remote-models": "Connect to Remote Models",
+  "server-examples": "Provide AI to Tools",
+  "mcp": "Model Context Protocol",
+
+  "explanation-separator": {
+    "title": "EXPLANATION",
+    "type": "separator"
+  },
+  "llama-cpp": "Local AI Engine",
+  "api-server": "Server Overview",
+  "data-folder": "Jan Data Folder",
+  "privacy": "Privacy",
+  "privacy-policy": {
+    "type": "page",
+    "display": "hidden",
+    "title": "Privacy Policy"
+  },
+
+  "reference-separator": {
+    "title": "REFERENCE",
+    "type": "separator"
+  },
+  "settings": "Settings",
+  "troubleshooting": "Troubleshooting",
+  "model-parameters": "Model Parameters"
+}
