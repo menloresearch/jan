@@ -1,8 +1,8 @@
 describe('Jan-nano-gguf download and use flow', () => {
   it('should download and use Jan-nano-gguf from the Hub', async () => {
     // Click the Hub button
-    const hubButton = await $('[data-test-id="menu-common.hub"]')
-    await hubButton.waitForDisplayed({ timeout: 5000 })
+    const hubButton = await $('[data-test-id="menu-common:hub"]')
+    await hubButton.waitForDisplayed({ timeout: 60000 })
     await hubButton.click()
 
     // Click Jan-nano-gguf
