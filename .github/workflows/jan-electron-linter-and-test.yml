@@ -154,6 +154,10 @@ jobs:
         with:
           node-version: 20
 
+      - name: Install tauri-driver dependencies
+        run: |
+          cargo install tauri-driver --locked
+
       # Clean cache, continue on error
       - name: 'Cleanup cache'
         shell: powershell
@@ -196,6 +200,31 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 20
+
+      - name: Install tauri-driver dependencies
+        run: |
+          cargo install tauri-driver --locked
+
+      - name: Setup Edge
+        uses: browser-actions/setup-edge@v1
+        with:
+          edge-version: stable
+      - name: Print Edge version
+        run: (Get-Item (Get-Command msedge).Source).VersionInfo.ProductVersion
+
+      - name: Download Microsoft Edge WebDriver v131
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          $url = "https://msedgedriver.azureedge.net/131.0.2903.86/edgedriver_win64.zip"
+          Invoke-WebRequest -Uri $url -OutFile "edgedriver.zip"
+
+          Expand-Archive -Path "edgedriver.zip" -DestinationPath "edgedriver"
+
+          $targetDir = "$HOME\.cargo\bin"
+          New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
+
+          Copy-Item -Path "edgedriver\msedgedriver.exe" -Destination "$targetDir\msedgedriver.exe" -Force
 
       # Clean cache, continue on error
       - name: 'Cleanup cache'
@@ -240,6 +269,10 @@ jobs:
         with:
           node-version: 20
 
+      - name: Install tauri-driver dependencies
+        run: |
+          cargo install tauri-driver --locked
+
       # Clean cache, continue on error
       - name: 'Cleanup cache'
         shell: powershell
@@ -271,6 +304,15 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 20
+
+      - name: Install Tauri dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y libglib2.0-dev libatk1.0-dev libpango1.0-dev libgtk-3-dev libsoup-3.0-dev libwebkit2gtk-4.1-dev librsvg2-dev libfuse2 webkit2gtk-driver
+
+      - name: Install tauri-driver dependencies
+        run: |
+          cargo install tauri-driver --locked
 
       - name: 'Cleanup cache'
         continue-on-error: true
@@ -367,6 +409,15 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 20
+
+      - name: Install Tauri dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y libglib2.0-dev libatk1.0-dev libpango1.0-dev libgtk-3-dev libsoup-3.0-dev libwebkit2gtk-4.1-dev librsvg2-dev libfuse2 webkit2gtk-driver
+
+      - name: Install tauri-driver dependencies
+        run: |
+          cargo install tauri-driver --locked
 
       - name: 'Cleanup cache'
         continue-on-error: true
