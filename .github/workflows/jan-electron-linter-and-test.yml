@@ -226,10 +226,6 @@ jobs:
 
           Copy-Item -Path "edgedriver\msedgedriver.exe" -Destination "$targetDir\msedgedriver.exe" -Force
 
-      - name: Verify msedgedriver version
-        run: |
-          C:\msedgedriver.exe --version
-
       # Clean cache, continue on error
       - name: 'Cleanup cache'
         shell: powershell
