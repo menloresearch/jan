@@ -8,6 +8,100 @@ use tokio::{process::Command, sync::Mutex, time::timeout};
 
 use super::{cmd::get_jan_data_folder_path, state::AppState};
 
+/// Helper function to wrap commands on Windows to prevent console windows
+#[cfg(target_os = "windows")]
+fn wrap_command_for_windows(program: &str, args: &[&str]) -> Command {
+    let mut cmd = Command::new("powershell.exe");
+    cmd.arg("-WindowStyle");
+    cmd.arg("Hidden");
+    cmd.arg("-NoProfile");
+    cmd.arg("-NonInteractive");
+    cmd.arg("-NoLogo");
+    cmd.arg("-ExecutionPolicy");
+    cmd.arg("Bypass");
+    cmd.arg("-Command");
+    
+    // Build simple PowerShell command without Windows API calls
+    let mut ps_command = format!("& '{}'", program.replace("'", "''"));
+    for arg in args {
+        ps_command.push_str(&format!(" '{}'", arg.replace("'", "''")));
+    }
+    
+    // Log before moving ps_command
+    log::debug!("powershell.exe -WindowStyle Hidden -NoProfile -NonInteractive -NoLogo -ExecutionPolicy Bypass -Command \"{}\"", ps_command);
+    cmd.arg(ps_command);
+    
+    // Apply creation flags to prevent console window
+    // Note: DETACHED_PROCESS conflicts with CREATE_NEW_PROCESS_GROUP, so we exclude it
+    use std::os::windows::process::CommandExt;
+    const CREATE_NO_WINDOW: u32 = 0x08000000;
+    const CREATE_NEW_PROCESS_GROUP: u32 = 0x00000200;
+    const CREATE_BREAKAWAY_FROM_JOB: u32 = 0x01000000;
+    
+    // Recommended combination: CREATE_NO_WINDOW prevents console window creation
+    // CREATE_NEW_PROCESS_GROUP isolates the process group
+    // CREATE_BREAKAWAY_FROM_JOB allows breaking away from job objects
+    let creation_flags = CREATE_NO_WINDOW | CREATE_NEW_PROCESS_GROUP | CREATE_BREAKAWAY_FROM_JOB;
+    
+    log::debug!("Using creation flags: 0x{:08X}", creation_flags);
+    cmd.creation_flags(creation_flags);
+    cmd
+}
+
+/// Helper to create command with arguments for any platform
+fn create_command_with_args(program: &str, base_args: &[&str], config_args: &[Value]) -> Command {
+    #[cfg(target_os = "windows")]
+    {
+        let mut all_args = base_args.to_vec();
+        let config_str_args: Vec<&str> = config_args.iter().filter_map(Value::as_str).collect();
+        all_args.extend(config_str_args);
+        wrap_command_for_windows(program, &all_args)
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        let mut cmd = Command::new(program);
+        for arg in base_args {
+            cmd.arg(arg);
+        }
+        config_args.iter().filter_map(Value::as_str).for_each(|arg| {
+            cmd.arg(arg);
+        });
+        cmd
+    }
+}
+
+/// Unified command setup function to eliminate duplication
+fn setup_command(
+    command: &str,
+    args: &[Value],
+    app_path: &std::path::Path,
+    bin_path: &std::path::Path,
+) -> (Command, Vec<(String, String)>) {
+    let mut env_vars = Vec::new();
+    
+    let cmd = match command {
+        "npx" => {
+            let mut cache_dir = app_path.to_path_buf();
+            cache_dir.push(".npx");
+            let bun_x_path = bin_path.join("bun").to_string_lossy().to_string();
+            env_vars.push(("BUN_INSTALL".to_string(), cache_dir.to_str().unwrap().to_string()));
+            create_command_with_args(&bun_x_path, &["x"], args)
+        }
+        "uvx" => {
+            let mut cache_dir = app_path.to_path_buf();
+            cache_dir.push(".uvx");
+            let uv_path = bin_path.join("uv").to_string_lossy().to_string();
+            env_vars.push(("UV_CACHE_DIR".to_string(), cache_dir.to_str().unwrap().to_string()));
+            create_command_with_args(&uv_path, &["tool", "run"], args)
+        }
+        _ => {
+            create_command_with_args(command, &[], args)
+        }
+    };
+    
+    (cmd, env_vars)
+}
+
 const DEFAULT_MCP_CONFIG: &str = r#"{
   "mcpServers": {
     "browsermcp": {
@@ -135,29 +229,14 @@ async fn start_mcp_server<R: Runtime>(
         .expect("Executable must have a parent directory");
     let bin_path = exe_parent_path.to_path_buf();
     if let Some((command, args, envs)) = extract_command_args(&config) {
-        let mut cmd = Command::new(command.clone());
-        if command.clone() == "npx" {
-            let mut cache_dir = app_path.clone();
-            cache_dir.push(".npx");
-            let bun_x_path = format!("{}/bun", bin_path.display());
-            cmd = Command::new(bun_x_path);
-            cmd.arg("x");
-            cmd.env("BUN_INSTALL", cache_dir.to_str().unwrap().to_string());
+        // Use unified command setup function
+        let (mut cmd, command_env_vars) = setup_command(&command, &args, &app_path, &bin_path);
+        
+        // Apply command-specific environment variables
+        for (key, value) in command_env_vars {
+            cmd.env(key, value);
         }
-
-        if command.clone() == "uvx" {
-            let mut cache_dir = app_path.clone();
-            cache_dir.push(".uvx");
-            let bun_x_path = format!("{}/uv", bin_path.display());
-            cmd = Command::new(bun_x_path);
-            cmd.arg("tool");
-            cmd.arg("run");
-            cmd.env("UV_CACHE_DIR", cache_dir.to_str().unwrap().to_string());
-        }
-        #[cfg(windows)]
-        {
-            cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW: prevents shell window on Windows
-        }
+        
         let app_path_str = app_path.to_str().unwrap().to_string();
         let log_file_path = format!("{}/logs/app.log", app_path_str);
         match std::fs::OpenOptions::new()
@@ -177,9 +256,7 @@ async fn start_mcp_server<R: Runtime>(
 
         log::trace!("Command: {cmd:#?}");
 
-        args.iter().filter_map(Value::as_str).for_each(|arg| {
-            cmd.arg(arg);
-        });
+        // Apply environment variables from config
         envs.iter().for_each(|(k, v)| {
             if let Some(v_str) = v.as_str() {
                 cmd.env(k, v_str);
