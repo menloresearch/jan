@@ -212,6 +212,24 @@ jobs:
       - name: Print Edge version
         run: (Get-Item (Get-Command msedge).Source).VersionInfo.ProductVersion
 
+      - name: Download Microsoft Edge WebDriver v131
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          $url = "https://msedgedriver.azureedge.net/131.0.2903.86/edgedriver_win64.zip"
+          Invoke-WebRequest -Uri $url -OutFile "edgedriver.zip"
+
+          Expand-Archive -Path "edgedriver.zip" -DestinationPath "edgedriver"
+
+          $targetDir = "$HOME\.cargo\bin"
+          New-Item -ItemType Directory -Force -Path $targetDir | Out-Null
+
+          Copy-Item -Path "edgedriver\msedgedriver.exe" -Destination "$targetDir\msedgedriver.exe" -Force
+
+      - name: Verify msedgedriver version
+        run: |
+          C:\msedgedriver.exe --version
+
       # Clean cache, continue on error
       - name: 'Cleanup cache'
         shell: powershell
