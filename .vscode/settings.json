@@ -1,4 +1,12 @@
 {
   "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "editor.formatOnSave": true
+  "editor.formatOnSave": true,
+  "eslint.workingDirectories": [
+    {
+      "directory": "./web-app"
+    },
+    {
+      "directory": "./docs"
+    }
+  ]
 }
