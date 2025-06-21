@@ -247,7 +247,12 @@ pub fn setup_sidecar(app: &App) -> Result<(), String> {
                 ]);
             #[cfg(target_os = "windows")]
             {
-                let resource_dir = app_handle_for_spawn.path().resource_dir().unwrap();
+                let mut resource_dir = app_handle_for_spawn.path().resource_dir().unwrap();
+                // If debug
+                #[cfg(debug_assertions)]
+                {
+                    resource_dir = resource_dir.join("binaries");
+                }
                 let normalized_path = resource_dir.to_string_lossy().replace(r"\\?\", "");
                 let normalized_pathbuf = PathBuf::from(normalized_path);
                 cmd = cmd.current_dir(normalized_pathbuf);
