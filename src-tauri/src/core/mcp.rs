@@ -59,6 +59,7 @@ const MCP_TOOL_CALL_TIMEOUT: Duration = Duration::from_secs(30);
 const MCP_BASE_RESTART_DELAY_MS: u64 = 1000; // Start with 1 second
 const MCP_MAX_RESTART_DELAY_MS: u64 = 30000; // Cap at 30 seconds
 const MCP_BACKOFF_MULTIPLIER: f64 = 2.0; // Double the delay each time
+const MCP_MAX_RESTARTS: u32 = 5; 
 
 /// Calculate exponential backoff delay with jitter
 ///
@@ -161,7 +162,7 @@ pub async fn run_mcp_commands<R: Runtime>(
                 servers_clone.clone(),
                 name_clone.clone(),
                 config_clone.clone(),
-                Some(3), // Default max restarts for startup
+                Some(MCP_MAX_RESTARTS), // Default max restarts for startup
             ).await;
             
             // If initial startup failed, we still want to continue with other servers
@@ -277,7 +278,7 @@ async fn start_mcp_server_with_restart<R: Runtime>(
     // Store active server config for restart purposes
     store_active_server_config(&active_servers_state, &name, &config).await;
     
-    let max_restarts = max_restarts.unwrap_or(5);
+    let max_restarts = max_restarts.unwrap_or(MCP_MAX_RESTARTS);
     
     // Try the first start attempt and return its result
     log::info!("Starting MCP server {} (Initial attempt)", name);
@@ -345,10 +346,14 @@ async fn start_restart_loop<R: Runtime>(
 
         if current_restart_count > max_restarts {
             log::error!(
-                "MCP server {} reached maximum restart attempts ({}). Giving up.",
+                "MCP server {} reached maximum restart attempts ({}). Disabling server.",
                 name,
                 max_restarts
             );
+            
+            // Disable the server after exceeding maximum restart attempts
+            disable_mcp_server_after_max_restarts(&app, &name).await;
+            
             if let Err(e) = app.emit("mcp_max_restarts_reached",
                 serde_json::json!({
                     "server": name,
@@ -492,7 +497,7 @@ pub async fn activate_mcp_server<R: Runtime>(
         state.mcp_servers.clone();
     
     // Use the modified start_mcp_server_with_restart that returns first attempt result
-    start_mcp_server_with_restart(app, servers, name, config, Some(3)).await
+    start_mcp_server_with_restart(app, servers, name, config, Some(MCP_MAX_RESTARTS)).await
 }
 
 async fn schedule_mcp_start_task<R: Runtime>(
@@ -622,43 +627,66 @@ async fn schedule_mcp_start_task<R: Runtime>(
     Ok(())
 }
 
-#[tauri::command]
-pub async fn deactivate_mcp_server(state: State<'_, AppState>, name: String) -> Result<(), String> {
-    log::info!("Deactivating MCP server: {}", name);
-    
-    // First, mark server as manually deactivated to prevent restart
+/// Common cleanup logic for stopping and removing MCP servers from all tracking systems
+async fn cleanup_mcp_server<R: Runtime>(
+    state: &AppState,
+    server_name: &str,
+    update_config: bool,
+    app: Option<&AppHandle<R>>,
+) -> Result<(), String> {
     // Remove from active servers list to prevent restart
     {
         let mut active_servers = state.mcp_active_servers.lock().await;
-        active_servers.remove(&name);
-        log::info!("Removed MCP server {} from active servers list", name);
+        active_servers.remove(server_name);
+        log::info!("Removed MCP server {server_name} from active servers list");
     }
     
     // Mark as not successfully connected to prevent restart logic
     {
         let mut connected = state.mcp_successfully_connected.lock().await;
-        connected.insert(name.clone(), false);
-        log::info!("Marked MCP server {} as not successfully connected", name);
+        connected.insert(server_name.to_string(), false);
+        log::info!("Marked MCP server {server_name} as not successfully connected");
     }
     
     // Reset restart count
     {
         let mut counts = state.mcp_restart_counts.lock().await;
-        counts.remove(&name);
-        log::info!("Reset restart count for MCP server {}", name);
+        counts.remove(server_name);
+        log::info!("Reset restart count for MCP server {server_name}");
     }
 
-    // Now remove and stop the server
-    let servers = state.mcp_servers.clone();
-    let mut servers_map = servers.lock().await;
+    // Remove and stop the server
+    {
+        let mut servers = state.mcp_servers.lock().await;
+        if let Some(service) = servers.remove(server_name) {
+            // Release the lock before calling cancel
+            drop(servers);
+            let _ = service.cancel().await;
+            log::info!("Stopped and removed MCP server {server_name} from running servers list");
+        }
+    }
+    
+    // Update configuration file if requested
+    if update_config {
+        if let Some(app_handle) = app {
+            if let Err(e) = update_server_config_active_status(app_handle, server_name, false).await {
+                log::error!("Failed to update config for MCP server {server_name}: {e}");
+            } else {
+                log::info!("Updated config file to set MCP server {server_name} active = false");
+            }
+        }
+    }
+    
+    Ok(())
+}
 
-    let service = servers_map.remove(&name)
-        .ok_or_else(|| format!("Server {} not found", name))?;
-
-    // Release the lock before calling cancel
-    drop(servers_map);
-
-    service.cancel().await.map_err(|e| e.to_string())?;
+#[tauri::command]
+pub async fn deactivate_mcp_server(state: State<'_, AppState>, name: String) -> Result<(), String> {
+    log::info!("Deactivating MCP server: {name}");
+    
+    // Use common cleanup logic (no config update for manual deactivation)
+    cleanup_mcp_server(&state, &name, false, None::<&AppHandle<tauri::Wry>>).await?;
+    
     log::info!("Server {name} stopped successfully and marked as deactivated.");
     Ok(())
 }
@@ -723,7 +751,7 @@ pub async fn restart_active_mcp_servers<R: Runtime>(
                 servers_clone,
                 name_clone,
                 config_clone,
-                Some(3), // Default max restarts for startup
+                Some(MCP_MAX_RESTARTS), // Default max restarts for startup
             ).await;
         });
     }
@@ -932,6 +960,57 @@ async fn reset_restart_count(
     let mut counts = restart_counts.lock().await;
     counts.insert(name.to_string(), 0);
 }
+/// Disable MCP server after maximum restart attempts exceeded
+async fn disable_mcp_server_after_max_restarts<R: Runtime>(
+    app: &AppHandle<R>,
+    server_name: &str,
+) {
+    let app_state = app.state::<AppState>();
+    
+    // Use common cleanup logic with config update enabled
+    if let Err(e) = cleanup_mcp_server(&app_state, server_name, true, Some(app)).await {
+        log::error!("Failed to disable MCP server {}: {}", server_name, e);
+    }
+}
+
+/// Update server configuration active status in the config file
+async fn update_server_config_active_status<R: Runtime>(
+    app: &AppHandle<R>,
+    server_name: &str,
+    active: bool,
+) -> Result<(), String> {
+    let app_path = get_jan_data_folder_path(app.clone());
+    let config_path = app_path.join("mcp_config.json");
+    
+    // Read current config
+    let config_content = std::fs::read_to_string(&config_path)
+        .map_err(|e| format!("Failed to read config file: {e}"))?;
+    
+    let mut mcp_config: serde_json::Value = serde_json::from_str(&config_content)
+        .map_err(|e| format!("Failed to parse config: {e}"))?;
+    
+    // Update the active status for the specific server
+    if let Some(servers) = mcp_config.get_mut("mcpServers")
+        .and_then(|v| v.as_object_mut()) {
+        if let Some(server_config) = servers.get_mut(server_name)
+            .and_then(|v| v.as_object_mut()) {
+            server_config.insert("active".to_string(), serde_json::Value::Bool(active));
+            
+            // Write back to file
+            let updated_config = serde_json::to_string_pretty(&mcp_config)
+                .map_err(|e| format!("Failed to serialize config: {e}"))?;
+            
+            std::fs::write(&config_path, updated_config)
+                .map_err(|e| format!("Failed to write config file: {e}"))?;
+        } else {
+            return Err(format!("Server {} not found in config", server_name));
+        }
+    } else {
+        return Err("No mcpServers found in config".to_string());
+    }
+    
+    Ok(())
+}
 
 /// Spawn the server monitoring task for handling restarts
 async fn spawn_server_monitoring_task<R: Runtime>(
@@ -1020,9 +1099,14 @@ mod tests {
     #[tokio::test]
     async fn test_run_mcp_commands() {
         let app = mock_app();
-        // Create a mock mcp_config.json file
-        let config_path = "mcp_config.json";
-        let mut file: File = File::create(config_path).expect("Failed to create config file");
+        
+        // Get the Jan data folder path and create the directory structure
+        let jan_data_path = get_jan_data_folder_path(app.handle().clone());
+        std::fs::create_dir_all(&jan_data_path).expect("Failed to create Jan data directory");
+        
+        // Create a mock mcp_config.json file in the correct location
+        let config_path = jan_data_path.join("mcp_config.json");
+        let mut file: File = File::create(&config_path).expect("Failed to create config file");
         file.write_all(b"{\"mcpServers\":{}}")
             .expect("Failed to write to config file");
 
@@ -1034,7 +1118,8 @@ mod tests {
         // Assert that the function returns Ok(())
         assert!(result.is_ok());
 
-        // Clean up the mock config file
-        std::fs::remove_file(config_path).expect("Failed to remove config file");
+        // Clean up the mock config file and directory
+        std::fs::remove_file(&config_path).expect("Failed to remove config file");
+        let _ = std::fs::remove_dir_all(&jan_data_path); // Best effort cleanup
     }
 }
