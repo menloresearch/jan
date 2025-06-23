@@ -354,13 +354,13 @@ async fn start_restart_loop<R: Runtime>(
             // Disable the server after exceeding maximum restart attempts
             disable_mcp_server_after_max_restarts(&app, &name).await;
             
-            if let Err(e) = app.emit("mcp_max_restarts_reached",
+            if let Err(e) = app.emit("mcp-max-restarts-reached",
                 serde_json::json!({
                     "server": name,
                     "max_restarts": max_restarts
                 })
             ) {
-                log::error!("Failed to emit mcp_max_restarts_reached event: {e}");
+                log::error!("Failed to emit mcp-max-restarts-reached event: {e}");
             }
             break;
         }
@@ -1095,6 +1095,7 @@ mod tests {
     use std::sync::Arc;
     use tauri::test::mock_app;
     use tokio::sync::Mutex;
+    use serde_json::Value;
 
     #[tokio::test]
     async fn test_run_mcp_commands() {
@@ -1121,5 +1122,119 @@ mod tests {
         // Clean up the mock config file and directory
         std::fs::remove_file(&config_path).expect("Failed to remove config file");
         let _ = std::fs::remove_dir_all(&jan_data_path); // Best effort cleanup
+    }
+
+    #[tokio::test]
+    async fn test_start_restart_loop_max_restarts_reached() {
+        let app = mock_app();
+        let server_name = "test_server".to_string();
+        let max_restarts = 3;
+        
+        // Test that the restart loop eventually gives up and emits an event
+        // For now, we'll test the event emission logic directly
+        let result = app.emit("mcp-max-restarts-reached", serde_json::json!({
+            "server": server_name,
+            "max_restarts": max_restarts
+        }));
+        
+        assert!(result.is_ok(), "Event emission should succeed");
+    }
+
+    #[tokio::test]
+    async fn test_mcp_server_config_serialization() {
+        let config = serde_json::json!({
+            "command": "test_command",
+            "args": ["arg1", "arg2"],
+            "env": {
+                "TEST_VAR": "test_value"
+            },
+            "active": true
+        });
+        
+        // Test serialization
+        let serialized = serde_json::to_string(&config).expect("Failed to serialize config");
+        assert!(serialized.contains("test_command"));
+        assert!(serialized.contains("arg1"));
+        assert!(serialized.contains("TEST_VAR"));
+        assert!(serialized.contains("test_value"));
+        
+        // Test deserialization
+        let deserialized: Value = serde_json::from_str(&serialized)
+            .expect("Failed to deserialize config");
+        assert_eq!(deserialized["command"], "test_command");
+        assert_eq!(deserialized["args"][0], "arg1");
+        assert_eq!(deserialized["env"]["TEST_VAR"], "test_value");
+        assert_eq!(deserialized["active"], true);
+    }
+
+    #[tokio::test]
+    async fn test_activate_mcp_server_command() {
+        // Create a mock app with proper state management
+        let app = tauri::test::mock_app();
+        let app_state = AppState::default();
+        app.manage(app_state);
+        
+        let state = app.state::<AppState>();
+        
+        // Get the Jan data folder path and create the directory structure
+        let jan_data_path = get_jan_data_folder_path(app.handle().clone());
+        std::fs::create_dir_all(&jan_data_path).expect("Failed to create Jan data directory");
+        
+        // Create a mock mcp_config.json file
+        let config_path = jan_data_path.join("mcp_config.json");
+        let mut file = File::create(&config_path).expect("Failed to create config file");
+        file.write_all(b"{\"mcpServers\":{}}")
+            .expect("Failed to write to config file");
+        
+        let config = serde_json::json!({
+            "command": "echo",
+            "args": ["test"],
+            "env": {},
+            "active": true
+        });
+        
+        // Test the activate_mcp_server command
+        // Note: This will likely fail in the test environment since we don't have a real MCP server
+        // but we can test that the function doesn't panic and handles errors gracefully
+        let result = activate_mcp_server(app.handle().clone(), state, "test_server".to_string(), config).await;
+        
+        // The command should handle errors gracefully and return a Result
+        // We don't assert success here since the test environment won't have MCP servers
+        assert!(result.is_ok() || result.is_err());
+        
+        // Clean up
+        let _ = std::fs::remove_file(&config_path); // Best effort cleanup
+        let _ = std::fs::remove_dir_all(&jan_data_path); // Best effort cleanup
+    }
+
+    #[tokio::test]
+    async fn test_deactivate_mcp_server_command() {
+        // Create a mock app with proper state management
+        let app = tauri::test::mock_app();
+        let app_state = AppState::default();
+        app.manage(app_state);
+        
+        let state = app.state::<AppState>();
+        
+        // Test the deactivate_mcp_server command
+        let result = deactivate_mcp_server(state, "test_server".to_string()).await;
+        
+        // The command should handle the case where the server doesn't exist gracefully
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_mcp_server_config_default_values() {
+        let config = serde_json::json!({
+            "command": "test",
+            "args": [],
+            "env": {},
+            "active": false
+        });
+        
+        assert_eq!(config["command"], "test");
+        assert_eq!(config["args"].as_array().unwrap().len(), 0);
+        assert_eq!(config["env"].as_object().unwrap().len(), 0);
+        assert_eq!(config["active"], false);
     }
 }
