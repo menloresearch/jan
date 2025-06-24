@@ -10,8 +10,8 @@
 
 ### 1. Users install app (New user flow)
 
-- [ ] :rocket: Installation package is not corrupted and passes all security checks.
-- [ ] :key: App launches successfully after installation.
+- [ ] :rocket: The installation package is not corrupted and passes all security checks.
+- [ ] :key: The app launches successfully after installation.
 
 ### 2. Users update app (Existing user flow)
 
@@ -19,6 +19,7 @@
 - [ ] :key: App restarts or prompts the user to restart after an update.
 - [ ] When updating the app, check if the `/models` directory has any JSON/YML files that change according to the update.
 - [ ] Updating the app also updates extensions correctly, test functionality changes.
+- [ ] All data, threads, configurations, etc… migration to new UI after upgraded version.
 
 ### 3. Users uninstall / close app
 
@@ -26,166 +27,163 @@
 - [ ] :key::warning: Uninstallation process removes the app successfully from the system.
 - [ ] Clean the data folder and open the app to check if it creates all the necessary folders, especially models and extensions.
 
-## B. Overview
+### 4. Migration data & Upgrade version 
 
-### 1. Shortcut key
+#### 4.1 Migration data
 
-- [ ] :key: Test each shortcut key to confirm it works as described (My models, navigating, opening, closing, etc.).
+- [ ] :Local model kept (Downloaded & Imported)
+- [ ] :API keys for remote models kept
+- [ ] :Imported models (GGUF file or folder) should be displayed in the list
+- [ ] :Models added from Hugging Face should appear in the Hub 
+  - [ ] :Cortexso model
+  - [ ] :HF model (eg: unsloth models)
+- [ ] :Llama.cpp  information should be retained after upgrade 
+  - [ ] :HF token 
+- [ ] :Config HTTP Proxy should be retained shouldn’t be migrated after upgrade
+- [ ] :Ensure threads & chat migrated and work fine 
+- [ ] :Ensure the Local API Server shouldn’t be migrated and work fine
+- [ ] :Ensure app log location remains unchanged
+- [ ] :Ensure model starts/loads correctly with CPU/GPU backend without error
+  - [ ] :Toggle GPUs 
+- [ ] :Ensure API functions correctly
+- [ ] :Ensure search/download model function work fine
 
-### 2. Users check the `active model`
+#### 4.2 Upgrade version 
 
-- [ ] :key: The app correctly displays the state of the loading model (e.g., loading, ready, error).
-- [ ] :key: Confirm that the app allows users to switch between models if multiple are available.
-- [ ] Check that the app provides feedback or instructions if the model fails to load.
-- [ ] Verify the troubleshooting assistant correctly capture hardware / log info [#1784](https://github.com/menloresearch/jan/issues/1784)
+- [ ] :Electron to tauri (v0.5.17 -> latest tauri version)
+- [ ] :Tauri to tauri (v0.6.1 -> latest tauri version)
 
-## C. Thread
+## B. Settings
 
-### 1. Users can chat with Jan, the default assistant
+### 1. General
 
-- [ ] :key: Sending a message enables users to receive responses from model.
-- [ ] :key: Conversation thread is maintained without any loss of data upon sending multiple messages.
-- [ ] ‌Users should be able to edit msg and the assistant will re-generate the answer based on the edited version of the message.
-- [ ] Test for the ability to send different types of messages (e.g., text, emojis, code blocks).
-- [ ] Check the output format of the AI (code blocks, JSON, markdown, ...).
-- [ ] :key: Validate the scroll functionality in the chat window for lengthy conversations.
-- [ ] User can copy / delete the response.
-- [ ] :key: Check the `clear message` / `delete entire chat` button works.
-- [ ] Deleting all the chat retains the model instruction and settings.
-- [ ] :key: Appropriate error handling and messaging if the assistant fails to respond.
-- [ ] Test assistant's ability to maintain context over multiple exchanges.
-- [ ] :key: Check the `create new chat` button, and new conversation will have an automatically generated thread title based on users msg.
-- [ ] Changing `models` mid-thread the app can still handle it.
-- [ ] Check the `regenerate` button renews the response (single / multiple times).
-- [ ] Check the `Instructions` update correctly after the user updates it midway (mid-thread).
+- [ ] :Users can click on the Reset button to factory reset app settings to its original state & delete all usage data. 
+- [ ] :The app should update its language to match the selected language.
+- [ ] :Verify that the 'Community' and 'Support' options navigate to the correct URLs.
 
-### 2. Users can customize chat settings like model parameters via both the GUI & model.yml
+### 2. Appearance
 
-- [ ] Adjust model parameters (e.g., Temperature, Top K, Top P) from the GUI and verify they are reflected in the chat behavior.
-- [ ] :key: Changes can be saved and persisted between sessions.
-- [ ] Users can access and modify the model.yml file.
-- [ ] :key: Changes made in model.yml are correctly applied to the chat session upon reload or restart.
-- [ ] Check the maximum and minimum limits of the adjustable parameters and how they affect the assistant's responses.
-- [ ] :key: Users switch between threads with different models, the app can handle it.
+- [ ] :Test the Light, Dark, and System theme settings to ensure they are functioning as expected.
+- [ ] :Confirm that the application saves the theme preference and persists it across sessions.
+- [ ] :Validate that all elements of the UI are compatible with the theme changes and maintain legibility and contrast.
+- [ ] :Confirm that the application saves the color and persists it across sessions (Window Background, App main view, Primary, Accent, Destructive).
+- [ ] :Confirm that the application saves the code style and persists it across sessions.
+- [ ] :Confirm that the application saves the font size  and persists it across sessions.
+- [ ] :Users can click on Reset button to reset app original color/code style.
 
-### 3. Model dropdown
+### 3. Model Providers
 
-- :key: Model list should highlight recommended based on user RAM (this is not really correct, I think it's based on static formula)
-- [ ] Model size should display (for both installed and imported models)
+- [ ] :Can add a new provider and model with API key/token in correct format.
+- [ ] :Model list is displayed correctly after successful addition.
+- [ ] :Can edit and delete individual models/providers without crashing the UI.
+- [ ] :Action icons (edit, delete, set default) work properly.
+- [ ] :Automatically update the active model when selecting another model.
+- [ ] :Model loading status (Start, Stop) is clearly displayed.
+- [ ] :Can import .gguf models without errors.
+  - [ ] :Import by file GGUF.
+  - [ ] :Import same name model different repo.
+- [ ] :When selecting a local model, check:
+  - [ ] :The engine has been started.
+  - [ ] :The app does not crash if the model is too heavy.
+  - [ ] :RAM usage is stable (hardware).
+- [ ] :Automatically stop old models when loading new models (Auto-unload works).
+- [ ] :If Context Shift is enabled, ensure important context is not lost when replying long.
+- [ ] :Chat works fine with all models in the list.
+- [ ] :Batching works properly if enabled (multi prompt send).
+- [ ] :When the model provider is disconnected or loses internet connection, the error message is clear.
+- [ ] :Try to intentionally use the wrong token to ensure the app is stable and shows the correct error.
+- [ ] :Disable the provider => ensure the related model is hidden or not available.
+- [ ] :The app does not crash when loading many models continuously (stress test).
 
-### 4. Users can click on a history thread
+### 4. Shortcuts
 
-- [ ] Chat window displays the entire conversation from the selected history thread without any missing messages.
-- [ ] Historical threads reflect the exact state of the chat at that time, including settings.
-- [ ] :key: Ability to delete or clean old threads.
-- [ ] Changing the title of the thread updates correctly.
+- [ ] :key: Test each shortcut key to confirm it works as described (My models, navigating, opening, closing, etc.)
+- [ ] :key: Ensure that keyboard shortcuts are shown for each available function within the application.
 
-### 5. Users can config instructions for the assistant.
+### 5. Hardware
+- [ ] :Verify that all system information including OS, CPU, Memory, and GPUs are displayed correctly based on the user's machine.
+- [ ] :Ensure that the current usage percentages of CPU and GPU are shown accurately when the user is chatting with models.
+- [ ] :Verify that the model name, provider, uptime, and available actions are displayed correctly when a model is started.
+- [ ] :Test enabling and disabling GPUs to ensure that chat functionality works as expected.
+- [ ] :Enabling/disabling Vulkan in session does not affect other parts (inference, model loading).
 
-- [ ] Instructions set by the user are being followed by the assistant in subsequent conversations.
-- [ ] :key: Changes to instructions are updated in real time and do not require a restart of the application or session.
-- [ ] :key: Ability to reset instructions to default or clear them completely.
-- [ ] :key: RAG - Users can import documents and the system should process queries about the uploaded file, providing accurate and appropriate responses in the conversation thread.
-- [ ] :key: Jan can see - Users can import image and Model with vision can generate responses (e.g. LLaVa model). [#294](https://github.com/menloresearch/jan/issues/294)
+### 6. MCP Servers
 
-## D. Hub
+- [ ] :Create an MCP server successfully.
+- [ ] :Check if the delete server button is working, the server disappears without reporting an error.
+- [ ] :Check if the command/args/env is edited and the content is updated correctly.
+- [ ] :Check if the server toggle button is working properly, not in the wrong state.
+- [ ] :Check if the key in Env is exposed (must be hidden as *****)
+- [ ] :Ensure MCP servers automatically start when opening Jan.
+- [ ] :Ensure chat works properly with the MCP servers.
+- [ ] :Test with multiple MCP servers running simultaneously.
+- [ ] :Turn off MCP server → assistant cannot call tool even if requested.
+- [ ] :If Allow All MCP Tool Permissions is off → tool must ask for confirmation before call.
+- [ ] :If permission is denied → assistant cannot execute tool.
+- [ ] :If ENV key is missing (eg Serper) → error must be reported clearly, UI must not crash.
 
-### 1. Users can discover recommended models
+### 7. Local API Server
 
-- :key: Each model's recommendations are consistent with the user’s activity and preferences.
-- [ ] Search models and verify results / action on the results
+- [ ] :Explore API Reference: Swagger API for sending/receiving requests.
+- [ ] :Use default server option.
+- [ ] :Configure and use custom server options.
+- [ ] :Server logs captured correct each APIs call .
+- [ ] :Verify functionality of Open logs.
+- [ ] :Ensure that other threads and functions work properly while the local server is running.
+- [ ] :Chat completion (127.0.0.1; 0.0.0.0):
+  - [ ] :Threads.
+  - [ ] :Models.
+  - [ ] :Ensure chat works correctly with Jan model hosted on machine A, used from machine B.
 
-### 2. Users can download models suitable for their devices, e.g. compatible with their RAM
+### 8. HTTP Proxy
+- [ ] :Attempt to test downloading model from hub using HTTP Proxy guideline.
+- [ ] :Ensure that the SSL Verification and Proxy configuration settings are displayed correctly according to the design.
 
-- [ ] Model list should be in order: Featured > Remote > Local
-- [ ] :key: Ensure that models are labeled with RAM requirements.
+### 9. Entensions
+- [ ] :Verify that all extensions are properly listed and function as expected within the Jan.
+- [ ] :Ensure that all links navigate to their intended URLs, if any are present.
+
+## C. HUB
+
+- [ ] :key: Each model's recommendations are from cortexSO.
+- [ ] :key: Search models and verify results / action on the results.
 - [ ] :key: Check the download model functionality and validate if the cancel download feature works correctly.
+- [ ] :key: Verify that the list variants show enough and correct with each model.
+- [ ] :key: Import via Hugging Face Id / full HuggingFace URL, check the progress bar reflects the download process #1740.
+- [ ] :key: Ensure that navigate to New Thread when clicking use button.
+- [ ] :key: Filter list model matching with Newest, Most downloaded.
+- [ ] :key: Model download will displayed when turn on Downloaded.
+- [ ] :key: Confirm that the deleted model is no longer displayed under the Downloaded section in the Hub tab.
 
-### 3. Users can download models via a HuggingFace URL [#1740](https://github.com/menloresearch/jan/issues/1740)
+## D. Thread & Chat
 
-- [ ] :key: Import via Hugging Face Id / full HuggingFace URL, check the progress bar reflects the download process
-- [ ] :key: Test deeplink import [#2876](https://github.com/menloresearch/jan/issues/2876)
-- [ ] :key: Users can use / remove the imported model.
+### 1. Threads
 
-### 4. Users can import new models to the Hub
+- [ ] :Conversation thread is maintained without any loss of data upon sending multiple messages.
+- [ ] :Appropriate error handling and messaging if the assistant fails to respond.
+- [ ] :Check the create new chat button, and the new conversation will have an automatically generated thread title based on users msg.
+- [ ] :Changing models mid-thread the app can still handle it.
+- [ ] :Check the regenerate button to renew the response (single / multiple times).
+- [ ] :Check the Instructions update correctly after the user updates it midway (mid-thread).
+- [ ] :The chat window displays the entire conversation from the selected history thread without any missing messages.
+- [ ] :Historical threads reflect the exact state of the chat at that time, including settings.
+- [ ] :Ability to delete old threads.
+- [ ] :Changing the title of the thread updates correctly.
+- [ ] :Ensure that starred threads are correctly categorized under Favorites and Recent as separate fields.
+- [ ] :Verify that the Delete All action works independently for each field.
+- [ ] :Ensure that the search thread feature returns accurate results based on thread titles, content (Exact matches, Partial matches, Case-insensitive queries).
 
-- [ ] :key: Ensure import successfully via drag / drop or upload GGUF.
-- [ ] :key: Verify Move model binary file / Keep Original Files & Symlink option are working
-- [ ] Users can add more info to the imported model / edit name
-- [ ] :key: Ensure the new model updates after restarting the app.
+### 2. Chat
 
-### 5. Users can use the model as they want
-
-- [ ] :key: Check `start` / `stop` / `delete` button response exactly what it does.
-- [ ] Check if starting another model stops the other model entirely.
-- [ ] :rocket: Navigate to `hub` > Click `Use` button to use model. Expect to jump to thread and see the model in dropdown model selector.
-- [ ] :key: Check when deleting a model it will delete all the files on the user's computer.
-- [ ] :warning:The recommended tags should present right for the user's hardware.
-
-### 6. Users can Integrate With a Remote Server
-
-- [ ] :key: Import openAI GPT model https://jan.ai/guides/using-models/integrate-with-remote-server/ and the model displayed in Hub / Thread dropdown
-- [ ] Users can use the remote model properly (openAI GPT, Groq)
-
-## E. System Monitor
-
-### 1. Users can see disk and RAM utilization
-
-- [ ] :key: Verify that the RAM and VRAM utilization graphs accurately reported in real time.
-- [ ] :key: Validate that the utilization percentages reflect the actual usage compared to the system's total available resources.
-- [ ] :key: Ensure that the system monitors updates dynamically as the models run and stop.
-
-### 2. Users can start and stop models based on system health
-
-- [ ] :key: Verify the `Start/Stop` action for a model, the system resource usage reflects this change.
-- [ ] Confirm that any changes in model status (start/stop) are logged or reported to the user for transparency.
-- [ ] :key: Check the functionality of `App log` to ensure it opens the correct folder in the system file explorer.
-
-## F. Settings
-
-### 1. Appearance
-
-- [ ] :key: Test the `Light`, `Dark`, and `System` theme settings to ensure they are functioning as expected.
-- [ ] Confirm that the application saves the theme preference and persists it across sessions.
-- [ ] Validate that all elements of the UI are compatible with the theme changes and maintain legibility and contrast.
-
-### 2. Extensions [TBU]
-
-- Validate the `Install Extensions` process by selecting and installing a plugin file.
-- [ ] Enable / disable extensions and the UI should reflex accordingly
-
-### 3. Extension group
-
-- [ ] :key: Users can set valid Endpoint and API Key to use remote models
-- [ ] Monitoring extension should allow users to enable / disable log and set log Cleaning Interval
-
-### 4. Advanced settings
-
-- [ ] :key: Test the `Experimental Mode` toggle to confirm it enables or disables experimental features as intended.
-- [ ] :key: Check the functionality of `Open App Directory` to ensure it opens the correct folder in the system file explorer.
-- [ ] Users can move **Jan data folder**
-- [ ] Validate that changes in advanced settings are applied immediately or provide appropriate instructions if a restart is needed.
-- [ ] Attemp to test downloading model from hub using **HTTP Proxy** [guideline](https://github.com/menloresearch/jan/pull/1562)
-- [ ] Logs that are older than 7 days or exceed 1MB in size will be automatically cleared upon starting the application.
-- [ ] Users can click on Reset button to **factory reset** app settings to its original state & delete all usage data.
-  - [ ] Keep the current app data location
-  - [ ] Reset the current app data location
-- [ ] Users can enable the setting and chat using quick ask.
-
-### 5. Engine
-
-- [ ] :key: TensorRT Engine - Users able to chat with the model
-- [ ] :key: Onnx Engine - Users able to chat with the model
-- [ ] :key: Other remote Engine - Users able to chat with the model
-
-## G. Local API server
-
-### 1. Local Server Usage with Server Options
-
-- [ ] :key: Explore API Reference: Swagger API for sending/receiving requests
-  - [ ] Use default server option
-  - [ ] Configure and use custom server options
-- [ ] Test starting/stopping the local API server with different Model/Model settings
-- [ ] Server logs captured with correct Server Options provided
-- [ ] Verify functionality of Open logs/Clear feature
-- [ ] Ensure that threads and other functions impacting the model are disabled while the local server is running
+- [ ] :Sending a message enables users to receive responses from the model.
+- [ ] :Test for the ability to send different types of messages (e.g., text, emojis, code blocks).
+- [ ] :Verify that the model can generate responses in a structured table format.
+- [ ] :Test the model’s ability to handle and display long-form responses.
+- [ ] :Verify that the model can summarize content accurately and concisely.
+- [ ] :Test the model’s ability to generate code snippets to ensure syntax highlighting, line formatting, and horizontal scrolling for long lines.
+- [ ] :Check the output format of the AI (code blocks, JSON, markdown, ...).
+- [ ] :Users should be able to edit msg and the assistant will re-generate the answer based on 
+- [ ] :Validate the scroll functionality in the chat window for lengthy conversations.
+- [ ] :User can copy / delete the response.
+- [ ] :Check the clear message / delete entire chat button works
+- [ ] :Test assistant's ability to maintain context over multiple exchanges.
