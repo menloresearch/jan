@@ -12,6 +12,120 @@ use tokio::{
 
 use super::{cmd::get_jan_data_folder_path, state::AppState};
 
+/// Helper function to apply Windows creation flags to prevent console windows
+#[cfg(target_os = "windows")]
+fn apply_windows_creation_flags(cmd: &mut Command) {
+    use std::os::windows::process::CommandExt;
+    const CREATE_NO_WINDOW: u32 = 0x08000000;
+    const CREATE_NEW_PROCESS_GROUP: u32 = 0x00000200;
+    const CREATE_BREAKAWAY_FROM_JOB: u32 = 0x01000000;
+    
+    // Recommended combination: CREATE_NO_WINDOW prevents console window creation
+    // CREATE_NEW_PROCESS_GROUP isolates the process group
+    // CREATE_BREAKAWAY_FROM_JOB allows breaking away from job objects
+    let creation_flags = CREATE_NO_WINDOW | CREATE_NEW_PROCESS_GROUP | CREATE_BREAKAWAY_FROM_JOB;
+    
+    log::debug!("Using creation flags: 0x{:08X}", creation_flags);
+    cmd.creation_flags(creation_flags);
+}
+
+/// Helper function to wrap commands on Windows to prevent console windows
+/// Only wraps with PowerShell if use_powershell is true
+#[cfg(target_os = "windows")]
+fn wrap_command_for_windows(program: &str, args: &[&str], use_powershell: bool) -> Command {
+    let mut cmd = if use_powershell {
+        let mut ps_cmd = Command::new("powershell.exe");
+        ps_cmd.arg("-WindowStyle");
+        ps_cmd.arg("Hidden");
+        ps_cmd.arg("-NoProfile");
+        ps_cmd.arg("-NonInteractive");
+        ps_cmd.arg("-NoLogo");
+        ps_cmd.arg("-ExecutionPolicy");
+        ps_cmd.arg("Bypass");
+        ps_cmd.arg("-Command");
+        
+        // Build simple PowerShell command without Windows API calls
+        let mut ps_command = format!("& '{}'", program.replace("'", "''"));
+        for arg in args {
+            ps_command.push_str(&format!(" '{}'", arg.replace("'", "''")));
+        }
+        
+        // Log before moving ps_command
+        log::debug!("powershell.exe -WindowStyle Hidden -NoProfile -NonInteractive -NoLogo -ExecutionPolicy Bypass -Command \"{}\"", ps_command);
+        ps_cmd.arg(ps_command);
+        ps_cmd
+    } else {
+        // Create direct command without PowerShell wrapping
+        let mut direct_cmd = Command::new(program);
+        for arg in args {
+            direct_cmd.arg(arg);
+        }
+        direct_cmd
+    };
+    
+    // Apply creation flags to prevent console window for both cases
+    apply_windows_creation_flags(&mut cmd);
+    cmd
+}
+
+/// Helper to create command with arguments for any platform
+/// Determines whether to use PowerShell wrapping based on the command
+fn create_command_with_args(program: &str, base_args: &[&str], config_args: &[Value]) -> Command {
+    #[cfg(target_os = "windows")]
+    {
+        let mut all_args = base_args.to_vec();
+        let config_str_args: Vec<&str> = config_args.iter().filter_map(Value::as_str).collect();
+        all_args.extend(config_str_args);
+        
+        // Only use PowerShell wrapping for npx and uvx commands
+        let use_powershell = program.ends_with("bun") || program.ends_with("uv");
+        wrap_command_for_windows(program, &all_args, use_powershell)
+    }
+    #[cfg(not(target_os = "windows"))]
+    {
+        let mut cmd = Command::new(program);
+        for arg in base_args {
+            cmd.arg(arg);
+        }
+        config_args.iter().filter_map(Value::as_str).for_each(|arg| {
+            cmd.arg(arg);
+        });
+        cmd
+    }
+}
+
+/// Unified command setup function to eliminate duplication
+fn setup_command(
+    command: &str,
+    args: &[Value],
+    app_path: &std::path::Path,
+    bin_path: &std::path::Path,
+) -> (Command, Vec<(String, String)>) {
+    let mut env_vars = Vec::new();
+    
+    let cmd = match command {
+        "npx" => {
+            let mut cache_dir = app_path.to_path_buf();
+            cache_dir.push(".npx");
+            let bun_x_path = bin_path.join("bun").to_string_lossy().to_string();
+            env_vars.push(("BUN_INSTALL".to_string(), cache_dir.to_str().unwrap().to_string()));
+            create_command_with_args(&bun_x_path, &["x"], args)
+        }
+        "uvx" => {
+            let mut cache_dir = app_path.to_path_buf();
+            cache_dir.push(".uvx");
+            let uv_path = bin_path.join("uv").to_string_lossy().to_string();
+            env_vars.push(("UV_CACHE_DIR".to_string(), cache_dir.to_str().unwrap().to_string()));
+            create_command_with_args(&uv_path, &["tool", "run"], args)
+        }
+        _ => {
+            create_command_with_args(command, &[], args)
+        }
+    };
+    
+    (cmd, env_vars)
+}
+
 const DEFAULT_MCP_CONFIG: &str = r#"{
   "mcpServers": {
     "browsermcp": {
@@ -501,6 +615,7 @@ async fn schedule_mcp_start_task<R: Runtime>(
     name: String,
     config: Value,
 ) -> Result<(), String> {
+    // Get required paths
     let app_path = get_jan_data_folder_path(app.clone());
     let exe_path = env::current_exe().expect("Failed to get current exe path");
     let exe_parent_path = exe_path
@@ -508,91 +623,66 @@ async fn schedule_mcp_start_task<R: Runtime>(
         .expect("Executable must have a parent directory");
     let bin_path = exe_parent_path.to_path_buf();
     
-    let (command, args, envs) = extract_command_args(&config)
-        .ok_or_else(|| format!("Failed to extract command args from config for {name}"))?;
-
-    let mut cmd = Command::new(command.clone());
+    // Extract command configuration - early return if invalid
+    let Some((command, args, envs)) = extract_command_args(&config) else {
+        return Err(format!("Invalid MCP server configuration for {}", name));
+    };
     
-    if command == "npx" {
-        let mut cache_dir = app_path.clone();
-        cache_dir.push(".npx");
-        let bun_x_path = format!("{}/bun", bin_path.display());
-        cmd = Command::new(bun_x_path);
-        cmd.arg("x");
-        cmd.env("BUN_INSTALL", cache_dir.to_str().unwrap().to_string());
-    }
-
-    if command == "uvx" {
-        let mut cache_dir = app_path.clone();
-        cache_dir.push(".uvx");
-        let bun_x_path = format!("{}/uv", bin_path.display());
-        cmd = Command::new(bun_x_path);
-        cmd.arg("tool");
-        cmd.arg("run");
-        cmd.env("UV_CACHE_DIR", cache_dir.to_str().unwrap().to_string());
+    // Setup command with unified function
+    let (mut cmd, command_env_vars) = setup_command(&command, &args, &app_path, &bin_path);
+    
+    // Apply command-specific environment variables
+    for (key, value) in command_env_vars {
+        cmd.env(key, value);
     }
     
-    #[cfg(windows)]
-    {
-        cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW: prevents shell window on Windows
-    }
-    
+    // Setup logging - flatten the match with if-let
     let app_path_str = app_path.to_str().unwrap().to_string();
     let log_file_path = format!("{}/logs/app.log", app_path_str);
-    match std::fs::OpenOptions::new()
+    if let Ok(file) = std::fs::OpenOptions::new()
         .create(true)
         .append(true)
         .open(log_file_path)
     {
-        Ok(file) => {
-            cmd.stderr(std::process::Stdio::from(file));
-        }
-        Err(err) => {
-            log::error!("Failed to open log file: {}", err);
-        }
-    };
-
+        cmd.stderr(std::process::Stdio::from(file));
+    } else {
+        log::error!("Failed to open log file");
+    }
+    
     cmd.kill_on_drop(true);
     log::trace!("Command: {cmd:#?}");
-
-    args.iter().filter_map(Value::as_str).for_each(|arg| {
-        cmd.arg(arg);
-    });
+    
+    // Apply environment variables from config
     envs.iter().for_each(|(k, v)| {
         if let Some(v_str) = v.as_str() {
             cmd.env(k, v_str);
         }
     });
-
-    let process = TokioChildProcess::new(cmd)
-        .map_err(|e| {
-            log::error!("Failed to run command {name}: {e}");
-            format!("Failed to run command {name}: {e}")
-        })?;
-
+    
+    // Create and start the MCP server process
+    let process = TokioChildProcess::new(cmd).map_err(|e| {
+        log::error!("Failed to run command {name}: {e}");
+        format!("Failed to run command {name}: {e}")
+    })?;
+    
     let service = ().serve(process).await
         .map_err(|e| format!("Failed to start MCP server {name}: {e}"))?;
-
-    // Get peer info and clone the needed values before moving the service
-    let (server_name, server_version) = {
-        let server_info = service.peer_info();
-        log::trace!("Connected to server: {server_info:#?}");
-        (
-            server_info.server_info.name.clone(),
-            server_info.server_info.version.clone(),
-        )
-    };
-
-    // Now move the service into the HashMap
+    
+    // Get server info before moving service
+    let server_info = service.peer_info();
+    log::trace!("Connected to server: {server_info:#?}");
+    let server_name = server_info.server_info.name.clone();
+    let server_version = server_info.server_info.version.clone();
+    
+    // Store service in servers map
     servers.lock().await.insert(name.clone(), service);
     log::info!("Server {name} started successfully.");
-
-    // Wait a short time to verify the server is stable before marking as connected
-    // This prevents race conditions where the server quits immediately
+    
+    // Wait and verify server stability
     let verification_delay = Duration::from_millis(500);
     sleep(verification_delay).await;
     
-    // Check if server is still running after the verification delay
+    // Check if server is still running after verification delay
     let server_still_running = {
         let servers_map = servers.lock().await;
         servers_map.contains_key(&name)
@@ -601,24 +691,22 @@ async fn schedule_mcp_start_task<R: Runtime>(
     if !server_still_running {
         return Err(format!("MCP server {} quit immediately after starting", name));
     }
-
-    // Mark server as successfully connected (for restart policy)
-    {
-        let app_state = app.state::<AppState>();
-        let mut connected = app_state.mcp_successfully_connected.lock().await;
-        connected.insert(name.clone(), true);
-        log::info!("Marked MCP server {} as successfully connected", name);
-    }
-
-    // Emit event to the frontend
-    let event = format!("mcp-connected");
+    
+    // Mark server as successfully connected
+    let app_state = app.state::<AppState>();
+    let mut connected = app_state.mcp_successfully_connected.lock().await;
+    connected.insert(name.clone(), true);
+    log::info!("Marked MCP server {} as successfully connected", name);
+    
+    // Emit connection event to frontend
+    let event = "mcp-connected";
     let payload = serde_json::json!({
         "name": server_name,
         "version": server_version,
     });
-    app.emit(&event, payload)
+    app.emit(event, payload)
         .map_err(|e| format!("Failed to emit event: {}", e))?;
-
+    
     Ok(())
 }
 
@@ -1013,6 +1101,7 @@ mod tests {
     use std::collections::HashMap;
     use std::fs::File;
     use std::io::Write;
+    use std::path::PathBuf;
     use std::sync::Arc;
     use tauri::test::mock_app;
     use tokio::sync::Mutex;
@@ -1020,9 +1109,14 @@ mod tests {
     #[tokio::test]
     async fn test_run_mcp_commands() {
         let app = mock_app();
-        // Create a mock mcp_config.json file
-        let config_path = "mcp_config.json";
-        let mut file: File = File::create(config_path).expect("Failed to create config file");
+        
+        // Create the data directory as expected by get_jan_data_folder_path in test mode
+        let data_dir = PathBuf::from("./data");
+        std::fs::create_dir_all(&data_dir).expect("Failed to create data directory");
+        
+        // Create a mock mcp_config.json file in the correct location
+        let config_path = data_dir.join("mcp_config.json");
+        let mut file: File = File::create(&config_path).expect("Failed to create config file");
         file.write_all(b"{\"mcpServers\":{}}")
             .expect("Failed to write to config file");
 
@@ -1032,9 +1126,11 @@ mod tests {
         let result = run_mcp_commands(app.handle(), servers_state).await;
 
         // Assert that the function returns Ok(())
-        assert!(result.is_ok());
+        assert!(result.is_ok(), "run_mcp_commands failed with error: {:?}", result.err());
 
-        // Clean up the mock config file
-        std::fs::remove_file(config_path).expect("Failed to remove config file");
+        // Clean up the mock config file and directory
+        std::fs::remove_file(&config_path).expect("Failed to remove config file");
+        // Only remove the data directory if it's empty to avoid removing other test data
+        let _ = std::fs::remove_dir(&data_dir); // This will fail if directory is not empty, which is fine
     }
 }
