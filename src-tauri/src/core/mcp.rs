@@ -32,13 +32,25 @@ fn apply_windows_creation_flags(cmd: &mut Command) {
 /// Only wraps with shell if use_shell is true
 #[cfg(target_os = "windows")]
 fn wrap_command_for_windows(program: &str, args: &[&str], use_shell: bool) -> Command {
+    wrap_command_for_windows_with_shell(program, args, use_shell, windows_shell::ShellType::Cmd)
+}
+
+/// Helper function to wrap commands on Windows with configurable shell type
+#[cfg(target_os = "windows")]
+fn wrap_command_for_windows_with_shell(
+    program: &str,
+    args: &[&str],
+    use_shell: bool,
+    shell_type: windows_shell::ShellType
+) -> Command {
     let mut cmd = if use_shell {
         // Use comprehensive shell processing logic for proper Windows command handling
         let args_vec: Vec<String> = args.iter().map(|s| s.to_string()).collect();
-        let (final_command, final_args) = windows_shell::parse_non_shell(
+        let (final_command, final_args) = windows_shell::parse_shell_with_type(
             program.to_string(),
             args_vec,
             true, // force_shell = true since use_shell indicates shell is needed
+            shell_type,
         );
         
         log::info!("Windows shell command: {} {:?}", final_command, final_args);
@@ -55,10 +67,11 @@ fn wrap_command_for_windows(program: &str, args: &[&str], use_shell: bool) -> Co
             log::error!("Executable not found: {}", program);
             // Fall back to shell execution if direct execution fails
             let args_vec: Vec<String> = args.iter().map(|s| s.to_string()).collect();
-            let (final_command, final_args) = windows_shell::parse_non_shell(
+            let (final_command, final_args) = windows_shell::parse_shell_with_type(
                 program.to_string(),
                 args_vec,
                 true,
+                shell_type,
             );
             
             log::info!("Fallback Windows shell command: {} {:?}", final_command, final_args);
@@ -104,7 +117,8 @@ fn create_command_with_args(program: &str, base_args: &[&str], config_args: &[Va
         let use_shell = executable_name == "bun" || executable_name == "bun.exe" ||
                        executable_name == "uv" || executable_name == "uv.exe";
         
-        wrap_command_for_windows(program, &all_args, use_shell)
+        // Use PowerShell for better path handling with spaces, especially for MCP servers
+        wrap_command_for_windows_with_shell(program, &all_args, use_shell, windows_shell::ShellType::PowerShell)
     }
     #[cfg(not(target_os = "windows"))]
     {
