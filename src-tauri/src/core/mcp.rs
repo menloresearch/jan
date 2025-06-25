@@ -19,11 +19,10 @@ use super::{cmd::get_jan_data_folder_path, state::AppState};
 fn apply_windows_creation_flags(cmd: &mut Command) {
     use std::os::windows::process::CommandExt;
     const CREATE_NO_WINDOW: u32 = 0x08000000;
-    const CREATE_NEW_PROCESS_GROUP: u32 = 0x00000200;
     
     // Recommended combination: CREATE_NO_WINDOW prevents console window creation
     // CREATE_NEW_PROCESS_GROUP isolates the process group
-    let creation_flags = CREATE_NO_WINDOW | CREATE_NEW_PROCESS_GROUP;
+    let creation_flags = CREATE_NO_WINDOW;
     
     log::debug!("Using creation flags: 0x{:08X}", creation_flags);
     cmd.creation_flags(creation_flags);
@@ -34,46 +33,26 @@ fn apply_windows_creation_flags(cmd: &mut Command) {
 #[cfg(target_os = "windows")]
 fn wrap_command_for_windows(program: &str, args: &[&str], use_powershell: bool) -> Command {
     let mut cmd = if use_powershell {
-        // Try pwsh (PowerShell 7+) first, fallback to powershell.exe (Windows PowerShell)
-        let powershell_exe = match which::which("pwsh") {
-            Ok(_) => {
-                log::debug!("Using PowerShell 7+ (pwsh) for command execution");
-                "pwsh"
-            }
-            Err(_) => {
-                log::debug!("PowerShell 7+ not found, using Windows PowerShell (powershell.exe)");
-                "powershell.exe"
-            }
-        };
+        // Use cmd.exe instead of PowerShell for better Windows 11 compatibility
+        let comspec = std::env::var("COMSPEC").unwrap_or_else(|_| "cmd.exe".to_string());
+        let mut cmd_process = Command::new(comspec.clone());
         
-        let mut ps_cmd = Command::new(powershell_exe);
-        ps_cmd.arg("-WindowStyle");
-        ps_cmd.arg("Hidden");
-        ps_cmd.arg("-NoProfile");
-        ps_cmd.arg("-NonInteractive");
-        ps_cmd.arg("-NoLogo");
-        ps_cmd.arg("-ExecutionPolicy");
-        ps_cmd.arg("Bypass");
-        ps_cmd.arg("-Command");
+        // cmd.exe arguments: /d /s /c "command"
+        cmd_process.arg("/d");  // Disable AutoRun registry entries
+        cmd_process.arg("/s");  // Strip quotes and process the command line
+        cmd_process.arg("/c");  // Execute command and terminate
         
-        // Escape the program path and arguments for PowerShell
-        let escaped_program = program.replace("'", "''").replace("\\", "\\\\");
-        let mut escaped_args = Vec::new();
-        for arg in args {
-            let escaped_arg = arg.replace("'", "''").replace("\\", "\\\\");
-            escaped_args.push(format!("'{}'", escaped_arg));
-        }
+        // Build the command string with proper escaping
+        let mut cmd_parts = vec![program.to_string()];
+        cmd_parts.extend(args.iter().map(|s| s.to_string()));
         
-        // Use a simpler approach that's more compatible with Windows 11
-        let ps_command = if escaped_args.is_empty() {
-            format!("& '{}'", escaped_program)
-        } else {
-            format!("& '{}' {}", escaped_program, escaped_args.join(" "))
-        };
+        // Join arguments and wrap in quotes for cmd.exe
+        let cmd_string = cmd_parts.join(" ");
+        let quoted_cmd = format!("\"{}\"", cmd_string);
         
-        log::debug!("{} -WindowStyle Hidden -NoProfile -NonInteractive -NoLogo -ExecutionPolicy Bypass -Command \"{}\"", powershell_exe, ps_command);
-        ps_cmd.arg(ps_command);
-        ps_cmd
+        log::debug!("{} /d /s /c {}", comspec, quoted_cmd);
+        cmd_process.arg(quoted_cmd);
+        cmd_process
     } else {
         // Create direct command without PowerShell wrapping
         let mut direct_cmd = Command::new(program);
