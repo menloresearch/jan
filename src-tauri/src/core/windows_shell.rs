@@ -76,20 +76,20 @@ fn detect_shebang(command: &str, args: &mut Vec<String>) -> String {
     }
 }
 
-/// Escape command for cmd.exe - simplified approach
+/// Escape command for cmd.exe - use double quotes for paths with spaces
 fn escape_command(command: &str) -> String {
-    // For commands with spaces, use simple double-quoting
-    // Windows handles most edge cases correctly with this approach
+    // For cmd.exe with paths containing spaces, we need double quotes
+    // Working pattern: cmd.exe /d /s /c ""C:\path with spaces\file.exe"" args
     if command.contains(' ') || command.contains('\t') {
-        // If already quoted, return as-is
-        if command.starts_with('"') && command.ends_with('"') {
-            command.to_string()
+        // cmd.exe needs double quotes for paths with spaces
+        if command.starts_with("\"\"") && command.ends_with("\"\"") {
+            command.to_string() // Already double-quoted
+        } else if command.starts_with('"') && command.ends_with('"') {
+            format!("\"{}\"", command) // Convert single quotes to double quotes
         } else {
-            // Simple double-quote wrapping - let Windows handle internal escaping
-            format!("\"{}\"", command)
+            format!("\"\"{}\"\"", command) // Add double quotes
         }
     } else {
-        // No spaces, return as-is
         command.to_string()
     }
 }
@@ -345,9 +345,9 @@ mod tests {
         let shell_cmd = &final_args[3];
         println!("Shell command: {}", shell_cmd);
         
-        // With fixed escaping, should NOT have extra quotes around the entire command
-        // The individual components should be properly quoted
-        assert!(shell_cmd.contains(r#""C:\Users\sam hoang\AppData\Local\Programs\Jan-nightly\bun""#));
+        // With double-quote escaping for cmd.exe paths with spaces
+        // Should match pattern: ""C:\path with spaces\file.exe"" args
+        assert!(shell_cmd.contains(r#"""C:\Users\sam hoang\AppData\Local\Programs\Jan-nightly\bun"""#));
         assert!(shell_cmd.contains("x"));
         assert!(shell_cmd.contains("@browsermcp/mcp"));
     }

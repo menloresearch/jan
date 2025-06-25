@@ -118,7 +118,7 @@ fn create_command_with_args(program: &str, base_args: &[&str], config_args: &[Va
                        executable_name == "uv" || executable_name == "uv.exe";
         
         // Use PowerShell for better path handling with spaces, especially for MCP servers
-        wrap_command_for_windows_with_shell(program, &all_args, use_shell, windows_shell::ShellType::PowerShell)
+        wrap_command_for_windows(program, &all_args, use_shell, windows_shell::ShellType::PowerShell)
     }
     #[cfg(not(target_os = "windows"))]
     {
