@@ -29,16 +29,16 @@ fn apply_windows_creation_flags(cmd: &mut Command) {
 }
 
 /// Helper function to wrap commands on Windows to prevent console windows
-/// Only wraps with PowerShell if use_powershell is true
+/// Only wraps with shell if use_shell is true
 #[cfg(target_os = "windows")]
-fn wrap_command_for_windows(program: &str, args: &[&str], use_powershell: bool) -> Command {
-    let mut cmd = if use_powershell {
+fn wrap_command_for_windows(program: &str, args: &[&str], use_shell: bool) -> Command {
+    let mut cmd = if use_shell {
         // Use comprehensive shell processing logic for proper Windows command handling
-        let mut args_vec: Vec<String> = args.iter().map(|s| s.to_string()).collect();
+        let args_vec: Vec<String> = args.iter().map(|s| s.to_string()).collect();
         let (final_command, final_args) = windows_shell::parse_non_shell(
             program.to_string(),
             args_vec,
-            true, // force_shell = true since use_powershell indicates shell is needed
+            true, // force_shell = true since use_shell indicates shell is needed
         );
         
         log::info!("Windows shell command: {} {:?}", final_command, final_args);
@@ -49,20 +49,35 @@ fn wrap_command_for_windows(program: &str, args: &[&str], use_powershell: bool) 
         }
         cmd_process
     } else {
-        // Create direct command without PowerShell wrapping, but handle paths with spaces
-        let program_path = if program.contains(" ") && !program.starts_with('"') {
-            format!("\"{}\"", program)
+        // Check if executable exists before creating command
+        let executable_path = std::path::Path::new(program);
+        if !executable_path.exists() {
+            log::error!("Executable not found: {}", program);
+            // Fall back to shell execution if direct execution fails
+            let args_vec: Vec<String> = args.iter().map(|s| s.to_string()).collect();
+            let (final_command, final_args) = windows_shell::parse_non_shell(
+                program.to_string(),
+                args_vec,
+                true,
+            );
+            
+            log::info!("Fallback Windows shell command: {} {:?}", final_command, final_args);
+            
+            let mut cmd_process = Command::new(final_command);
+            for arg in final_args {
+                cmd_process.arg(arg);
+            }
+            cmd_process
         } else {
-            program.to_string()
-        };
-        
-        log::info!("Direct Windows command: {} {:?}", program_path, args);
-        
-        let mut direct_cmd = Command::new(&program_path);
-        for arg in args {
-            direct_cmd.arg(arg);
+            // Create direct command - let Windows handle the path quoting
+            log::info!("Direct Windows command: {} {:?}", program, args);
+            
+            let mut direct_cmd = Command::new(program);
+            for arg in args {
+                direct_cmd.arg(arg);
+            }
+            direct_cmd
         }
-        direct_cmd
     };
     
     // Apply creation flags to prevent console window for both cases
@@ -79,9 +94,17 @@ fn create_command_with_args(program: &str, base_args: &[&str], config_args: &[Va
         let config_str_args: Vec<&str> = config_args.iter().filter_map(Value::as_str).collect();
         all_args.extend(config_str_args);
         
-        // Only use PowerShell wrapping for npx and uvx commands
-        let use_powershell = program.ends_with("bun") || program.ends_with("uv");
-        wrap_command_for_windows(program, &all_args, use_powershell)
+        // Extract executable name from path for detection
+        let executable_name = std::path::Path::new(program)
+            .file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or(program);
+        
+        // Only use shell wrapping for specific executables that need it
+        let use_shell = executable_name == "bun" || executable_name == "bun.exe" ||
+                       executable_name == "uv" || executable_name == "uv.exe";
+        
+        wrap_command_for_windows(program, &all_args, use_shell)
     }
     #[cfg(not(target_os = "windows"))]
     {
@@ -630,8 +653,34 @@ async fn schedule_mcp_start_task<R: Runtime>(
         return Err(format!("Invalid MCP server configuration for {}", name));
     };
     
+    log::info!("Setting up MCP server '{}' with command: '{}', args: {:?}", name, command, args);
+    
     // Setup command with unified function
     let (mut cmd, command_env_vars) = setup_command(&command, &args, &app_path, &bin_path);
+    
+    // Validate executable paths for better error reporting
+    #[cfg(target_os = "windows")]
+    {
+        if command == "npx" || command == "uvx" {
+            // These use our wrapped binaries, check if they exist
+            let executable_path = match command {
+                "npx" => bin_path.join("bun"),
+                "uvx" => bin_path.join("uv"),
+                _ => bin_path.join(&command),
+            };
+            
+            if !executable_path.exists() && !executable_path.with_extension("exe").exists() {
+                return Err(format!(
+                    "MCP server '{}': Required executable not found at {} or {}.exe",
+                    name,
+                    executable_path.display(),
+                    executable_path.display()
+                ));
+            }
+            
+            log::info!("Validated executable path for MCP server '{}': {}", name, executable_path.display());
+        }
+    }
     
     // Apply command-specific environment variables
     for (key, value) in command_env_vars {
@@ -665,13 +714,37 @@ async fn schedule_mcp_start_task<R: Runtime>(
     // Create and start the MCP server process
     log::info!("Creating process for MCP server '{}'", name);
     let process = TokioChildProcess::new(cmd).map_err(|e| {
-        log::error!("Failed to run command {name}: {e}");
-        format!("Failed to run command {name}: {e}")
+        log::error!("Failed to create process for MCP server {}: {}", name, e);
+        
+        // Provide more specific error messages for common Windows issues
+        let error_msg = if e.to_string().contains("program not found") ||
+                          e.to_string().contains("cannot find") {
+            format!("MCP server '{}': Executable not found. Please ensure the required program is installed and accessible.", name)
+        } else if e.to_string().contains("Access is denied") {
+            format!("MCP server '{}': Access denied. Please check permissions for the executable.", name)
+        } else if e.to_string().contains("network path") {
+            format!("MCP server '{}': Invalid path format. This may be due to improper command escaping.", name)
+        } else {
+            format!("Failed to create process for MCP server '{}': {}", name, e)
+        };
+        
+        error_msg
     })?;
     
     log::info!("Starting MCP service for '{}'", name);
-    let service = ().serve(process).await
-        .map_err(|e| format!("Failed to start MCP server {name}: {e}"))?;
+    
+    // Add timeout for service startup to prevent hanging
+    let startup_timeout = Duration::from_secs(10);
+    let service = timeout(startup_timeout, ().serve(process))
+        .await
+        .map_err(|_| {
+            log::error!("MCP server '{}' startup timed out after {} seconds", name, startup_timeout.as_secs());
+            format!("MCP server '{}': startup timed out after {} seconds", name, startup_timeout.as_secs())
+        })?
+        .map_err(|e| {
+            log::error!("Failed to start MCP service for '{}': {}", name, e);
+            format!("Failed to start MCP server '{}': connection closed: {}", name, e)
+        })?;
     
     // Get server info before moving service
     let server_info = service.peer_info();

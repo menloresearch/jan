@@ -60,87 +60,40 @@ fn detect_shebang(command: &str, args: &mut Vec<String>) -> String {
     }
 }
 
-/// Escape command for cmd.exe
+/// Escape command for cmd.exe - simplified approach
 fn escape_command(command: &str) -> String {
-    // Check if command contains spaces or special characters that need quoting
-    let needs_quotes = command.contains(' ') || command.contains('\t') ||
-                      command.contains('&') || command.contains('|') ||
-                      command.contains('(') || command.contains(')') ||
-                      command.contains('<') || command.contains('>') ||
-                      command.contains('^') || command.contains('"');
-    
-    let mut result = String::new();
-    
-    if needs_quotes {
-        result.push('"');
-    }
-    
-    // Escape special characters: & | ( ) < > ^ "
-    for c in command.chars() {
-        match c {
-            '"' => {
-                // Escape quotes with backslash when inside quotes
-                if needs_quotes {
-                    result.push('\\');
-                }
-                result.push('"');
-            }
-            '&' | '|' | '(' | ')' | '<' | '>' | '^' => {
-                // Only escape these if not already quoted
-                if !needs_quotes {
-                    result.push('^');
-                }
-                result.push(c);
-            }
-            _ => result.push(c),
+    // For commands with spaces, use simple double-quoting
+    // Windows handles most edge cases correctly with this approach
+    if command.contains(' ') || command.contains('\t') {
+        // If already quoted, return as-is
+        if command.starts_with('"') && command.ends_with('"') {
+            command.to_string()
+        } else {
+            // Simple double-quote wrapping - let Windows handle internal escaping
+            format!("\"{}\"", command)
         }
+    } else {
+        // No spaces, return as-is
+        command.to_string()
     }
-    
-    if needs_quotes {
-        result.push('"');
-    }
-    
-    result
 }
 
-/// Escape argument for cmd.exe
-fn escape_argument(arg: &str, double_escape_meta_chars: bool) -> String {
-    let mut result = String::new();
-    let needs_quotes = arg.contains(' ') || arg.contains('\t') || arg.contains('"') ||
-                      arg.contains('&') || arg.contains('|') || arg.contains('<') ||
-                      arg.contains('>') || arg.contains('^') || arg.contains('%');
-    
-    if needs_quotes {
-        result.push('"');
-    }
-    
-    for ch in arg.chars() {
-        match ch {
-            '"' => {
-                // Escape quotes with backslash
-                result.push('\\');
-                result.push('"');
-            }
-            '&' | '|' | '(' | ')' | '<' | '>' | '^' | '%' => {
-                if double_escape_meta_chars {
-                    // Double escape for cmd-shims
-                    result.push_str("^^");
-                    result.push(ch);
-                } else {
-                    // Single escape
-                    result.push('^');
-                    result.push(ch);
-                }
-            }
-            _ => result.push(ch),
+/// Escape argument for cmd.exe - simplified approach
+fn escape_argument(arg: &str, _double_escape_meta_chars: bool) -> String {
+    // For arguments with spaces or special characters, use simple double-quoting
+    if arg.contains(' ') || arg.contains('\t') || arg.contains('"') {
+        // If already quoted, return as-is
+        if arg.starts_with('"') && arg.ends_with('"') {
+            arg.to_string()
+        } else {
+            // Escape internal quotes and wrap in quotes
+            let escaped_quotes = arg.replace('"', "\\\"");
+            format!("\"{}\"", escaped_quotes)
         }
+    } else {
+        // No special characters, return as-is
+        arg.to_string()
     }
-    
-    if needs_quotes {
-        result.push('"');
-    }
-    
-    result
 }
 
 /// Main shell processing logic for Windows (equivalent to Node.js parseNonShell)
@@ -203,15 +156,14 @@ mod tests {
     #[test]
     fn test_parse_non_shell_with_spaces_in_path() {
         let command = r#"C:\Users\sam hoang\AppData\Local\Programs\Jan-nightly\bun"#.to_string();
-        let args = vec!["x".to_string(), "-y".to_string(), "serper-search-scrape-mcp-server".to_string()];
+        let args = vec!["x".to_string(), "@browsermcp/mcp".to_string()];
         
         let (final_command, final_args) = parse_non_shell(command, args, true);
         
         println!("Final command: {}", final_command);
         println!("Final args: {:?}", final_args);
         
-        // Should produce something like:
-        // cmd.exe ["/d", "/s", "/c", "\"\"C:\\Users\\sam hoang\\AppData\\Local\\Programs\\Jan-nightly\\bun\" x -y serper-search-scrape-mcp-server\""]
+        // Should produce: cmd.exe ["/d", "/s", "/c", "\"executable_path args\""]
         assert_eq!(final_command, "cmd.exe");
         assert_eq!(final_args.len(), 4);
         assert_eq!(final_args[0], "/d");
@@ -222,7 +174,9 @@ mod tests {
         let shell_cmd = &final_args[3];
         println!("Shell command: {}", shell_cmd);
         
-        // Should contain the quoted executable path
+        // With simplified escaping, should be properly quoted without double escaping
+        assert!(shell_cmd.starts_with('"'));
+        assert!(shell_cmd.ends_with('"'));
         assert!(shell_cmd.contains(r#""C:\Users\sam hoang\AppData\Local\Programs\Jan-nightly\bun""#));
     }
 }
