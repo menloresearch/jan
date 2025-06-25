@@ -11,6 +11,8 @@ use tokio::{
 };
 #[cfg(target_os = "windows")]
 use which;
+#[cfg(target_os = "windows")]
+mod windows_shell;
 
 use super::{cmd::get_jan_data_folder_path, state::AppState};
 
@@ -33,25 +35,18 @@ fn apply_windows_creation_flags(cmd: &mut Command) {
 #[cfg(target_os = "windows")]
 fn wrap_command_for_windows(program: &str, args: &[&str], use_powershell: bool) -> Command {
     let mut cmd = if use_powershell {
-        // Use cmd.exe instead of PowerShell for better Windows 11 compatibility
-        let comspec = std::env::var("COMSPEC").unwrap_or_else(|_| "cmd.exe".to_string());
-        let mut cmd_process = Command::new(comspec.clone());
+        // Use comprehensive shell processing logic for proper Windows command handling
+        let mut args_vec: Vec<String> = args.iter().map(|s| s.to_string()).collect();
+        let (final_command, final_args) = windows_shell::parse_non_shell(
+            program.to_string(),
+            args_vec,
+            true, // force_shell = true since use_powershell indicates shell is needed
+        );
         
-        // cmd.exe arguments: /d /s /c "command"
-        cmd_process.arg("/d");  // Disable AutoRun registry entries
-        cmd_process.arg("/s");  // Strip quotes and process the command line
-        cmd_process.arg("/c");  // Execute command and terminate
-        
-        // Build the command string with proper escaping
-        let mut cmd_parts = vec![program.to_string()];
-        cmd_parts.extend(args.iter().map(|s| s.to_string()));
-        
-        // Join arguments and wrap in quotes for cmd.exe
-        let cmd_string = cmd_parts.join(" ");
-        let quoted_cmd = format!("\"{}\"", cmd_string);
-        
-        log::debug!("{} /d /s /c {}", comspec, quoted_cmd);
-        cmd_process.arg(quoted_cmd);
+        let mut cmd_process = Command::new(final_command);
+        for arg in final_args {
+            cmd_process.arg(arg);
+        }
         cmd_process
     } else {
         // Create direct command without PowerShell wrapping
