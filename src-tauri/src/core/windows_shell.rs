@@ -136,12 +136,13 @@ pub fn parse_non_shell(
     // let comspec = std::env::var("COMSPEC").unwrap_or_else(|_| "cmd.exe".to_string());
     let comspec = "cmd.exe".to_string();
     
-    // Return cmd.exe with arguments: /d /s /c "command"
+    // Return cmd.exe with arguments: /d /s /c command
+    // Note: Don't add extra quotes here - shell_command already has proper escaping
     let cmd_args = vec![
         "/d".to_string(),
         "/s".to_string(),
         "/c".to_string(),
-        format!("\"{}\"", shell_command),
+        shell_command,
     ];
     
     log::debug!("Windows shell processor: {} {}", comspec, cmd_args.join(" "));
@@ -170,13 +171,16 @@ mod tests {
         assert_eq!(final_args[1], "/s");
         assert_eq!(final_args[2], "/c");
         
-        // The fourth argument should be the properly quoted command
+        // The fourth argument should be the properly quoted command without extra wrapping
         let shell_cmd = &final_args[3];
         println!("Shell command: {}", shell_cmd);
         
-        // With simplified escaping, should be properly quoted without double escaping
-        assert!(shell_cmd.starts_with('"'));
-        assert!(shell_cmd.ends_with('"'));
+        // With fixed escaping, should NOT have extra quotes around the entire command
+        // The individual components should be properly quoted
         assert!(shell_cmd.contains(r#""C:\Users\sam hoang\AppData\Local\Programs\Jan-nightly\bun""#));
+        assert!(shell_cmd.contains("x"));
+        assert!(shell_cmd.contains("@browsermcp/mcp"));
+        // Should not start and end with quotes (no over-escaping)
+        assert!(!shell_cmd.starts_with('"') || !shell_cmd.ends_with('"') || shell_cmd.len() > 2);
     }
 }

@@ -658,30 +658,6 @@ async fn schedule_mcp_start_task<R: Runtime>(
     // Setup command with unified function
     let (mut cmd, command_env_vars) = setup_command(&command, &args, &app_path, &bin_path);
     
-    // Validate executable paths for better error reporting
-    #[cfg(target_os = "windows")]
-    {
-        if command == "npx" || command == "uvx" {
-            // These use our wrapped binaries, check if they exist
-            let executable_path = match command {
-                "npx" => bin_path.join("bun"),
-                "uvx" => bin_path.join("uv"),
-                _ => bin_path.join(&command),
-            };
-            
-            if !executable_path.exists() && !executable_path.with_extension("exe").exists() {
-                return Err(format!(
-                    "MCP server '{}': Required executable not found at {} or {}.exe",
-                    name,
-                    executable_path.display(),
-                    executable_path.display()
-                ));
-            }
-            
-            log::info!("Validated executable path for MCP server '{}': {}", name, executable_path.display());
-        }
-    }
-    
     // Apply command-specific environment variables
     for (key, value) in command_env_vars {
         cmd.env(key, value);
