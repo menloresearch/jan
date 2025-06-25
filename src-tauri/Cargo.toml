@@ -56,6 +56,7 @@ fix-path-env = { git = "https://github.com/tauri-apps/fix-path-env-rs" }
 [target.'cfg(windows)'.dependencies]
 libloading = "0.8.7"
 libc = "0.2.172"
+which = "6.0"
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-updater = "2"

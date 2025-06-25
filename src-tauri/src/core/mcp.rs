@@ -9,6 +9,8 @@ use tokio::{
     sync::Mutex,
     time::{sleep, timeout},
 };
+#[cfg(target_os = "windows")]
+use which;
 
 use super::{cmd::get_jan_data_folder_path, state::AppState};
 
@@ -18,12 +20,10 @@ fn apply_windows_creation_flags(cmd: &mut Command) {
     use std::os::windows::process::CommandExt;
     const CREATE_NO_WINDOW: u32 = 0x08000000;
     const CREATE_NEW_PROCESS_GROUP: u32 = 0x00000200;
-    const CREATE_BREAKAWAY_FROM_JOB: u32 = 0x01000000;
     
     // Recommended combination: CREATE_NO_WINDOW prevents console window creation
     // CREATE_NEW_PROCESS_GROUP isolates the process group
-    // CREATE_BREAKAWAY_FROM_JOB allows breaking away from job objects
-    let creation_flags = CREATE_NO_WINDOW | CREATE_NEW_PROCESS_GROUP | CREATE_BREAKAWAY_FROM_JOB;
+    let creation_flags = CREATE_NO_WINDOW | CREATE_NEW_PROCESS_GROUP;
     
     log::debug!("Using creation flags: 0x{:08X}", creation_flags);
     cmd.creation_flags(creation_flags);
@@ -34,7 +34,19 @@ fn apply_windows_creation_flags(cmd: &mut Command) {
 #[cfg(target_os = "windows")]
 fn wrap_command_for_windows(program: &str, args: &[&str], use_powershell: bool) -> Command {
     let mut cmd = if use_powershell {
-        let mut ps_cmd = Command::new("powershell.exe");
+        // Try pwsh (PowerShell 7+) first, fallback to powershell.exe (Windows PowerShell)
+        let powershell_exe = match which::which("pwsh") {
+            Ok(_) => {
+                log::debug!("Using PowerShell 7+ (pwsh) for command execution");
+                "pwsh"
+            }
+            Err(_) => {
+                log::debug!("PowerShell 7+ not found, using Windows PowerShell (powershell.exe)");
+                "powershell.exe"
+            }
+        };
+        
+        let mut ps_cmd = Command::new(powershell_exe);
         ps_cmd.arg("-WindowStyle");
         ps_cmd.arg("Hidden");
         ps_cmd.arg("-NoProfile");
@@ -44,14 +56,22 @@ fn wrap_command_for_windows(program: &str, args: &[&str], use_powershell: bool) 
         ps_cmd.arg("Bypass");
         ps_cmd.arg("-Command");
         
-        // Build simple PowerShell command without Windows API calls
-        let mut ps_command = format!("& '{}'", program.replace("'", "''"));
+        // Escape the program path and arguments for PowerShell
+        let escaped_program = program.replace("'", "''").replace("\\", "\\\\");
+        let mut escaped_args = Vec::new();
         for arg in args {
-            ps_command.push_str(&format!(" '{}'", arg.replace("'", "''")));
+            let escaped_arg = arg.replace("'", "''").replace("\\", "\\\\");
+            escaped_args.push(format!("'{}'", escaped_arg));
         }
         
-        // Log before moving ps_command
-        log::debug!("powershell.exe -WindowStyle Hidden -NoProfile -NonInteractive -NoLogo -ExecutionPolicy Bypass -Command \"{}\"", ps_command);
+        // Use a simpler approach that's more compatible with Windows 11
+        let ps_command = if escaped_args.is_empty() {
+            format!("& '{}'", escaped_program)
+        } else {
+            format!("& '{}' {}", escaped_program, escaped_args.join(" "))
+        };
+        
+        log::debug!("{} -WindowStyle Hidden -NoProfile -NonInteractive -NoLogo -ExecutionPolicy Bypass -Command \"{}\"", powershell_exe, ps_command);
         ps_cmd.arg(ps_command);
         ps_cmd
     } else {
