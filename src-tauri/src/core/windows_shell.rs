@@ -62,11 +62,45 @@ fn detect_shebang(command: &str, args: &mut Vec<String>) -> String {
 
 /// Escape command for cmd.exe
 fn escape_command(command: &str) -> String {
+    // Check if command contains spaces or special characters that need quoting
+    let needs_quotes = command.contains(' ') || command.contains('\t') ||
+                      command.contains('&') || command.contains('|') ||
+                      command.contains('(') || command.contains(')') ||
+                      command.contains('<') || command.contains('>') ||
+                      command.contains('^') || command.contains('"');
+    
+    let mut result = String::new();
+    
+    if needs_quotes {
+        result.push('"');
+    }
+    
     // Escape special characters: & | ( ) < > ^ "
-    command.chars().map(|c| match c {
-        '&' | '|' | '(' | ')' | '<' | '>' | '^' | '"' => format!("^{}", c),
-        _ => c.to_string(),
-    }).collect()
+    for c in command.chars() {
+        match c {
+            '"' => {
+                // Escape quotes with backslash when inside quotes
+                if needs_quotes {
+                    result.push('\\');
+                }
+                result.push('"');
+            }
+            '&' | '|' | '(' | ')' | '<' | '>' | '^' => {
+                // Only escape these if not already quoted
+                if !needs_quotes {
+                    result.push('^');
+                }
+                result.push(c);
+            }
+            _ => result.push(c),
+        }
+    }
+    
+    if needs_quotes {
+        result.push('"');
+    }
+    
+    result
 }
 
 /// Escape argument for cmd.exe
@@ -138,10 +172,12 @@ pub fn parse_non_shell(
         .map(|arg| escape_argument(arg, needs_double_escape))
         .collect();
     
-    // Build shell command
-    let mut shell_parts = vec![escaped_command];
-    shell_parts.extend(escaped_args);
-    let shell_command = shell_parts.join(" ");
+    // Build shell command with proper quoting
+    let shell_command = if escaped_args.is_empty() {
+        escaped_command
+    } else {
+        format!("{} {}", escaped_command, escaped_args.join(" "))
+    };
     
     // Get COMSPEC or default to cmd.exe
     let comspec = std::env::var("COMSPEC").unwrap_or_else(|_| "cmd.exe".to_string());
@@ -149,7 +185,7 @@ pub fn parse_non_shell(
     // Return cmd.exe with arguments: /d /s /c "command"
     let cmd_args = vec![
         "/d".to_string(),
-        "/s".to_string(), 
+        "/s".to_string(),
         "/c".to_string(),
         format!("\"{}\"", shell_command),
     ];
@@ -157,4 +193,35 @@ pub fn parse_non_shell(
     log::debug!("Windows shell processor: {} {}", comspec, cmd_args.join(" "));
     
     (comspec, cmd_args)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_non_shell_with_spaces_in_path() {
+        let command = r#"C:\Users\sam hoang\AppData\Local\Programs\Jan-nightly\bun"#.to_string();
+        let args = vec!["x".to_string(), "-y".to_string(), "serper-search-scrape-mcp-server".to_string()];
+        
+        let (final_command, final_args) = parse_non_shell(command, args, true);
+        
+        println!("Final command: {}", final_command);
+        println!("Final args: {:?}", final_args);
+        
+        // Should produce something like:
+        // cmd.exe ["/d", "/s", "/c", "\"\"C:\\Users\\sam hoang\\AppData\\Local\\Programs\\Jan-nightly\\bun\" x -y serper-search-scrape-mcp-server\""]
+        assert_eq!(final_command, "cmd.exe");
+        assert_eq!(final_args.len(), 4);
+        assert_eq!(final_args[0], "/d");
+        assert_eq!(final_args[1], "/s");
+        assert_eq!(final_args[2], "/c");
+        
+        // The fourth argument should be the properly quoted command
+        let shell_cmd = &final_args[3];
+        println!("Shell command: {}", shell_cmd);
+        
+        // Should contain the quoted executable path
+        assert!(shell_cmd.contains(r#""C:\Users\sam hoang\AppData\Local\Programs\Jan-nightly\bun""#));
+    }
 }

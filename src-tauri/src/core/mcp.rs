@@ -9,12 +9,10 @@ use tokio::{
     sync::Mutex,
     time::{sleep, timeout},
 };
-#[cfg(target_os = "windows")]
-use which;
-#[cfg(target_os = "windows")]
-mod windows_shell;
-
 use super::{cmd::get_jan_data_folder_path, state::AppState};
+
+#[cfg(target_os = "windows")]
+use super::windows_shell;
 
 /// Helper function to apply Windows creation flags to prevent console windows
 #[cfg(target_os = "windows")]
@@ -30,31 +28,32 @@ fn apply_windows_creation_flags(cmd: &mut Command) {
     cmd.creation_flags(creation_flags);
 }
 
-/// Helper function to process commands on Windows with intelligent shell detection
-///
-/// Uses comprehensive shell processing logic to determine if cmd.exe is needed:
-/// - If use_powershell is true: Forces shell usage (cmd.exe)
-/// - If use_powershell is false: Intelligently detects if shell is needed based on:
-///   * File extension (.exe/.com don't need shell, others might)
-///   * Special characters that require shell processing
-///   * Shebang detection for script files
-///   * Cmd-shim detection in node_modules/.bin/
-///
-/// Uses DETACHED_PROCESS creation flag to prevent console window creation entirely
+/// Helper function to wrap commands on Windows to prevent console windows
+/// Only wraps with PowerShell if use_powershell is true
 #[cfg(target_os = "windows")]
 fn wrap_command_for_windows(program: &str, args: &[&str], use_powershell: bool) -> Command {
-    // Always use comprehensive shell processing logic on Windows
-    let mut args_vec: Vec<String> = args.iter().map(|s| s.to_string()).collect();
-    let (final_command, final_args) = windows_shell::parse_non_shell(
-        program.to_string(),
-        args_vec,
-        use_powershell, // Pass use_powershell as force_shell parameter
-    );
-    
-    let mut cmd = Command::new(final_command);
-    for arg in final_args {
-        cmd.arg(arg);
-    }
+    let mut cmd = if use_powershell {
+        // Use comprehensive shell processing logic for proper Windows command handling
+        let mut args_vec: Vec<String> = args.iter().map(|s| s.to_string()).collect();
+        let (final_command, final_args) = windows_shell::parse_non_shell(
+            program.to_string(),
+            args_vec,
+            true, // force_shell = true since use_powershell indicates shell is needed
+        );
+        
+        let mut cmd_process = Command::new(final_command);
+        for arg in final_args {
+            cmd_process.arg(arg);
+        }
+        cmd_process
+    } else {
+        // Create direct command without PowerShell wrapping
+        let mut direct_cmd = Command::new(program);
+        for arg in args {
+            direct_cmd.arg(arg);
+        }
+        direct_cmd
+    };
     
     // Apply creation flags to prevent console window for both cases
     apply_windows_creation_flags(&mut cmd);

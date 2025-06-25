@@ -7,3 +7,5 @@ pub mod setup;
 pub mod state;
 pub mod threads;
 pub mod utils;
+#[cfg(target_os = "windows")]
+pub mod windows_shell;
