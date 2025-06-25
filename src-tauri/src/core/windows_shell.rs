@@ -180,7 +180,8 @@ pub fn parse_non_shell(
     };
     
     // Get COMSPEC or default to cmd.exe
-    let comspec = std::env::var("COMSPEC").unwrap_or_else(|_| "cmd.exe".to_string());
+    // let comspec = std::env::var("COMSPEC").unwrap_or_else(|_| "cmd.exe".to_string());
+    let comspec = "cmd.exe".to_string();
     
     // Return cmd.exe with arguments: /d /s /c "command"
     let cmd_args = vec![

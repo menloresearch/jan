@@ -41,14 +41,24 @@ fn wrap_command_for_windows(program: &str, args: &[&str], use_powershell: bool) 
             true, // force_shell = true since use_powershell indicates shell is needed
         );
         
+        log::info!("Windows shell command: {} {:?}", final_command, final_args);
+        
         let mut cmd_process = Command::new(final_command);
         for arg in final_args {
             cmd_process.arg(arg);
         }
         cmd_process
     } else {
-        // Create direct command without PowerShell wrapping
-        let mut direct_cmd = Command::new(program);
+        // Create direct command without PowerShell wrapping, but handle paths with spaces
+        let program_path = if program.contains(" ") && !program.starts_with('"') {
+            format!("\"{}\"", program)
+        } else {
+            program.to_string()
+        };
+        
+        log::info!("Direct Windows command: {} {:?}", program_path, args);
+        
+        let mut direct_cmd = Command::new(&program_path);
         for arg in args {
             direct_cmd.arg(arg);
         }
@@ -642,21 +652,24 @@ async fn schedule_mcp_start_task<R: Runtime>(
     }
     
     cmd.kill_on_drop(true);
-    log::trace!("Command: {cmd:#?}");
+    log::info!("Starting MCP server '{}' with command: {:?}", name, cmd);
     
     // Apply environment variables from config
     envs.iter().for_each(|(k, v)| {
         if let Some(v_str) = v.as_str() {
+            log::debug!("Setting env var for {}: {}={}", name, k, v_str);
             cmd.env(k, v_str);
         }
     });
     
     // Create and start the MCP server process
+    log::info!("Creating process for MCP server '{}'", name);
     let process = TokioChildProcess::new(cmd).map_err(|e| {
         log::error!("Failed to run command {name}: {e}");
         format!("Failed to run command {name}: {e}")
     })?;
     
+    log::info!("Starting MCP service for '{}'", name);
     let service = ().serve(process).await
         .map_err(|e| format!("Failed to start MCP server {name}: {e}"))?;
     
