@@ -32,7 +32,7 @@ fn apply_windows_creation_flags(cmd: &mut Command) {
 /// Only wraps with shell if use_shell is true
 #[cfg(target_os = "windows")]
 fn wrap_command_for_windows(program: &str, args: &[&str], use_shell: bool) -> Command {
-    wrap_command_for_windows_with_shell(program, args, use_shell, windows_shell::ShellType::Cmd)
+    wrap_command_for_windows_with_shell(program, args, use_shell, windows_shell::ShellType::PowerShell)
 }
 
 /// Helper function to wrap commands on Windows with configurable shell type
@@ -118,7 +118,7 @@ fn create_command_with_args(program: &str, base_args: &[&str], config_args: &[Va
                        executable_name == "uv" || executable_name == "uv.exe";
         
         // Use PowerShell for better path handling with spaces, especially for MCP servers
-        wrap_command_for_windows_with_shell(program, &all_args, use_shell, windows_shell::ShellType::PowerShell)
+        wrap_command_for_windows(program, &all_args, use_shell)
     }
     #[cfg(not(target_os = "windows"))]
     {
@@ -723,16 +723,10 @@ async fn schedule_mcp_start_task<R: Runtime>(
     
     log::info!("Starting MCP service for '{}'", name);
     
-    // Add timeout for service startup to prevent hanging
-    let startup_timeout = Duration::from_secs(10);
-    let service = timeout(startup_timeout, ().serve(process))
+    let service = ().serve(process)
         .await
-        .map_err(|_| {
-            log::error!("MCP server '{}' startup timed out after {} seconds", name, startup_timeout.as_secs());
-            format!("MCP server '{}': startup timed out after {} seconds", name, startup_timeout.as_secs())
-        })?
         .map_err(|e| {
-            log::error!("Failed to start MCP service for '{}': {}", name, e);
+            log::error!("Failed to start MCP service for '{name}': {e}");
             format!("Failed to start MCP server '{}': connection closed: {}", name, e)
         })?;
     
