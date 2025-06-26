@@ -76,18 +76,15 @@ fn detect_shebang(command: &str, args: &mut Vec<String>) -> String {
     }
 }
 
-/// Escape command for cmd.exe - use double quotes for paths with spaces
+/// Escape command for cmd.exe - use simple quotes for paths with spaces
 fn escape_command(command: &str) -> String {
-    // For cmd.exe with paths containing spaces, we need double quotes
-    // Working pattern: cmd.exe /d /s /c ""C:\path with spaces\file.exe"" args
+    // For cmd.exe, use simple double quotes - avoid double-double quotes
+    // The double-double quote pattern works in command line but not when passed as argument
     if command.contains(' ') || command.contains('\t') {
-        // cmd.exe needs double quotes for paths with spaces
-        if command.starts_with("\"\"") && command.ends_with("\"\"") {
-            command.to_string() // Already double-quoted
-        } else if command.starts_with('"') && command.ends_with('"') {
-            format!("\"{}\"", command) // Convert single quotes to double quotes
+        if command.starts_with('"') && command.ends_with('"') {
+            command.to_string() // Already quoted
         } else {
-            format!("\"\"{}\"\"", command) // Add double quotes
+            format!("\"{}\"", command) // Simple double quotes
         }
     } else {
         command.to_string()
@@ -345,9 +342,9 @@ mod tests {
         let shell_cmd = &final_args[3];
         println!("Shell command: {}", shell_cmd);
         
-        // With double-quote escaping for cmd.exe paths with spaces
-        // Should match pattern: ""C:\path with spaces\file.exe"" args
-        assert!(shell_cmd.contains(r#"""C:\Users\sam hoang\AppData\Local\Programs\Jan-nightly\bun"""#));
+        // With simple quote escaping for cmd.exe paths with spaces
+        // Should match pattern: "C:\path with spaces\file.exe" args
+        assert!(shell_cmd.contains(r#""C:\Users\sam hoang\AppData\Local\Programs\Jan-nightly\bun""#));
         assert!(shell_cmd.contains("x"));
         assert!(shell_cmd.contains("@browsermcp/mcp"));
     }
