@@ -32,28 +32,16 @@ fn apply_windows_creation_flags(cmd: &mut Command) {
 /// Only wraps with shell if use_shell is true
 #[cfg(target_os = "windows")]
 fn wrap_command_for_windows(program: &str, args: &[&str], use_shell: bool) -> Command {
-    wrap_command_for_windows_with_shell(program, args, use_shell, windows_shell::ShellType::PowerShell)
-}
-
-/// Helper function to wrap commands on Windows with configurable shell type
-#[cfg(target_os = "windows")]
-fn wrap_command_for_windows_with_shell(
-    program: &str,
-    args: &[&str],
-    use_shell: bool,
-    shell_type: windows_shell::ShellType
-) -> Command {
     let mut cmd = if use_shell {
-        // Use comprehensive shell processing logic for proper Windows command handling
+        // Use comprehensive shell processing logic for proper Windows command handling with PowerShell
         let args_vec: Vec<String> = args.iter().map(|s| s.to_string()).collect();
-        let (final_command, final_args) = windows_shell::parse_shell_with_type(
+        let (final_command, final_args) = windows_shell::parse_powershell(
             program.to_string(),
             args_vec,
             true, // force_shell = true since use_shell indicates shell is needed
-            shell_type,
         );
         
-        log::info!("Windows shell command: {} {:?}", final_command, final_args);
+        log::info!("Windows PowerShell command: {} {:?}", final_command, final_args);
         
         let mut cmd_process = Command::new(final_command);
         for arg in final_args {
@@ -65,16 +53,15 @@ fn wrap_command_for_windows_with_shell(
         let executable_path = std::path::Path::new(program);
         if !executable_path.exists() {
             log::error!("Executable not found: {}", program);
-            // Fall back to shell execution if direct execution fails
+            // Fall back to PowerShell execution if direct execution fails
             let args_vec: Vec<String> = args.iter().map(|s| s.to_string()).collect();
-            let (final_command, final_args) = windows_shell::parse_shell_with_type(
+            let (final_command, final_args) = windows_shell::parse_powershell(
                 program.to_string(),
                 args_vec,
                 true,
-                shell_type,
             );
             
-            log::info!("Fallback Windows shell command: {} {:?}", final_command, final_args);
+            log::info!("Fallback Windows PowerShell command: {} {:?}", final_command, final_args);
             
             let mut cmd_process = Command::new(final_command);
             for arg in final_args {
