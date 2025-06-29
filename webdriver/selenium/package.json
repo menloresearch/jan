@@ -1,13 +1,13 @@
 {
-    "name": "selenium",
-    "version": "1.0.0",
-    "private": true,
-    "scripts": {
-        "test": "mocha"
-    },
-    "devDependencies": {
-        "chai": "^5.2.0",
-        "mocha": "^11.7.1",
-        "selenium-webdriver": "^4.33.0"
-    }
+  "name": "selenium",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "test": "mocha"
+  },
+  "devDependencies": {
+    "chai": "^4.3.4",
+    "mocha": "^9.0.0",
+    "selenium-webdriver": "^4.0.0-beta.4"
+  }
 }

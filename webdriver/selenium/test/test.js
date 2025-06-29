@@ -46,13 +46,7 @@ before(async function () {
   capabilities.set('tauri:options', {
     application,
     webviewOptions: {
-      additionalBrowserArguments: [
-        '--no-first-run',
-        '--no-default-browser-check',
-        '--disable-features=EdgeIdentity',
-        '--disable-sync',
-        '--guest',
-      ],
+      additionalBrowserArguments: [],
     },
   })
   capabilities.setBrowserName('wry')
