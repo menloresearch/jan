@@ -165,6 +165,10 @@ jobs:
       - name: Build app
         run: |
           rustup target add x86_64-apple-darwin
+          SCCACHE_PATH = $(mise which sccache)
+          ctoml ~/.cargo/config.toml build.rustc-wrapper "${SCCACHE_PATH}"
+          echo "---------cargo.config.toml---------"
+          cat ~/.cargo/config.toml
           mise run build-tauri
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
