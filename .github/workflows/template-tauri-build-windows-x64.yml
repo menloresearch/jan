@@ -86,7 +86,7 @@ jobs:
         uses: mozilla-actions/sccache-action@v0.0.9
 
       - name: Tell sccache to use Actions cache
-        run: Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_GHA_ENABLED=true"
+        run: echo "SCCACHE_GHA_ENABLED=true" >> $GITHUB_ENV
 
       - name: Update app version base on tag
         id: version_update
@@ -186,6 +186,7 @@ jobs:
           cat ~/.cargo/config.toml
           mise run build-tauri
         env:
+          SCCACHE_GHA_ENABLED: "true"
           AZURE_KEY_VAULT_URI: ${{ secrets.AZURE_KEY_VAULT_URI }}
           AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
