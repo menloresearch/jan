@@ -101,7 +101,7 @@ jobs:
           jq --arg version "${{ inputs.new_version }}" '.version = $version' web-app/package.json > /tmp/package.json
           mv /tmp/package.json web-app/package.json
 
-          ctoml ./src-tauri/Cargo.toml package.version "${{ inputs.new_version }}"
+          mise exec -- ctoml ./src-tauri/Cargo.toml package.version "${{ inputs.new_version }}"
           echo "---------Cargo.toml---------"
           cat ./src-tauri/Cargo.toml
 
@@ -139,7 +139,7 @@ jobs:
           sed -i "s/jan_build/$new_build_version/g" ./src-tauri/tauri.bundle.windows.nsis.template          
 
           # Temporarily enable devtool on prod build
-          ctoml ./src-tauri/Cargo.toml dependencies.tauri.features[] "devtools"
+          mise exec -- ctoml ./src-tauri/Cargo.toml dependencies.tauri.features[] "devtools"
           cat ./src-tauri/Cargo.toml
 
           # Change app name for beta and nightly builds
@@ -154,8 +154,8 @@ jobs:
             cat ./src-tauri/tauri.conf.json
 
             # Update Cargo.toml
-            ctoml ./src-tauri/Cargo.toml package.name "Jan-${{ inputs.channel }}"
-            ctoml ./src-tauri/Cargo.toml dependencies.tauri.features[] "devtools"
+            mise exec -- ctoml ./src-tauri/Cargo.toml package.name "Jan-${{ inputs.channel }}"
+            mise exec -- ctoml ./src-tauri/Cargo.toml dependencies.tauri.features[] "devtools"
             echo "------------------"
             cat ./src-tauri/Cargo.toml
 
