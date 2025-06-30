@@ -66,8 +66,7 @@ jobs:
     permissions:
       contents: write
     env:
-      SCCACHE_GHA_ENABLED: "true"
-      RUSTC_WRAPPER: "sccache"
+      MISE_ENV: ci
     steps:
       - name: Getting the repo
         uses: actions/checkout@v3
@@ -87,7 +86,7 @@ jobs:
 
       - name: Install tools via mise
         shell: bash
-        run: mise install --env ci
+        run: mise install
 
 
       - name: Create bun and uv universal
@@ -166,7 +165,7 @@ jobs:
       - name: Build app
         run: |
           rustup target add x86_64-apple-darwin
-          mise run build-tauri --env ci
+          mise run build-tauri
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APP_PATH: '.'
