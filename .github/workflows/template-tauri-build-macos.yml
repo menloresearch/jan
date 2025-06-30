@@ -76,17 +76,15 @@ jobs:
         run: |
           cp .github/scripts/icon-${{ inputs.channel }}.png src-tauri/icons/icon.png
 
-      - name: Installing node
-        uses: actions/setup-node@v1
-        with:
-          node-version: 20
+      - name: Install mise
+        uses: jdx/mise-action@v2
 
-      - name: Install jq
-        uses: dcarbone/install-jq-action@v2.0.1
+      - name: Install tools via mise
+        shell: bash
+        run: mise install --env ci
 
-      - name: Install ctoml
-        run: |
-          cargo install ctoml
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.9
 
       - name: Create bun and uv universal
         run: |
@@ -164,7 +162,7 @@ jobs:
       - name: Build app
         run: |
           rustup target add x86_64-apple-darwin
-          make build-tauri
+          mise run build-tauri --env ci
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           APP_PATH: '.'
@@ -179,7 +177,10 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           TAURI_SIGNING_PUBLIC_KEY: ${{ secrets.TAURI_SIGNING_PUBLIC_KEY }}
-
+      
+      - name: Show sccache stats
+        shell: bash
+        run: sccache --show-stats
       # Publish app
 
       ## Artifacts, for dev and test
