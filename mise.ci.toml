@@ -7,8 +7,6 @@ jq = "latest"
 
 [env]
 _.path = ['./node_modules/.bin']
-RUSTC_WRAPPER="sccache"
-SCCACHE_GHA_ENABLED="true"
 
 # ============================================================================
 # CORE SETUP AND CONFIGURATION TASKS

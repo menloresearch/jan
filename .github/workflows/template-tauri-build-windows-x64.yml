@@ -65,6 +65,9 @@ jobs:
       FILE_NAME: ${{ steps.metadata.outputs.FILE_NAME }}
     permissions:
       contents: write
+    env:
+      SCCACHE_GHA_ENABLED: "true"
+      RUSTC_WRAPPER: "sccache"
     steps:
       - name: Getting the repo
         uses: actions/checkout@v3
@@ -79,6 +82,9 @@ jobs:
       
       - name: Install mise
         uses: jdx/mise-action@v2
+
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.9
 
       - name: Install tools via mise
         shell: bash
