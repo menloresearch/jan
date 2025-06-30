@@ -151,7 +151,7 @@ jobs:
       - name: Build app
         run: |
           SCCACHE_PATH = $(mise which sccache)
-          ctoml ~/.cargo/config.toml build.rustc-wrapper "${SCCACHE_PATH}"
+          ctoml ~/.cargo/config.toml build.rustc-wrapper "$SCCACHE_PATH"
           echo "---------cargo.config.toml---------"
           cat ~/.cargo/config.toml
           mise run build-tauri
