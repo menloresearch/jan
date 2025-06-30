@@ -87,7 +87,7 @@ jobs:
 
       - name: Install mise
         uses: jdx/mise-action@v2
-        with:
+        env:
           RUSTC_WRAPPER: ""
 
       - name: Run sccache-cache
