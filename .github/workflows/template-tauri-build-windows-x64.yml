@@ -78,13 +78,15 @@ jobs:
         shell: bash
         run: |
           cp .github/scripts/icon-${{ inputs.channel }}.png src-tauri/icons/icon.png
-      
+
       - name: Install mise
         uses: jdx/mise-action@v2
 
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.9
 
+      - name: Tell sccache to use Actions cache
+        run: Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_GHA_ENABLED=true"
 
       - name: Update app version base on tag
         id: version_update
