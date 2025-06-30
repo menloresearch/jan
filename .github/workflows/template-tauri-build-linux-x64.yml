@@ -57,6 +57,8 @@ jobs:
       APPIMAGE_FILE_NAME: ${{ steps.packageinfo.outputs.APPIMAGE_FILE_NAME }}
     permissions:
       contents: write
+    env:
+      MISE_ENV: ci
     steps:
       - name: Getting the repo
         uses: actions/checkout@v3
@@ -83,17 +85,15 @@ jobs:
         run: |
           cp .github/scripts/icon-${{ inputs.channel }}.png src-tauri/icons/icon.png
 
-      - name: Installing node
-        uses: actions/setup-node@v1
-        with:
-          node-version: 20
+      - name: Install mise
+        uses: jdx/mise-action@v2
 
-      - name: Install jq
-        uses: dcarbone/install-jq-action@v2.0.1
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.9
 
-      - name: Install ctoml
-        run: |
-          cargo install ctoml
+      - name: Install tools via mise
+        shell: bash
+        run: mise install
 
       - name: Install Tauri dependencies
         run: |
@@ -150,7 +150,7 @@ jobs:
           fi
       - name: Build app
         run: |
-          make build-tauri
+          mise run build-tauri
           # Copy engines and bun to appimage
            wget https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O ./appimagetool
           chmod +x ./appimagetool
