@@ -86,7 +86,7 @@ jobs:
           cp .github/scripts/icon-${{ inputs.channel }}.png src-tauri/icons/icon.png
 
       - name: Install mise
-        script: |
+        run: |
           curl https://mise.run | sh
           mise install
 
