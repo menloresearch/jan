@@ -87,6 +87,8 @@ jobs:
 
       - name: Install mise
         uses: jdx/mise-action@v2
+        with:
+          RUSTC_WRAPPER: ""
 
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.9
