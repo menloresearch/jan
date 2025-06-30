@@ -91,9 +91,6 @@ jobs:
           log_level: debug
           cache: false
 
-      - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.9
-
       - name: Install Tauri dependencies
         run: |
           sudo apt update
