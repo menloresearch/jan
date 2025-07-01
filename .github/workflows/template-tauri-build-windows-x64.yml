@@ -88,7 +88,12 @@ jobs:
         uses: mozilla-actions/sccache-action@v0.0.9
 
       - name: Tell sccache to use Actions cache
-        run: echo "SCCACHE_GHA_ENABLED=true" >> $GITHUB_ENV
+        run: |
+          echo "SCCACHE_GHA_ENABLED=true" >> $GITHUB_ENV
+          echo "SCCACHE_GHA_VERSION=0" >> $GITHUB_ENV
+
+      - name: Set up sccache on Windows
+        run: Add-Content -Path $env:GITHUB_ENV -Value "SCCACHE_GHA_ENABLED=true"
 
       - name: Update app version base on tag
         id: version_update
