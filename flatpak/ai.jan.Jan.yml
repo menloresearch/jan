@@ -1,0 +1,40 @@
+id: ai.jan.Jan
+runtime: org.gnome.Platform
+runtime-version: '48'
+sdk: org.gnome.Sdk
+add-extensions:
+  org.freedesktop.Platform.GL.cuda:
+    version: '1.4'
+    directory: lib/GL/cuda-12.3
+    add-ld-path: lib
+  org.freedesktop.Platform.GL.vulkan:
+    version: '1.4'
+    directory: lib/GL/vulkan
+    add-ld-path: lib
+command: Jan
+finish-args:
+  - --socket=wayland # Permission needed to show the window
+  - --socket=fallback-x11 # Permission needed to show the window on X11
+  - --device=dri
+  - --share=ipc
+
+modules:
+  - name: binary
+    buildsystem: simple
+    sources:
+      - type: file
+        url: https://github.com/menloresearch/jan/releases/download/untagged-952b0124754621e9805e/Jan_0.6.0_amd64.deb
+        sha256: 641316bbb92d0509f07366a636e3d902d81ac1d728a3975198bda74f21e61d9a
+        only-arches: [x86_64]
+    build-commands:
+      - ar -x *.deb
+      - tar -xf data.tar.gz
+      - 'install -Dm755 usr/bin/Jan /app/bin/Jan'
+      - 'install -Dm755 usr/bin/cortex-server /app/bin/cortex-server'
+      - 'install -Dm755 usr/bin/bun /app/bin/bun'
+      - 'install -Dm755 usr/bin/bun /app/bin/uv'
+      - install -Dm644 usr/share/applications/Jan.desktop /app/share/applications/ai.jan.Jan.desktop
+      - install -Dm644 usr/share/icons/hicolor/128x128/apps/jan.png /app/share/icons/hicolor/128x128/apps/ai.jan.Jan.png
+      - install -Dm644 usr/share/icons/hicolor/32x32/apps/jan.png /app/share/icons/hicolor/32x32/apps/ai.jan.Jan.png
+      - install -Dm644 usr/share/icons/hicolor/256x256@2/apps/jan.png /app/share/icons/hicolor/256x256@2/apps/ai.jan.Jan.png
+      - install -Dm644 ai.jan.Jan.metainfo.xml /app/share/metainfo/ai.jan.Jan.rosary.metainfo.xml
