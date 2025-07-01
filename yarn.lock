@@ -13039,7 +13039,7 @@ __metadata:
     husky: "npm:^9.1.5"
     jest: "npm:^30.0.3"
     jest-environment-jsdom: "npm:^29.7.0"
-    rimraf: "npm:^3.0.2"
+    rimraf: "npm:^6.0.1"
     run-script-os: "npm:^1.1.6"
     tar: "npm:^4.4.19"
     unzipper: "npm:^0.12.3"
