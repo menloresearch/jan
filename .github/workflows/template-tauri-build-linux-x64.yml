@@ -143,11 +143,6 @@ jobs:
           fi
       - name: Build app
         run: |
-          SCCACHE_PATH=$(mise which sccache)
-          ctoml ~/.cargo/config.toml build.rustc-wrapper "$SCCACHE_PATH"
-          echo "---------cargo.config.toml---------"
-          cat ~/.cargo/config.toml
-
           # Pin linuxdeploy version to prevent @tauri-apps/cli-linux-x64-gnu from pulling in an outdated version
           TAURI_TOOLKIT_PATH="${XDG_CACHE_HOME:-$HOME/.cache}/tauri"
           mkdir -p "$TAURI_TOOLKIT_PATH"
@@ -198,9 +193,6 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           TAURI_SIGNING_PUBLIC_KEY: ${{ secrets.TAURI_SIGNING_PUBLIC_KEY }}
 
-      - name: Show sccache stats
-        shell: bash
-        run: sccache --show-stats
       # Publish app
 
       ## Artifacts, for dev and test
