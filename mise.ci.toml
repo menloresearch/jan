@@ -7,7 +7,6 @@ jq = "latest"
 
 [env]
 _.path = ['./node_modules/.bin']
-SCCACHE_GHA_ENABLED = "true"
 
 # ============================================================================
 # CORE SETUP AND CONFIGURATION TASKS
