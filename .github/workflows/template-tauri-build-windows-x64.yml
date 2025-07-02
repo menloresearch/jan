@@ -193,6 +193,10 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           TAURI_SIGNING_PUBLIC_KEY: ${{ secrets.TAURI_SIGNING_PUBLIC_KEY }}
 
+      - name: Show sccache stats
+        shell: bash
+        run: sccache --show-stats
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
