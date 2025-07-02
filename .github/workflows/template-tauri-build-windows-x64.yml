@@ -67,6 +67,9 @@ jobs:
       contents: write
     env:
       MISE_ENV: ci
+      # GitHub Actions sccache configuration
+      SCCACHE_GHA_ENABLED: 'true'
+      RUSTC_WRAPPER: sccache
     steps:
       - name: Getting the repo
         uses: actions/checkout@v3
@@ -81,6 +84,16 @@ jobs:
 
       - name: Install mise
         uses: jdx/mise-action@v2
+
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.9
+
+      - name: Configure sccache for GitHub Actions
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.exportVariable('ACTIONS_RESULTS_URL', process.env.ACTIONS_RESULTS_URL || '');
+            core.exportVariable('ACTIONS_RUNTIME_TOKEN', process.env.ACTIONS_RUNTIME_TOKEN || '');
 
       - name: Update app version base on tag
         id: version_update
@@ -193,9 +206,9 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
           TAURI_SIGNING_PUBLIC_KEY: ${{ secrets.TAURI_SIGNING_PUBLIC_KEY }}
 
-      - name: Show sccache stats
+      - name: Run sccache stat for check
         shell: bash
-        run: sccache --show-stats
+        run: ${SCCACHE_PATH} --show-stats
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
