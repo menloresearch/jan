@@ -83,6 +83,10 @@ jobs:
 
       - name: Install mise
         uses: jdx/mise-action@v2
+        with:
+          version: 2024.12.14
+          install: true
+          cache: true
 
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.9
