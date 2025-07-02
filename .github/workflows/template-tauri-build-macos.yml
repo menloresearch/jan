@@ -81,9 +81,6 @@ jobs:
       - name: Install mise
         uses: jdx/mise-action@v2
 
-      - name: Run sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.9
-
       - name: Create bun and uv universal
         run: |
           mkdir -p ./src-tauri/resources/bin/

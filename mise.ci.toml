@@ -1,7 +1,7 @@
 [tools]
 node = "20"
 rust = "1.85.1"
-sccache = "latest"
+"cargo:sccache" = "latest"
 jq = "latest"
 "cargo:ctoml" = "latest"
 
