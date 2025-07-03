@@ -9,8 +9,274 @@ use tokio::{
     sync::Mutex,
     time::{sleep, timeout},
 };
-
 use super::{cmd::get_jan_data_folder_path, state::AppState};
+
+#[cfg(target_os = "windows")]
+mod windows_powershell {
+    //! Windows PowerShell command processor for MCP
+    //!
+    //! Provides PowerShell-based command execution for Windows platforms
+
+    use std::path::Path;
+    use std::fs::File;
+    use std::io::{BufRead, BufReader};
+
+    /// Check if command file is an executable (.com or .exe)
+    fn is_executable(command_file: &str) -> bool {
+        let path = Path::new(command_file);
+        if let Some(ext) = path.extension() {
+            let ext_str = ext.to_string_lossy().to_lowercase();
+            ext_str == "com" || ext_str == "exe"
+        } else {
+            false
+        }
+    }
+
+
+    /// Escape command for PowerShell
+    fn escape_command_powershell(command: &str) -> String {
+        if command.contains(' ') || command.contains('\t') {
+            if command.starts_with('\'') && command.ends_with('\'') {
+                command.to_string()
+            } else {
+                let escaped_quotes = command.replace('\'', "''");
+                format!("'{}'", escaped_quotes)
+            }
+        } else {
+            command.to_string()
+        }
+    }
+
+    /// Escape argument for PowerShell
+    fn escape_argument_powershell(arg: &str) -> String {
+        let needs_escaping = arg.contains(' ') || arg.contains('\t') || arg.contains('\'') ||
+                            arg.contains('"') || arg.contains('$') || arg.contains('`') ||
+                            arg.contains(';') || arg.contains('|') || arg.contains('&') ||
+                            arg.contains('<') || arg.contains('>') || arg.contains('(') ||
+                            arg.contains(')') || arg.contains('[') || arg.contains(']') ||
+                            arg.contains('{') || arg.contains('}');
+        
+        if needs_escaping {
+            if arg.starts_with('\'') && arg.ends_with('\'') {
+                arg.to_string()
+            } else {
+                let escaped_quotes = arg.replace('\'', "''");
+                format!("'{}'", escaped_quotes)
+            }
+        } else {
+            arg.to_string()
+        }
+    }
+
+    /// Pure function: Create PowerShell configuration without side effects
+    fn create_powershell_config(command: &str, args: &[String]) -> (String, Vec<String>) {
+        // Normalize POSIX paths to Windows paths
+        let normalized_command = command.replace('/', "\\");
+        
+        // Escape command and arguments for PowerShell
+        let escaped_command = escape_command_powershell(&normalized_command);
+        let escaped_args: Vec<String> = args.iter()
+            .map(|arg| escape_argument_powershell(arg))
+            .collect();
+        
+        // Build PowerShell command
+        let shell_command = if escaped_args.is_empty() {
+            format!("& {}", escaped_command)
+        } else {
+            format!("& {} {}", escaped_command, escaped_args.join(" "))
+        };
+        
+        // Use PowerShell with proper arguments
+        let powershell = "powershell.exe".to_string();
+        let ps_args = vec![
+            "-WindowStyle".to_string(),
+            "Hidden".to_string(),
+            "-NoLogo".to_string(),
+            "-NoProfile".to_string(),
+            "-NonInteractive".to_string(),
+            "-Command".to_string(),
+            shell_command,
+        ];
+        
+        (powershell, ps_args)
+    }
+
+    /// Side effect wrapper: Log PowerShell command (isolated logging)
+    fn log_powershell_command(powershell: &str, args: &[String]) {
+        log::debug!("Windows PowerShell processor: {} {}", powershell, args.join(" "));
+    }
+
+    /// Deprecated: Use create_powershell_config + log_powershell_command (maintained for compatibility)
+    fn process_with_powershell(mut command: String, args: Vec<String>) -> (String, Vec<String>) {
+        let (powershell, ps_args) = create_powershell_config(&command, &args);
+        log_powershell_command(&powershell, &ps_args);
+        (powershell, ps_args)
+    }
+
+    /// Shell processing logic using PowerShell
+    pub fn parse_powershell(
+        mut command: String,
+        mut args: Vec<String>,
+        force_shell: bool,
+    ) -> (String, Vec<String>) {
+        // Check if we need a shell
+        let needs_shell = force_shell || !is_executable(&command);
+        
+        if !needs_shell {
+            // No shell needed, return as-is
+            return (command, args);
+        }
+        
+        process_with_powershell(command, args)
+    }
+}
+
+/// Helper function to apply Windows creation flags to prevent console windows
+#[cfg(target_os = "windows")]
+fn apply_windows_creation_flags(cmd: &mut Command) {
+    use std::os::windows::process::CommandExt;
+    const CREATE_NO_WINDOW: u32 = 0x08000000;
+    
+    log::debug!("Using creation flags: 0x{:08X}", CREATE_NO_WINDOW);
+    cmd.creation_flags(CREATE_NO_WINDOW);
+}
+
+/// Helper function to wrap commands on Windows to prevent console windows
+#[cfg(target_os = "windows")]
+fn wrap_command_for_windows(program: &str, args: &[&str], use_shell: bool) -> Command {
+    let mut cmd = if use_shell {
+        // Use PowerShell processing for proper Windows command handling
+        let args_vec: Vec<String> = args.iter().map(|s| s.to_string()).collect();
+        let (final_command, final_args) = windows_powershell::parse_powershell(
+            program.to_string(),
+            args_vec,
+            true, // force_shell = true since use_shell indicates shell is needed
+        );
+        
+        log::info!("Windows PowerShell command: {} {:?}", final_command, final_args);
+        
+        let mut cmd_process = Command::new(final_command);
+        for arg in final_args {
+            cmd_process.arg(arg);
+        }
+        cmd_process
+    } else {
+        // Check if executable exists before creating command
+        let executable_path = std::path::Path::new(program);
+        if !executable_path.exists() {
+            log::error!("Executable not found: {}", program);
+            // Fall back to PowerShell execution if direct execution fails
+            let args_vec: Vec<String> = args.iter().map(|s| s.to_string()).collect();
+            let (final_command, final_args) = windows_powershell::parse_powershell(
+                program.to_string(),
+                args_vec,
+                true,
+            );
+            
+            log::info!("Fallback Windows PowerShell command: {} {:?}", final_command, final_args);
+            
+            let mut cmd_process = Command::new(final_command);
+            for arg in final_args {
+                cmd_process.arg(arg);
+            }
+            cmd_process
+        } else {
+            // Create direct command
+            log::info!("Direct Windows command: {} {:?}", program, args);
+            
+            let mut direct_cmd = Command::new(program);
+            for arg in args {
+                direct_cmd.arg(arg);
+            }
+            direct_cmd
+        }
+    };
+    
+    // Apply creation flags to prevent console window
+    apply_windows_creation_flags(&mut cmd);
+    cmd
+}
+
+/// Configuration for command setup
+struct CommandConfig {
+    program: String,
+    base_args: Vec<String>,
+    env_vars: Vec<(String, String)>,
+    use_shell: bool,
+}
+
+/// Get command configuration based on command type
+fn get_command_config(
+    command: &str,
+    app_path: &std::path::Path,
+    bin_path: &std::path::Path,
+) -> CommandConfig {
+    match command {
+        "npx" => {
+            let mut cache_dir = app_path.to_path_buf();
+            cache_dir.push(".npx");
+            let bun_path = bin_path.join("bun").to_string_lossy().to_string();
+            
+            CommandConfig {
+                program: bun_path,
+                base_args: vec!["x".to_string()],
+                env_vars: vec![("BUN_INSTALL".to_string(), cache_dir.to_str().unwrap().to_string())],
+                use_shell: true,
+            }
+        }
+        "uvx" => {
+            let mut cache_dir = app_path.to_path_buf();
+            cache_dir.push(".uvx");
+            let uv_path = bin_path.join("uv").to_string_lossy().to_string();
+            
+            CommandConfig {
+                program: uv_path,
+                base_args: vec!["tool".to_string(), "run".to_string()],
+                env_vars: vec![("UV_CACHE_DIR".to_string(), cache_dir.to_str().unwrap().to_string())],
+                use_shell: true,
+            }
+        }
+        _ => {
+            // Extract executable name for shell detection
+            let executable_name = std::path::Path::new(command)
+                .file_name()
+                .and_then(|name| name.to_str())
+                .unwrap_or(command);
+            
+            let use_shell = executable_name == "bun" || executable_name == "bun.exe" ||
+                           executable_name == "uv" || executable_name == "uv.exe";
+            
+            CommandConfig {
+                program: command.to_string(),
+                base_args: Vec::new(),
+                env_vars: Vec::new(),
+                use_shell,
+            }
+        }
+    }
+}
+
+/// Create command with arguments for any platform
+fn create_command_with_args(config: CommandConfig, args: &[Value]) -> Command {
+    let mut all_args = config.base_args;
+    let config_str_args: Vec<String> = args.iter().filter_map(Value::as_str).map(String::from).collect();
+    all_args.extend(config_str_args);
+    
+    #[cfg(target_os = "windows")]
+    {
+        let all_args_str: Vec<&str> = all_args.iter().map(String::as_str).collect();
+        wrap_command_for_windows(&config.program, &all_args_str, config.use_shell)
+    }
+    
+    #[cfg(not(target_os = "windows"))]
+    {
+        let mut cmd = Command::new(config.program);
+        for arg in all_args {
+            cmd.arg(arg);
+        }
+        cmd
+    }
+}
 
 const DEFAULT_MCP_CONFIG: &str = r#"{
   "mcpServers": {
@@ -508,91 +774,91 @@ async fn schedule_mcp_start_task<R: Runtime>(
         .expect("Executable must have a parent directory");
     let bin_path = exe_parent_path.to_path_buf();
     
-    let (command, args, envs) = extract_command_args(&config)
-        .ok_or_else(|| format!("Failed to extract command args from config for {name}"))?;
-
-    let mut cmd = Command::new(command.clone());
+    // Extract command configuration - early return if invalid
+    let Some((command, args, envs)) = extract_command_args(&config) else {
+        return Err(format!("Invalid MCP server configuration for {}", name));
+    };
     
-    if command == "npx" {
-        let mut cache_dir = app_path.clone();
-        cache_dir.push(".npx");
-        let bun_x_path = format!("{}/bun", bin_path.display());
-        cmd = Command::new(bun_x_path);
-        cmd.arg("x");
-        cmd.env("BUN_INSTALL", cache_dir.to_str().unwrap().to_string());
-    }
-
-    if command == "uvx" {
-        let mut cache_dir = app_path.clone();
-        cache_dir.push(".uvx");
-        let bun_x_path = format!("{}/uv", bin_path.display());
-        cmd = Command::new(bun_x_path);
-        cmd.arg("tool");
-        cmd.arg("run");
-        cmd.env("UV_CACHE_DIR", cache_dir.to_str().unwrap().to_string());
+    log::info!("Setting up MCP server '{}' with command: '{}', args: {:?}", name, command, args);
+    
+    // Setup command with new modular structure
+    let config = get_command_config(&command, &app_path, &bin_path);
+    let command_env_vars = config.env_vars.clone();
+    let mut cmd = create_command_with_args(config, &args);
+    
+    // Apply command-specific environment variables
+    for (key, value) in command_env_vars {
+        cmd.env(key, value);
     }
     
-    #[cfg(windows)]
-    {
-        cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW: prevents shell window on Windows
-    }
-    
+    // Setup logging - flatten the match with if-let
     let app_path_str = app_path.to_str().unwrap().to_string();
     let log_file_path = format!("{}/logs/app.log", app_path_str);
-    match std::fs::OpenOptions::new()
+    if let Ok(file) = std::fs::OpenOptions::new()
         .create(true)
         .append(true)
         .open(log_file_path)
     {
-        Ok(file) => {
-            cmd.stderr(std::process::Stdio::from(file));
-        }
-        Err(err) => {
-            log::error!("Failed to open log file: {}", err);
-        }
-    };
-
+        cmd.stderr(std::process::Stdio::from(file));
+    } else {
+        log::error!("Failed to open log file");
+    }
+    
     cmd.kill_on_drop(true);
-    log::trace!("Command: {cmd:#?}");
-
-    args.iter().filter_map(Value::as_str).for_each(|arg| {
-        cmd.arg(arg);
-    });
+    log::info!("Starting MCP server '{}' with command: {:?}", name, cmd);
+    
+    // Apply environment variables from config
     envs.iter().for_each(|(k, v)| {
         if let Some(v_str) = v.as_str() {
+            log::debug!("Setting env var for {}: {}={}", name, k, v_str);
             cmd.env(k, v_str);
         }
     });
-
-    let process = TokioChildProcess::new(cmd)
+    
+    // Create and start the MCP server process
+    log::info!("Creating process for MCP server '{}'", name);
+    let process = TokioChildProcess::new(cmd).map_err(|e| {
+        log::error!("Failed to create process for MCP server {}: {}", name, e);
+        
+        // Provide more specific error messages for common Windows issues
+        let error_msg = if e.to_string().contains("program not found") ||
+                          e.to_string().contains("cannot find") {
+            format!("MCP server '{}': Executable not found. Please ensure the required program is installed and accessible.", name)
+        } else if e.to_string().contains("Access is denied") {
+            format!("MCP server '{}': Access denied. Please check permissions for the executable.", name)
+        } else if e.to_string().contains("network path") {
+            format!("MCP server '{}': Invalid path format. This may be due to improper command escaping.", name)
+        } else {
+            format!("Failed to create process for MCP server '{}': {}", name, e)
+        };
+        
+        error_msg
+    })?;
+    
+    log::info!("Starting MCP service for '{}'", name);
+    
+    let service = ().serve(process)
+        .await
         .map_err(|e| {
-            log::error!("Failed to run command {name}: {e}");
-            format!("Failed to run command {name}: {e}")
+            log::error!("Failed to start MCP service for '{name}': {e}");
+            format!("Failed to start MCP server '{}': connection closed: {}", name, e)
         })?;
-
-    let service = ().serve(process).await
-        .map_err(|e| format!("Failed to start MCP server {name}: {e}"))?;
-
-    // Get peer info and clone the needed values before moving the service
-    let (server_name, server_version) = {
-        let server_info = service.peer_info();
-        log::trace!("Connected to server: {server_info:#?}");
-        (
-            server_info.server_info.name.clone(),
-            server_info.server_info.version.clone(),
-        )
-    };
-
-    // Now move the service into the HashMap
+    
+    // Get server info before moving service
+    let server_info = service.peer_info();
+    log::trace!("Connected to server: {server_info:#?}");
+    let server_name = server_info.server_info.name.clone();
+    let server_version = server_info.server_info.version.clone();
+    
+    // Store service in servers map
     servers.lock().await.insert(name.clone(), service);
     log::info!("Server {name} started successfully.");
-
-    // Wait a short time to verify the server is stable before marking as connected
-    // This prevents race conditions where the server quits immediately
+    
+    // Wait and verify server stability
     let verification_delay = Duration::from_millis(500);
     sleep(verification_delay).await;
     
-    // Check if server is still running after the verification delay
+    // Check if server is still running after verification delay
     let server_still_running = {
         let servers_map = servers.lock().await;
         servers_map.contains_key(&name)
@@ -601,24 +867,22 @@ async fn schedule_mcp_start_task<R: Runtime>(
     if !server_still_running {
         return Err(format!("MCP server {} quit immediately after starting", name));
     }
-
-    // Mark server as successfully connected (for restart policy)
-    {
-        let app_state = app.state::<AppState>();
-        let mut connected = app_state.mcp_successfully_connected.lock().await;
-        connected.insert(name.clone(), true);
-        log::info!("Marked MCP server {} as successfully connected", name);
-    }
-
-    // Emit event to the frontend
-    let event = format!("mcp-connected");
+    
+    // Mark server as successfully connected
+    let app_state = app.state::<AppState>();
+    let mut connected = app_state.mcp_successfully_connected.lock().await;
+    connected.insert(name.clone(), true);
+    log::info!("Marked MCP server {} as successfully connected", name);
+    
+    // Emit connection event to frontend
+    let event = "mcp-connected";
     let payload = serde_json::json!({
         "name": server_name,
         "version": server_version,
     });
-    app.emit(&event, payload)
+    app.emit(event, payload)
         .map_err(|e| format!("Failed to emit event: {}", e))?;
-
+    
     Ok(())
 }
 
@@ -1013,6 +1277,7 @@ mod tests {
     use std::collections::HashMap;
     use std::fs::File;
     use std::io::Write;
+    use std::path::PathBuf;
     use std::sync::Arc;
     use tauri::test::mock_app;
     use tokio::sync::Mutex;
@@ -1020,9 +1285,14 @@ mod tests {
     #[tokio::test]
     async fn test_run_mcp_commands() {
         let app = mock_app();
-        // Create a mock mcp_config.json file
-        let config_path = "mcp_config.json";
-        let mut file: File = File::create(config_path).expect("Failed to create config file");
+        
+        // Create the data directory as expected by get_jan_data_folder_path in test mode
+        let data_dir = PathBuf::from("./data");
+        std::fs::create_dir_all(&data_dir).expect("Failed to create data directory");
+        
+        // Create a mock mcp_config.json file in the correct location
+        let config_path = data_dir.join("mcp_config.json");
+        let mut file: File = File::create(&config_path).expect("Failed to create config file");
         file.write_all(b"{\"mcpServers\":{}}")
             .expect("Failed to write to config file");
 
@@ -1032,9 +1302,11 @@ mod tests {
         let result = run_mcp_commands(app.handle(), servers_state).await;
 
         // Assert that the function returns Ok(())
-        assert!(result.is_ok());
+        assert!(result.is_ok(), "run_mcp_commands failed with error: {:?}", result.err());
 
-        // Clean up the mock config file
-        std::fs::remove_file(config_path).expect("Failed to remove config file");
+        // Clean up the mock config file and directory
+        std::fs::remove_file(&config_path).expect("Failed to remove config file");
+        // Only remove the data directory if it's empty to avoid removing other test data
+        let _ = std::fs::remove_dir(&data_dir); // This will fail if directory is not empty, which is fine
     }
 }
